@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --community: #1a6b3a;
+  --community-light: #2e9e5b;
+  --community-lighter: #52c47a;
+}
+
+body {
+  @apply bg-stone-50 text-stone-900 antialiased;
+}

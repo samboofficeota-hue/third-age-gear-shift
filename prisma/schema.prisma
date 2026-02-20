@@ -1,0 +1,103 @@
+// サードエイジへのギア・シフト - DB設計
+// webapp_spec_third_age.md / webapp_spec_admin_control.md に準拠
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  admin
+  facilitator
+  participant
+}
+
+enum BlockStatusEnum {
+  LOCKED
+  PREVIEW
+  OPEN
+  CLOSED
+}
+
+enum ParticipantOverrideStatus {
+  LOCKED
+  OPEN
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         UserRole @default(participant)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  workshopData              WorkshopData?
+  participantBlockOverrides ParticipantBlockOverride[]
+
+  @@map("users")
+}
+
+// 1ユーザー = 1ワークショップデータ（同一ユーザーの複数回参加は将来 sessionId で分離可能）
+model WorkshopData {
+  id             String   @id @default(cuid())
+  userId         String   @unique @map("user_id")
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId      String?  @map("session_id") // 将来の複数セッション用、現状は "default"
+  profile        Json?    // { name, age_group, role, years_of_service, initial_feeling[] }
+  step1          Json?    // 500時間棚卸し
+  step2          Json?    // 4ワーク仕分け
+  step3          Json?    // 10年後ポートフォリオ
+  step4          Json?    // As-Is/To-Be
+  step5          Json?    // 4つの資本
+  step6          Json?    // 資本循環
+  step7          Json?    // 5年間移行計画
+  michiDialogues Json?    @map("michi_dialogues") // [{ block, role, content, timestamp }]
+  completedBlocks String[] @map("completed_blocks") // ["block_0", "block_1", ...]
+  lastUpdated    DateTime @updatedAt @map("last_updated")
+
+  @@map("workshop_data")
+}
+
+// 研修セッション（1回の2日間研修＝1セッション想定）
+model WorkshopSession {
+  id        String   @id @default(cuid())
+  name      String?  // 例: "2026年2月 研修"
+  createdAt DateTime @default(now()) @map("created_at")
+
+  blockStatuses BlockStatus[]
+
+  @@map("workshop_sessions")
+}
+
+// ブロック開示状態（管理者が一斉開放する対象）
+model BlockStatus {
+  id          String           @id @default(cuid())
+  sessionId   String           @map("session_id")
+  session     WorkshopSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  blockId     String           @map("block_id") // block_0 〜 block_8
+  status      BlockStatusEnum  @default(LOCKED)
+  openedAt    DateTime?        @map("opened_at")
+  openedBy    String?          @map("opened_by") // 管理者 user id
+  autoCloseAt DateTime?        @map("auto_close_at")
+
+  @@unique([sessionId, blockId])
+  @@map("block_status")
+}
+
+// 個別受講生のブロック開放オーバーライド（遅れている人だけ先行開放など）
+model ParticipantBlockOverride {
+  id        String                  @id @default(cuid())
+  userId    String                  @map("user_id")
+  user      User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blockId   String                  @map("block_id")
+  status    ParticipantOverrideStatus
+  updatedAt DateTime                @updatedAt @map("updated_at")
+
+  @@unique([userId, blockId])
+  @@map("participant_block_override")
+}
