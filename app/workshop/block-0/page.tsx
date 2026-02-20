@@ -39,7 +39,7 @@ export default function Block0Page() {
 
   useEffect(() => {
     (async () => {
-      const res = await fetch("/api/workshop/me");
+      const res = await fetch("/api/workshop/me", { credentials: "include" });
       const data = await res.json();
       if (data.workshopData?.profile) {
         const p = data.workshopData.profile as Profile;
@@ -52,7 +52,10 @@ export default function Block0Page() {
         });
       }
       if (!data.workshopData) {
-        const startRes = await fetch("/api/workshop/start", { method: "POST" });
+        const startRes = await fetch("/api/workshop/start", {
+          method: "POST",
+          credentials: "include",
+        });
         if (!startRes.ok) {
           setError("参加の開始に失敗しました。再読み込みしてください。");
           setLoading(false);
@@ -76,8 +79,10 @@ export default function Block0Page() {
   const handleSubmitProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setError(null);
     const res = await fetch("/api/workshop/me/profile", {
       method: "PATCH",
+      credentials: "include", // Cookie を確実に送る
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: profile.name || undefined,
@@ -92,8 +97,12 @@ export default function Block0Page() {
       }),
     });
     setSaving(false);
-    if (res.ok) setStep("flow");
-    else setError("保存に失敗しました。");
+    if (res.ok) {
+      setStep("flow");
+    } else {
+      const data = await res.json().catch(() => ({}));
+      setError(data?.error ?? "保存に失敗しました。");
+    }
   };
 
   const handleStartDay1 = () => {
@@ -273,6 +282,9 @@ export default function Block0Page() {
         {/* 0-D: 研修の進め方 */}
         {step === "flow" && (
           <section className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
+            <p className="mb-4 rounded-lg bg-community-lighter/20 px-3 py-2 text-sm text-stone-700">
+              プロフィールはサーバー（データベース）に保存されました。
+            </p>
             <h2 className="mb-4 text-lg font-bold text-stone-800">
               研修の進め方
             </h2>
