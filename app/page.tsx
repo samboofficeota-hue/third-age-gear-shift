@@ -13,7 +13,7 @@ export default function Home() {
         href="/workshop/block-0"
         className="rounded-xl bg-community px-6 py-3 text-white transition hover:bg-community-light"
       >
-        オンボーディングを始める（Block 0）
+        ログインしてオンボーディングを始める
       </Link>
     </main>
   );

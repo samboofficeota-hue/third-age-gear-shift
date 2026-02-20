@@ -1,23 +1,31 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { cookies } from "next/headers";
+import { getSession } from "@/lib/auth";
 
-const COOKIE_NAME = "workshop_guest_id";
-
+/**
+ * ログイン中のユーザーの WorkshopData を返す。なければ 1 件作成する。
+ */
 export async function GET() {
-  const cookieStore = await cookies();
-  const workshopDataId = cookieStore.get(COOKIE_NAME)?.value;
-  if (!workshopDataId) {
-    return NextResponse.json({ workshopData: null }, { status: 200 });
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json(
+      { error: "ログインしてください。" },
+      { status: 401 }
+    );
   }
 
-  const workshopData = await prisma.workshopData.findUnique({
-    where: { id: workshopDataId },
-    include: { user: { select: { id: true, email: true, role: true } } },
+  let workshopData = await prisma.workshopData.findUnique({
+    where: { userId: session.sub },
   });
 
   if (!workshopData) {
-    return NextResponse.json({ workshopData: null }, { status: 200 });
+    workshopData = await prisma.workshopData.create({
+      data: {
+        userId: session.sub,
+        sessionId: "default",
+        completedBlocks: [],
+      },
+    });
   }
 
   const profile = workshopData.profile as Record<string, unknown> | null;

@@ -40,6 +40,10 @@ export default function Block0Page() {
   useEffect(() => {
     (async () => {
       const res = await fetch("/api/workshop/me", { credentials: "include" });
+      if (res.status === 401) {
+        window.location.href = "/login?from=/workshop/block-0";
+        return;
+      }
       const data = await res.json();
       if (data.workshopData?.profile) {
         const p = data.workshopData.profile as Profile;
@@ -50,17 +54,6 @@ export default function Block0Page() {
           years_of_service: p.years_of_service,
           initial_feeling: p.initial_feeling ?? [],
         });
-      }
-      if (!data.workshopData) {
-        const startRes = await fetch("/api/workshop/start", {
-          method: "POST",
-          credentials: "include",
-        });
-        if (!startRes.ok) {
-          setError("参加の開始に失敗しました。再読み込みしてください。");
-          setLoading(false);
-          return;
-        }
       }
       setLoading(false);
     })();

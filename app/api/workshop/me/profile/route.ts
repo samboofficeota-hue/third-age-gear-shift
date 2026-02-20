@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { cookies } from "next/headers";
-
-const COOKIE_NAME = "workshop_guest_id";
+import { getSession } from "@/lib/auth";
 
 const AGE_GROUPS = ["40s", "50s", "60s"] as const;
 const INITIAL_FEELINGS = [
@@ -23,11 +21,10 @@ type ProfileBody = {
 };
 
 export async function PATCH(request: Request) {
-  const cookieStore = await cookies();
-  const workshopDataId = cookieStore.get(COOKIE_NAME)?.value;
-  if (!workshopDataId) {
+  const session = await getSession();
+  if (!session) {
     return NextResponse.json(
-      { error: "No workshop session. Start from /workshop." },
+      { error: "ログインしてください。" },
       { status: 401 }
     );
   }
@@ -40,10 +37,13 @@ export async function PATCH(request: Request) {
   }
 
   const existing = await prisma.workshopData.findUnique({
-    where: { id: workshopDataId },
+    where: { userId: session.sub },
   });
   if (!existing) {
-    return NextResponse.json({ error: "Workshop session not found" }, { status: 404 });
+    return NextResponse.json(
+      { error: "ワークショップデータが見つかりません。" },
+      { status: 404 }
+    );
   }
 
   const currentProfile = (existing.profile as Record<string, unknown>) || {};
@@ -66,7 +66,7 @@ export async function PATCH(request: Request) {
     : [...existing.completedBlocks, "block_0"];
 
   const updated = await prisma.workshopData.update({
-    where: { id: workshopDataId },
+    where: { userId: session.sub },
     data: {
       profile: profile as Prisma.InputJsonValue,
       completedBlocks,
