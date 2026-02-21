@@ -38,10 +38,47 @@ SEED_EMAIL="admin@example.com" SEED_PASSWORD="your-secret" SEED_ROLE="admin" npm
      ```
    - **ローカルから Railway CLI**: プロジェクトで `railway link` 済みなら:
      ```bash
-     railway run npm run db:seed
+     npm run db:seed:railway
      ```
-4. ログが `Created user: ... role: admin` と出れば成功。本番の `/login` でそのメール・パスワードでログインできる。
-5. 必要なら Variables の `SEED_*` は削除してよい（既存ユーザーは消えません）。
+     または `railway run npm run db:seed`  
+     **SEED_EMAIL / SEED_PASSWORD / SEED_ROLE** は Railway の Variables のほか、**.env.local に書いてもよい**（`npm run db:seed:railway` 実行時に読み込まれる）。
+
+#### Cursor から Railway CLI で進める
+
+Cursor のターミナルで次を順に実行する。
+
+- **CLI 確認**  
+  `railway --version` で未インストールなら `npm install -g @railway/cli` で導入。
+
+- **ログイン**（ブラウザが開く）
+
+  ```bash
+  railway login
+  ```
+
+- **プロジェクトをリンク**（一覧から本番用を選択）
+
+  ```bash
+  railway link
+  ```
+
+  リンクしていないと `railway run` で本番の `DATABASE_URL` が渡らず、シードがローカルの `.env.local` の DB を参照して失敗する。必ず先にリンクすること。
+
+- **Variables 設定**  
+  Railway ダッシュボードの **Variables** で `SEED_EMAIL` / `SEED_PASSWORD` / `SEED_ROLE=admin` を追加（手順 1–2 のとおり）。
+
+- **シード実行**
+
+  ```bash
+  npm run db:seed:railway
+  ```
+
+  成功時は `Created user: ... role: admin` と表示される。
+
+上記シード成功後:
+
+1. ログが `Created user: ... role: admin` と出れば成功。本番の `/login` でそのメール・パスワードでログインできる。
+2. 必要なら Variables の `SEED_*` は削除してよい（既存ユーザーは消えません）。
 
 **注意:** 同じメールのユーザーが既にいるときは「User already exists」と表示され、新規作成はスキップされる。
 
