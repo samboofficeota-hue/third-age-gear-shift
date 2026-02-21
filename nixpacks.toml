@@ -1,0 +1,5 @@
+# Railway (Nixpacks) ビルド設定
+# npm の --production 非推奨警告を避けるため、install を明示的に指定
+
+[phases.install]
+cmds = ["npm ci"]

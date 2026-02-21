@@ -22,15 +22,26 @@ SEED_EMAIL="admin@example.com" SEED_PASSWORD="your-secret" SEED_ROLE="admin" npm
 
 ### Railway（本番）
 
-1. アプリの **Variables** に一時的に追加（実行後削除してよい）:
-   - `SEED_EMAIL` = ログイン用メール
-   - `SEED_PASSWORD` = パスワード
-   - `SEED_ROLE` = `participant` | `facilitator` | `admin`
-2. **Shell（Railway CLI で `railway ssh`）** に入り、1 回だけ実行:
-   ```bash
-   npm run db:seed
-   ```
-3. 変数は残しておいてもよいが、本番用パスワードは強くすること。
+本番の管理画面で使うユーザーは、Railway 上でシードを 1 回実行して作成する。
+
+#### 手順
+
+1. **Railway ダッシュボード**で、該当プロジェクト → **Variables** を開く。
+2. 次の 3 つを追加（値は任意。本番用は強めのパスワード推奨）:
+   - `SEED_EMAIL` = ログイン用メール（例: `admin@example.com`）
+   - `SEED_PASSWORD` = ログイン用パスワード
+   - `SEED_ROLE` = `admin`（管理画面用）または `facilitator` / `participant`
+3. **シードを実行**（どちらか一方）:
+   - **Railway の Shell**: ダッシュボードの **Shell** を開き、プロジェクト内で:
+     ```bash
+     npm run db:seed
+     ```
+   - **ローカルから Railway CLI**: プロジェクトで `railway link` 済みなら:
+     ```bash
+     railway run npm run db:seed
+     ```
+4. ログが `Created user: ... role: admin` と出れば成功。本番の `/login` でそのメール・パスワードでログインできる。
+5. 必要なら Variables の `SEED_*` は削除してよい（既存ユーザーは消えません）。
 
 **注意:** 同じメールのユーザーが既にいるときは「User already exists」と表示され、新規作成はスキップされる。
 
