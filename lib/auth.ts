@@ -3,8 +3,11 @@ import * as jose from "jose";
 import { cookies } from "next/headers";
 
 const COOKIE_NAME = process.env.JWT_COOKIE_NAME ?? "third_age_session";
-const SECRET = process.env.JWT_SECRET ?? "dev-secret-change-in-production";
 const SALT_ROUNDS = 10;
+
+function getJwtSecret(): string {
+  return process.env.JWT_SECRET ?? "dev-secret-change-in-production";
+}
 
 export type UserRole = "admin" | "facilitator" | "participant";
 
@@ -28,9 +31,11 @@ export async function verifyPassword(
 }
 
 function getSecretKey(): Uint8Array {
-  const secret = SECRET;
+  const secret = getJwtSecret();
   if (secret.length < 32) {
-    throw new Error("JWT_SECRET must be at least 32 characters");
+    throw new Error(
+      `JWT_SECRET must be at least 32 characters (got ${secret.length}). Check Railway Variables: name must be exactly JWT_SECRET.`
+    );
   }
   return new TextEncoder().encode(secret.slice(0, 64));
 }
