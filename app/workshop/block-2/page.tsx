@@ -291,7 +291,8 @@ export default function Block2Page() {
                     cx="50%"
                     cy="50%"
                     outerRadius="80%"
-                    label={({ name, hours }) => `${name.split(".")[0]} ${hours}h`}
+                    label={({ name, payload }: { name?: string; payload?: { hours?: number } }) =>
+                      `${(name ?? "").split(".")[0]} ${payload?.hours ?? 0}h`}
                   >
                     {pieData.map((_, i) => (
                       <Cell key={i} fill={WORKS[i]?.color ?? "#94a3b8"} />
