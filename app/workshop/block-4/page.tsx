@@ -128,7 +128,7 @@ export default function Block4Page() {
   const baseTotal = currentTotal || 500;
   const tableRows = useMemo(() => {
     return WORKS.map((w) => {
-      const id = w.id as keyof typeof currentHours;
+      const id: keyof AllocationRow = w.id;
       const curH = Math.round((currentHours[id] ?? 0) * 10) / 10;
       const curP = baseTotal ? Math.round(((currentHours[id] ?? 0) / baseTotal) * 100) : 0;
       const futH = futureHours[id] ?? 0;

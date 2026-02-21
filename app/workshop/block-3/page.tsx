@@ -317,7 +317,7 @@ export default function Block3Page() {
                           <Cell key={i} fill={currentPieData[i].color} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(v: number) => [`${v}%`, ""]} />
+                      <Tooltip formatter={(v) => [`${v ?? 0}%`, ""]} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
@@ -332,7 +332,7 @@ export default function Block3Page() {
                           <Cell key={i} fill={futurePieData[i].color} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(v: number) => [`${v}%`, ""]} />
+                      <Tooltip formatter={(v) => [`${v ?? 0}%`, ""]} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
