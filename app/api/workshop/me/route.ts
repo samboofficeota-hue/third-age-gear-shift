@@ -29,10 +29,18 @@ export async function GET() {
   }
 
   const profile = workshopData.profile as Record<string, unknown> | null;
+  const step1 = workshopData.step1 as Record<string, unknown> | null;
+  const step2 = workshopData.step2 as Record<string, unknown> | null;
+  const step3 = workshopData.step3 as Record<string, unknown> | null;
+  const step4 = workshopData.step4 as Record<string, unknown> | null;
   return NextResponse.json({
     workshopData: {
       id: workshopData.id,
       profile,
+      step1,
+      step2,
+      step3,
+      step4,
       completedBlocks: workshopData.completedBlocks,
       lastUpdated: workshopData.lastUpdated,
     },

@@ -99,8 +99,7 @@ export default function Block0Page() {
   };
 
   const handleStartDay1 = () => {
-    // TODO: 認証実装後に /workshop/block-1 へ
-    window.location.href = "/";
+    window.location.href = "/workshop/block-1";
   };
 
   if (loading) {

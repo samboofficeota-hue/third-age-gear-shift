@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
@@ -13,6 +13,19 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  // すでにログイン済みなら from へリダイレクト
+  useEffect(() => {
+    (async () => {
+      const res = await fetch("/api/auth/me", { credentials: "include" });
+      const data = await res.json().catch(() => ({}));
+      setCheckingSession(false);
+      if (data?.user) {
+        router.replace(from);
+      }
+    })();
+  }, [from, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,6 +46,14 @@ function LoginForm() {
     router.push(from);
     router.refresh();
   };
+
+  if (checkingSession) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-stone-50">
+        <p className="text-stone-500">確認中...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-stone-50 px-4">
