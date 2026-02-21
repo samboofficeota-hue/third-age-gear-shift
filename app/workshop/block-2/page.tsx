@@ -298,7 +298,12 @@ export default function Block2Page() {
                       <Cell key={i} fill={WORKS[i]?.color ?? "#94a3b8"} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: number, name: string, props: { payload: { hours: number } }) => [`${props.payload.hours} 時間（${value}%）`, name]} />
+                  <Tooltip
+                    formatter={(value, name, item) => {
+                      const hours = (item?.payload as { hours?: number } | undefined)?.hours ?? 0;
+                      return [`${hours} 時間（${value ?? 0}%）`, name];
+                    }}
+                  />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
