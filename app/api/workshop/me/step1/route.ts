@@ -3,29 +3,19 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 
-type Step1Body = {
-  paid_work_hours?: number;
-  home_work_hours?: number;
-  care_hours?: number;
-  study_hours?: number;
-  leisure_hours?: number;
-  other_hours?: number;
-  user_feeling_comment?: string;
-};
+type Activity = { description: string; hours: number };
+type Step1Body = { activities?: unknown[] };
 
 function toNum(v: unknown): number {
-  if (typeof v === "number" && Number.isFinite(v)) return Math.max(0, v);
-  if (typeof v === "string") return Math.max(0, parseFloat(v) || 0);
+  if (typeof v === "number" && Number.isFinite(v)) return Math.max(0, Math.min(500, v));
+  if (typeof v === "string") return Math.max(0, Math.min(500, parseFloat(v) || 0));
   return 0;
 }
 
 export async function PATCH(request: Request) {
   const session = await getSession();
   if (!session) {
-    return NextResponse.json(
-      { error: "ログインしてください。" },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: "ログインしてください。" }, { status: 401 });
   }
 
   let body: Step1Body;
@@ -45,42 +35,21 @@ export async function PATCH(request: Request) {
     );
   }
 
-  const current = (existing.step1 as Record<string, unknown>) || {};
-  const paid_work_hours = toNum(body.paid_work_hours ?? current.paid_work_hours);
-  const home_work_hours = toNum(body.home_work_hours ?? current.home_work_hours);
-  const care_hours = toNum(body.care_hours ?? current.care_hours);
-  const study_hours = toNum(body.study_hours ?? current.study_hours);
-  const leisure_hours = toNum(body.leisure_hours ?? current.leisure_hours);
-  const other_hours = toNum(body.other_hours ?? current.other_hours);
-  const total =
-    paid_work_hours +
-    home_work_hours +
-    care_hours +
-    study_hours +
-    leisure_hours +
-    other_hours;
+  const activities: Activity[] = (Array.isArray(body.activities) ? body.activities : [])
+    .filter((a): a is Record<string, unknown> => typeof a === "object" && a !== null)
+    .map((a) => ({
+      description: String(a.description ?? "").trim().slice(0, 200),
+      hours: toNum(a.hours),
+    }))
+    .filter((a) => a.description || a.hours > 0);
 
-  const step1: Record<string, unknown> = {
-    ...current,
-    paid_work_hours,
-    home_work_hours,
-    care_hours,
-    study_hours,
-    leisure_hours,
-    other_hours,
-    total,
-  };
-  if (typeof body.user_feeling_comment === "string") {
-    step1.user_feeling_comment = body.user_feeling_comment;
-  }
+  const total = activities.reduce((sum, a) => sum + a.hours, 0);
+  const step1: Record<string, unknown> = { activities, total };
 
-  const feelingComment = body.user_feeling_comment ?? (current.user_feeling_comment as string | undefined);
-  const hasFeelingComment = typeof feelingComment === "string" && feelingComment.trim() !== "";
+  const isCompleted = activities.length > 0 && total > 0;
   const completedBlocks =
-    existing.completedBlocks.includes("block_1") || hasFeelingComment
-      ? existing.completedBlocks.includes("block_1")
-        ? existing.completedBlocks
-        : [...existing.completedBlocks, "block_1"]
+    isCompleted && !existing.completedBlocks.includes("block_1")
+      ? [...existing.completedBlocks, "block_1"]
       : existing.completedBlocks;
 
   await prisma.workshopData.update({

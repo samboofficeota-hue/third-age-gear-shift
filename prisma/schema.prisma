@@ -44,10 +44,11 @@ model User {
 
 // 1ユーザー = 1ワークショップデータ（同一ユーザーの複数回参加は将来 sessionId で分離可能）
 model WorkshopData {
-  id             String   @id @default(cuid())
-  userId         String   @unique @map("user_id")
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sessionId      String?  @map("session_id") // 将来の複数セッション用、現状は "default"
+  id             String           @id @default(cuid())
+  userId         String           @unique @map("user_id")
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId      String?          @map("session_id")
+  session        WorkshopSession? @relation(fields: [sessionId], references: [id])
   profile        Json?    // { name, age_group, role, years_of_service, initial_feeling[] }
   step1          Json?    // 500時間棚卸し
   step2          Json?    // 4ワーク仕分け
@@ -67,9 +68,12 @@ model WorkshopData {
 model WorkshopSession {
   id        String   @id @default(cuid())
   name      String?  // 例: "2026年2月 研修"
+  code      String   @unique // 受講生が入力する共通コード 例: "3rdage0201"
+  isActive  Boolean  @default(true) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at")
 
   blockStatuses BlockStatus[]
+  workshopData  WorkshopData[]
 
   @@map("workshop_sessions")
 }

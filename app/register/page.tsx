@@ -1,45 +1,49 @@
 "use client";
 
 import { Suspense, useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-function roleDefaultPath(role: string): string {
-  if (role === "admin" || role === "facilitator") return "/admin";
-  return "/workshop/block-0";
-}
-
-function LoginForm() {
+function RegisterForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const from = searchParams.get("from");
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
 
+  // ログイン済みなら /workshop/join へ
   useEffect(() => {
     (async () => {
       const res = await fetch("/api/auth/me", { credentials: "include" });
       const data = await res.json().catch(() => ({}));
       setCheckingSession(false);
       if (data?.user) {
-        router.replace(from ?? roleDefaultPath(data.user.role));
+        router.replace("/workshop/join");
       }
     })();
-  }, [from, router]);
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (password !== confirm) {
+      setError("パスワードが一致しません。");
+      return;
+    }
+    if (password.length < 8) {
+      setError("パスワードは8文字以上で設定してください。");
+      return;
+    }
+
     setLoading(true);
-    const res = await fetch("/api/auth/login", {
+    const res = await fetch("/api/auth/register", {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -47,11 +51,13 @@ function LoginForm() {
     });
     const data = await res.json().catch(() => ({}));
     setLoading(false);
+
     if (!res.ok) {
-      setError(data.error ?? "ログインに失敗しました。");
+      setError(data.error ?? "登録に失敗しました。");
       return;
     }
-    router.push(from ?? roleDefaultPath(data.user?.role ?? "participant"));
+
+    router.push("/workshop/join");
     router.refresh();
   };
 
@@ -79,8 +85,8 @@ function LoginForm() {
 
       <Card className="w-full max-w-sm shadow-lg">
         <CardHeader className="space-y-1 pb-4">
-          <CardTitle className="text-xl">ログイン</CardTitle>
-          <CardDescription>メールアドレスとパスワードを入力してください</CardDescription>
+          <CardTitle className="text-xl">アカウント作成</CardTitle>
+          <CardDescription>はじめての方は登録してください</CardDescription>
         </CardHeader>
 
         <form onSubmit={handleSubmit}>
@@ -98,13 +104,26 @@ function LoginForm() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">パスワード</Label>
+              <Label htmlFor="password">パスワード（8文字以上）</Label>
               <Input
                 id="password"
                 type="password"
-                autoComplete="current-password"
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                minLength={8}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirm">パスワード（確認）</Label>
+              <Input
+                id="confirm"
+                type="password"
+                autoComplete="new-password"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
                 placeholder="••••••••"
                 required
               />
@@ -118,17 +137,14 @@ function LoginForm() {
 
           <CardFooter className="flex flex-col gap-3 pt-2">
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "ログイン中..." : "ログインしてはじめる"}
+              {loading ? "登録中..." : "登録してはじめる"}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
-              アカウントをお持ちでない方は{" "}
-              <Link href="/register" className="font-medium text-primary hover:underline">
-                新規登録
+              すでにアカウントをお持ちの方は{" "}
+              <Link href="/login" className="font-medium text-primary hover:underline">
+                ログイン
               </Link>
             </p>
-            <Link href="/" className="text-center text-xs text-muted-foreground hover:text-foreground">
-              トップへ戻る
-            </Link>
           </CardFooter>
         </form>
       </Card>
@@ -136,7 +152,7 @@ function LoginForm() {
   );
 }
 
-export default function LoginPage() {
+export default function RegisterPage() {
   return (
     <Suspense
       fallback={
@@ -145,7 +161,7 @@ export default function LoginPage() {
         </div>
       }
     >
-      <LoginForm />
+      <RegisterForm />
     </Suspense>
   );
 }

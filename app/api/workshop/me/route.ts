@@ -19,10 +19,14 @@ export async function GET() {
   });
 
   if (!workshopData) {
+    // ユーザーが実際に存在するか確認（JWT が古い場合に FK エラーを防ぐ）
+    const userExists = await prisma.user.findUnique({ where: { id: session.sub }, select: { id: true } });
+    if (!userExists) {
+      return NextResponse.json({ error: "ログインしてください。" }, { status: 401 });
+    }
     workshopData = await prisma.workshopData.create({
       data: {
         userId: session.sub,
-        sessionId: "default",
         completedBlocks: [],
       },
     });
@@ -36,6 +40,7 @@ export async function GET() {
   return NextResponse.json({
     workshopData: {
       id: workshopData.id,
+      sessionId: workshopData.sessionId,
       profile,
       step1,
       step2,

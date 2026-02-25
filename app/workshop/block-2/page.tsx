@@ -2,59 +2,71 @@
 
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import { Button } from "@/components/ui/button";
 
-const CATEGORIES = [
-  { key: "paid_work_hours", label: "本業・関連" },
-  { key: "home_work_hours", label: "生活維持" },
-  { key: "care_hours", label: "ケア・付き合い" },
-  { key: "study_hours", label: "自己投資" },
-  { key: "leisure_hours", label: "娯楽・休息" },
-  { key: "other_hours", label: "その他" },
-] as const;
+type WorkType = "A" | "B" | "C" | "D" | "E";
 
-const WORKS = [
-  { id: "A", label: "A. 有償（Paid Work）", color: "#1a6b3a" },
-  { id: "B", label: "B. 家事（Home Work）", color: "#2e9e5b" },
-  { id: "C", label: "C. ギフト（Gift Work）", color: "#52c47a" },
-  { id: "D", label: "D. 学習（Study Work）", color: "#86efac" },
-] as const;
+const WORKS: {
+  id: WorkType;
+  label: string;
+  sub: string;
+  selectedClass: string;
+  dotClass: string;
+}[] = [
+  {
+    id: "A",
+    label: "お金をもらうワーク",
+    sub: "Paid Work",
+    selectedClass: "bg-primary border-primary text-primary-foreground",
+    dotClass: "bg-primary",
+  },
+  {
+    id: "B",
+    label: "家族のためのワーク",
+    sub: "Home Work",
+    selectedClass: "bg-rose-500 border-rose-500 text-white",
+    dotClass: "bg-rose-500",
+  },
+  {
+    id: "C",
+    label: "社会に貢献するワーク",
+    sub: "Gift Work",
+    selectedClass: "bg-blue-600 border-blue-600 text-white",
+    dotClass: "bg-blue-600",
+  },
+  {
+    id: "D",
+    label: "自分を高めるワーク",
+    sub: "Study Work",
+    selectedClass: "bg-amber-500 border-amber-500 text-white",
+    dotClass: "bg-amber-500",
+  },
+  {
+    id: "E",
+    label: "その他",
+    sub: "移動・SNS・娯楽・無駄時間など",
+    selectedClass: "bg-stone-400 border-stone-400 text-white",
+    dotClass: "bg-stone-400",
+  },
+];
 
-type AllocationRow = { A: number; B: number; C: number; D: number };
-type Step1Data = Record<string, number>;
-type Allocation = Partial<Record<(typeof CATEGORIES)[number]["key"], AllocationRow>>;
+const WORK_COLORS: Record<WorkType, string> = {
+  A: "#1a6b3a",
+  B: "#e11d48",
+  C: "#2563eb",
+  D: "#d97706",
+  E: "#a8a29e",
+};
 
-const defaultAllocation = (): Allocation => ({
-  paid_work_hours: { A: 100, B: 0, C: 0, D: 0 },
-  home_work_hours: { A: 0, B: 100, C: 0, D: 0 },
-  care_hours: { A: 0, B: 80, C: 20, D: 0 },
-  study_hours: { A: 0, B: 0, C: 0, D: 100 },
-  leisure_hours: { A: 0, B: 0, C: 20, D: 80 },
-  other_hours: { A: 0, B: 50, C: 0, D: 50 },
-});
-
-function normalizeRow(row: AllocationRow | undefined): AllocationRow {
-  if (!row) return { A: 100, B: 0, C: 0, D: 0 };
-  const a = Math.max(0, row.A ?? 0);
-  const b = Math.max(0, row.B ?? 0);
-  const c = Math.max(0, row.C ?? 0);
-  const d = Math.max(0, row.D ?? 0);
-  const sum = a + b + c + d || 1;
-  return {
-    A: Math.round((a / sum) * 100),
-    B: Math.round((b / sum) * 100),
-    C: Math.round((c / sum) * 100),
-    D: Math.round((d / sum) * 100),
-  };
-}
+type Classification = { description: string; hours: number; workType: WorkType | null };
 
 export default function Block2Page() {
-  const [step, setStep] = useState<"intro" | "allocation" | "chart" | "comment">("intro");
+  const [step, setStep] = useState<"intro" | "classifying" | "review">("intro");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [step1, setStep1] = useState<Step1Data>({});
-  const [allocation, setAllocation] = useState<Allocation>(defaultAllocation());
+  const [classifications, setClassifications] = useState<Classification[]>([]);
   const [saving, setSaving] = useState(false);
+  const [hasActivities, setHasActivities] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -65,91 +77,84 @@ export default function Block2Page() {
       }
       const data = await res.json();
       const w = data.workshopData;
-      if (w?.step1 && typeof w.step1 === "object") {
-        const s = w.step1 as Record<string, number>;
-        setStep1({
-          paid_work_hours: s.paid_work_hours ?? 0,
-          home_work_hours: s.home_work_hours ?? 0,
-          care_hours: s.care_hours ?? 0,
-          study_hours: s.study_hours ?? 0,
-          leisure_hours: s.leisure_hours ?? 0,
-          other_hours: s.other_hours ?? 0,
-        });
+
+      const activities = w?.step1?.activities ?? [];
+      setHasActivities(activities.length > 0);
+
+      // If AI classifications already exist, go straight to review
+      if (w?.step2?.classifications?.length > 0) {
+        setClassifications(
+          (w.step2.classifications as Classification[]).map((c) => ({
+            ...c,
+            workType: c.workType ?? null,
+          }))
+        );
+        setStep("review");
       }
-      if (w?.step2?.allocation && typeof w.step2.allocation === "object") {
-        const alloc: Allocation = {};
-        for (const { key } of CATEGORIES) {
-          const row = w.step2.allocation[key];
-          if (row && typeof row === "object")
-            alloc[key] = normalizeRow(row as AllocationRow);
-        }
-        if (Object.keys(alloc).length > 0) setAllocation((prev) => ({ ...defaultAllocation(), ...alloc }));
-      }
+
       setLoading(false);
     })();
   }, []);
 
-  const workHours = useMemo(() => {
-    const hours: Record<string, number> = { A: 0, B: 0, C: 0, D: 0 };
-    let step1Total = 0;
-    for (const { key } of CATEGORIES) {
-      const h = Number(step1[key]) || 0;
-      step1Total += h;
-      const row = normalizeRow(allocation[key]);
-      hours.A += (h * (row.A || 0)) / 100;
-      hours.B += (h * (row.B || 0)) / 100;
-      hours.C += (h * (row.C || 0)) / 100;
-      hours.D += (h * (row.D || 0)) / 100;
+  const totals = useMemo(() => {
+    const t: Record<WorkType, number> = { A: 0, B: 0, C: 0, D: 0, E: 0 };
+    for (const c of classifications) {
+      if (c.workType) t[c.workType] += c.hours;
     }
-    const sum = hours.A + hours.B + hours.C + hours.D;
-    if (sum === 0) return { hours: { A: 0, B: 0, C: 0, D: 0 }, total: step1Total };
-    return { hours, total: step1Total };
-  }, [step1, allocation]);
+    return t;
+  }, [classifications]);
 
-  const pieData = useMemo(() => {
-    const { hours, total } = workHours;
-    if (total === 0)
-      return WORKS.map((w) => ({ name: w.label, value: 25, hours: 0 }));
-    return WORKS.map((w) => ({
-      name: w.label,
-      value: total ? Math.round((hours[w.id as keyof typeof hours] / total) * 100) : 0,
-      hours: Math.round(hours[w.id as keyof typeof hours] * 10) / 10,
-    }));
-  }, [workHours]);
+  const totalHours = useMemo(
+    () => classifications.reduce((sum, c) => sum + c.hours, 0),
+    [classifications]
+  );
 
-  const setCategoryAllocation = (key: (typeof CATEGORIES)[number]["key"], row: AllocationRow) => {
-    setAllocation((prev) => ({ ...prev, [key]: normalizeRow(row) }));
+  const classifiedCount = classifications.filter((c) => c.workType !== null).length;
+  const allClassified =
+    classifications.length > 0 && classifiedCount === classifications.length;
+
+  const assign = (idx: number, workType: WorkType) => {
+    setClassifications((prev) =>
+      prev.map((c, i) => (i === idx ? { ...c, workType } : c))
+    );
   };
 
-  const saveStep2 = async () => {
+  const handleClassify = async () => {
+    setStep("classifying");
+    setError(null);
+    try {
+      const res = await fetch("/api/workshop/me/step2/classify", {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error ?? "分類に失敗しました。");
+      }
+      const data = await res.json();
+      setClassifications(data.classifications);
+      setStep("review");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "分類に失敗しました。");
+      setStep("intro");
+    }
+  };
+
+  const handleSave = async () => {
     setSaving(true);
     setError(null);
-    const alloc: Record<string, AllocationRow> = {};
-    for (const { key } of CATEGORIES) {
-      alloc[key] = normalizeRow(allocation[key]);
-    }
     const res = await fetch("/api/workshop/me/step2", {
       method: "PATCH",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ allocation: alloc }),
+      body: JSON.stringify({ classifications, totals }),
     });
     setSaving(false);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
       setError(data?.error ?? "保存に失敗しました。");
-      return false;
+      return;
     }
-    return true;
-  };
-
-  const handleToAllocation = () => setStep("allocation");
-  const handleToChart = async () => {
-    const ok = await saveStep2();
-    if (ok) setStep("chart");
-  };
-  const handleToComment = () => setStep("comment");
-  const handleToBlock3 = () => {
     window.location.href = "/workshop/block-3";
   };
 
@@ -165,196 +170,171 @@ export default function Block2Page() {
     <div className="min-h-screen bg-stone-50 px-4 py-8 md:px-8">
       <div className="mx-auto max-w-2xl">
         <p className="mb-4 text-sm text-stone-500">
-          <Link href="/workshop/block-1" className="text-community hover:underline">
+          <Link href="/workshop/block-1" className="text-primary hover:underline">
             ← Block 1
           </Link>
           {" · "}
           STEP 2：4つのワークへの仕分け
         </p>
 
-        {/* 2-A: 4ワーク説明 */}
+        {/* ===== Intro ===== */}
         {step === "intro" && (
           <section className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
             <div className="mb-6 flex justify-center">
-              <div className="h-24 w-24 rounded-full bg-community-light opacity-90" aria-hidden />
+              <div className="h-24 w-24 rounded-full bg-primary/20" aria-hidden />
             </div>
             <h1 className="mb-4 text-center text-xl font-bold text-stone-800">ミッチー</h1>
             <p className="mb-6 leading-relaxed text-stone-700">
-              では、先ほどの時間を4つの箱に入れていきましょう。ハンディの4つのワークです。
+              書き出してもらった活動を、ハンディの4つのワークに分類します。ミッチーが自動で分類しますので、確認・修正してください。
             </p>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {WORKS.map((w) => (
+              {WORKS.filter((w) => w.id !== "E").map((w) => (
                 <div
                   key={w.id}
-                  className="rounded-xl border border-stone-200 p-4"
-                  style={{ borderLeftWidth: 4, borderLeftColor: w.color }}
+                  className="rounded-xl border border-stone-100 p-4"
+                  style={{ borderLeftWidth: 4, borderLeftColor: WORK_COLORS[w.id] }}
                 >
-                  <span className="font-medium text-stone-800">{w.label}</span>
+                  <p className="font-medium text-stone-800">{w.label}</p>
+                  <p className="mt-0.5 text-xs text-stone-400">{w.sub}</p>
                 </div>
               ))}
             </div>
-            <div className="mt-8 flex justify-center">
-              <button
-                type="button"
-                onClick={handleToAllocation}
-                className="rounded-xl bg-community px-6 py-3 text-white transition hover:bg-community-light"
-              >
-                仕分けを始める
-              </button>
+            <div
+              className="mt-3 rounded-xl border border-stone-100 p-4"
+              style={{ borderLeftWidth: 4, borderLeftColor: WORK_COLORS["E"] }}
+            >
+              <p className="font-medium text-stone-500">その他</p>
+              <p className="mt-0.5 text-xs text-stone-400">
+                移動・通勤・SNS・娯楽・無駄時間など
+              </p>
             </div>
-          </section>
-        )}
 
-        {/* 2-B: 仕分けUI */}
-        {step === "allocation" && (
-          <section className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-            <h2 className="mb-2 text-lg font-bold text-stone-800">各カテゴリを4ワークに振り分け</h2>
-            <p className="mb-6 text-sm text-stone-500">
-              スライダーで比率（%）を設定。合計100%になります。一つのカテゴリを複数ワークに分散してもOKです。
-            </p>
-            <div className="space-y-6">
-              {CATEGORIES.map(({ key, label }) => {
-                const row = normalizeRow(allocation[key]);
-                const update = (k: "A" | "B" | "C" | "D", v: number) => {
-                  const next = { ...row, [k]: Math.max(0, Math.min(100, v)) };
-                  const sum = next.A + next.B + next.C + next.D;
-                  if (sum !== 100) {
-                    const scale = 100 / sum;
-                    next.A = Math.round(next.A * scale);
-                    next.B = Math.round(next.B * scale);
-                    next.C = Math.round(next.C * scale);
-                    next.D = 100 - next.A - next.B - next.C;
-                  }
-                  setCategoryAllocation(key, next);
-                };
-                return (
-                  <div key={key} className="rounded-lg border border-stone-100 bg-stone-50/50 p-4">
-                    <p className="mb-3 text-sm font-medium text-stone-700">{label}</p>
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                      {(["A", "B", "C", "D"] as const).map((k) => (
-                        <div key={k}>
-                          <label className="mb-1 block text-xs text-stone-500">
-                            {WORKS.find((w) => w.id === k)?.label.split(".")[0]}. {k}
-                          </label>
-                          <input
-                            type="range"
-                            min={0}
-                            max={100}
-                            value={row[k]}
-                            onChange={(e) => update(k, parseInt(e.target.value, 10))}
-                            className="w-full"
-                          />
-                          <span className="text-sm font-medium text-stone-700">{row[k]}%</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            {!hasActivities && (
+              <p className="mt-4 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                STEP 1の活動が見つかりません。先に
+                <Link href="/workshop/block-1" className="underline">Block 1</Link>
+                で活動を入力してください。
+              </p>
+            )}
+
             {error && (
-              <p className="mt-4 text-sm text-red-600" role="alert">
+              <p className="mt-4 rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
                 {error}
               </p>
             )}
-            <div className="mt-8 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setStep("intro")}
-                className="rounded-xl border border-stone-300 px-4 py-2 text-stone-600"
-              >
-                戻る
-              </button>
-              <button
-                type="button"
-                onClick={handleToChart}
-                disabled={saving}
-                className="rounded-xl bg-community px-6 py-2 text-white disabled:opacity-60"
-              >
-                {saving ? "保存中..." : "保存して円グラフを見る"}
-              </button>
+
+            <div className="mt-6 flex justify-center">
+              <Button onClick={handleClassify} disabled={!hasActivities}>
+                ミッチーに分類してもらう
+              </Button>
             </div>
           </section>
         )}
 
-        {/* 2-C: 円グラフ */}
-        {step === "chart" && (
+        {/* ===== AI Classifying ===== */}
+        {step === "classifying" && (
           <section className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-            <h2 className="mb-4 text-lg font-bold text-stone-800">現在のポートフォリオ</h2>
-            <div className="mx-auto h-72 w-full max-w-sm">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius="80%"
-                    label={({ name, payload }: { name?: string; payload?: { hours?: number } }) =>
-                      `${(name ?? "").split(".")[0]} ${payload?.hours ?? 0}h`}
-                  >
-                    {pieData.map((_, i) => (
-                      <Cell key={i} fill={WORKS[i]?.color ?? "#94a3b8"} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value, name, item) => {
-                      const hours = (item?.payload as { hours?: number } | undefined)?.hours ?? 0;
-                      return [`${hours} 時間（${value ?? 0}%）`, name];
-                    }}
-                  />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <ul className="mt-4 space-y-1 text-sm text-stone-600">
-              {pieData.map((d) => (
-                <li key={d.name}>
-                  {d.name}: {d.hours} 時間（{d.value}%）
-                </li>
-              ))}
-            </ul>
-            <div className="mt-8 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setStep("allocation")}
-                className="rounded-xl border border-stone-300 px-4 py-2 text-stone-600"
-              >
-                仕分けを修正
-              </button>
-              <button
-                type="button"
-                onClick={handleToComment}
-                className="rounded-xl bg-community px-6 py-2 text-white"
-              >
-                次へ
-              </button>
+            <div className="flex flex-col items-center gap-4 py-8">
+              <div className="h-12 w-12 animate-spin rounded-full border-4 border-stone-200 border-t-primary" />
+              <p className="text-stone-600">ミッチーが分類中...</p>
+              <p className="text-xs text-stone-400">少しお待ちください</p>
             </div>
           </section>
         )}
 
-        {/* 2-D: ミッチーコメント */}
-        {step === "comment" && (
-          <section className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-            <div className="mb-6 flex justify-center">
-              <div className="h-24 w-24 rounded-full bg-community-light opacity-90" aria-hidden />
-            </div>
-            <h2 className="mb-4 text-lg font-bold text-stone-800">ミッチーからのコメント</h2>
-            <p className="mb-6 leading-relaxed text-stone-700">
-              {(() => {
-                const min = pieData.reduce((acc, d) => (d.value < acc.value ? d : acc), pieData[0]);
-                return `あなたのポートフォリオでは、${min?.name ?? "学習"}が全体の${min?.value ?? 0}%です。これは多いですか、少ないですか？ 次のSTEPでは、10年後の理想の時間配分を一緒に設計していきましょう。`;
-              })()}
+        {/* ===== Review ===== */}
+        {step === "review" && (
+          <section className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+            <h2 className="mb-1 text-lg font-bold text-stone-800">分類結果を確認する</h2>
+            <p className="mb-1 text-sm text-stone-500">
+              ミッチーが分類しました。違うと思ったら変更してください。
             </p>
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={handleToBlock3}
-                className="rounded-xl bg-community px-6 py-3 text-white transition hover:bg-community-light"
+            <p className="mb-6 text-xs text-stone-400">
+              {classifiedCount} / {classifications.length} 件 分類済み
+            </p>
+
+            {/* Activity rows */}
+            <div className="space-y-3">
+              {classifications.map((c, idx) => (
+                <div
+                  key={idx}
+                  className={`rounded-xl border p-4 transition-colors ${
+                    c.workType
+                      ? "border-stone-200 bg-white"
+                      : "border-dashed border-stone-300 bg-stone-50"
+                  }`}
+                >
+                  <div className="mb-3 flex items-baseline justify-between gap-2">
+                    <span className="text-sm font-medium text-stone-800">{c.description}</span>
+                    <span className="flex-shrink-0 text-sm tabular-nums text-stone-500">
+                      {c.hours}時間
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {WORKS.map((w) => {
+                      const selected = c.workType === w.id;
+                      return (
+                        <button
+                          key={w.id}
+                          type="button"
+                          onClick={() => assign(idx, w.id)}
+                          className={`rounded-full border px-3 py-1 text-xs font-medium transition-all ${
+                            selected
+                              ? w.selectedClass
+                              : "border-stone-200 bg-white text-stone-600 hover:border-stone-400"
+                          }`}
+                        >
+                          {w.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Running totals */}
+            <div className="mt-6 rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-stone-400">
+                集計
+              </p>
+              <div className="space-y-2">
+                {WORKS.map((w) => {
+                  const hours = totals[w.id];
+                  const pct = totalHours > 0 ? Math.round((hours / totalHours) * 100) : 0;
+                  return (
+                    <div key={w.id} className="flex items-center gap-3">
+                      <div className={`h-2.5 w-2.5 flex-shrink-0 rounded-full ${w.dotClass}`} />
+                      <span className="min-w-0 flex-1 truncate text-xs text-stone-600">
+                        {w.label}
+                      </span>
+                      <span className="text-xs font-medium text-stone-700">{hours}時間</span>
+                      <span className="w-8 text-right text-xs text-stone-400">{pct}%</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {error && (
+              <p className="mt-3 text-sm text-destructive" role="alert">
+                {error}
+              </p>
+            )}
+
+            <div className="mt-6 flex justify-between">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setClassifications([]);
+                  setStep("intro");
+                }}
               >
-                STEP 3 へ進む
-              </button>
+                やり直す
+              </Button>
+              <Button onClick={handleSave} disabled={saving || !allClassified}>
+                {saving ? "保存中..." : "保存して STEP 3 へ"}
+              </Button>
             </div>
           </section>
         )}

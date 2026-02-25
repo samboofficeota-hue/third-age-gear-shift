@@ -45,6 +45,11 @@ export default function Block0Page() {
         return;
       }
       const data = await res.json();
+      // セッション未参加ならコード入力ページへ
+      if (!data.workshopData?.sessionId) {
+        window.location.href = "/workshop/join";
+        return;
+      }
       if (data.workshopData?.profile) {
         const p = data.workshopData.profile as Profile;
         setProfile({
