@@ -1,5 +1,10 @@
 # Railway (Nixpacks) ビルド設定
 # npm の --production 非推奨警告を避けるため、--omit=dev を明示
+# DATABASE_URL はビルド時不要（prisma generate はスキーマ読み取りのみ）
+# ランタイムでは Railway の環境変数が注入される
 
 [phases.install]
 cmds = ["npm ci --omit=dev"]
+
+[phases.build]
+cmds = ["DATABASE_URL='postgresql://build:build@localhost:5432/build' npx prisma generate && npx next build"]
