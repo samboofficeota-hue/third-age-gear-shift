@@ -2,13 +2,12 @@
 
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
-
 const WORKS = [
-  { id: "D", label: "D. 学習", color: "#86efac" },
-  { id: "C", label: "C. ギフト", color: "#52c47a" },
-  { id: "B", label: "B. 家事", color: "#2e9e5b" },
-  { id: "A", label: "A. 有償", color: "#1a6b3a" },
+  { id: "D", label: "D. 学習",   color: "#d97706" },  // amber  (Block 2 と統一)
+  { id: "C", label: "C. ギフト", color: "#2563eb" },  // blue
+  { id: "B", label: "B. 家事",   color: "#e11d48" },  // rose
+  { id: "A", label: "A. 有償",   color: "#1a6b3a" },  // green
+  { id: "E", label: "E. その他", color: "#a8a29e" },  // stone (Block 2 と統一)
 ] as const;
 
 type Step3Data = {
@@ -20,38 +19,14 @@ type Step3Data = {
   will_quit?: string;
 };
 
-const CATEGORIES = [
-  "paid_work_hours",
-  "home_work_hours",
-  "care_hours",
-  "study_hours",
-  "leisure_hours",
-  "other_hours",
-] as const;
-
-type AllocationRow = { A: number; B: number; C: number; D: number };
-
-function normalizeRow(row: AllocationRow | undefined): AllocationRow {
-  if (!row) return { A: 100, B: 0, C: 0, D: 0 };
-  const a = Math.max(0, row.A ?? 0);
-  const b = Math.max(0, row.B ?? 0);
-  const c = Math.max(0, row.C ?? 0);
-  const d = Math.max(0, row.D ?? 0);
-  const sum = a + b + c + d || 1;
-  return {
-    A: Math.round((a / sum) * 100),
-    B: Math.round((b / sum) * 100),
-    C: Math.round((c / sum) * 100),
-    D: Math.round((d / sum) * 100),
-  };
-}
+// step2.totals から現在の比率を計算
+type WorkTotals = { A: number; B: number; C: number; D: number; E: number };
 
 export default function Block3Page() {
   const [step, setStep] = useState<"intro" | "sliders" | "compare" | "will">("intro");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [step1, setStep1] = useState<Record<string, number>>({});
-  const [step2Allocation, setStep2Allocation] = useState<Record<string, AllocationRow>>({});
+  const [step2Totals, setStep2Totals] = useState<WorkTotals>({ A: 0, B: 0, C: 0, D: 0, E: 0 });
   const [future, setFuture] = useState<Step3Data>({
     future_D: 5,
     future_C: 5,
@@ -71,24 +46,16 @@ export default function Block3Page() {
       }
       const data = await res.json();
       const w = data.workshopData;
-      if (w?.step1 && typeof w.step1 === "object") {
-        const s = w.step1 as Record<string, number>;
-        setStep1({
-          paid_work_hours: s.paid_work_hours ?? 0,
-          home_work_hours: s.home_work_hours ?? 0,
-          care_hours: s.care_hours ?? 0,
-          study_hours: s.study_hours ?? 0,
-          leisure_hours: s.leisure_hours ?? 0,
-          other_hours: s.other_hours ?? 0,
+      // step2.totals から現在の時間配分を取得（新フォーマット）
+      if (w?.step2?.totals && typeof w.step2.totals === "object") {
+        const t = w.step2.totals as WorkTotals;
+        setStep2Totals({
+          A: Number(t.A) || 0,
+          B: Number(t.B) || 0,
+          C: Number(t.C) || 0,
+          D: Number(t.D) || 0,
+          E: Number(t.E) || 0,
         });
-      }
-      if (w?.step2?.allocation && typeof w.step2.allocation === "object") {
-        const alloc: Record<string, AllocationRow> = {};
-        for (const key of CATEGORIES) {
-          const row = w.step2.allocation[key];
-          if (row && typeof row === "object") alloc[key] = normalizeRow(row as AllocationRow);
-        }
-        setStep2Allocation(alloc);
       }
       if (w?.step3 && typeof w.step3 === "object") {
         const s = w.step3 as Step3Data;
@@ -106,60 +73,36 @@ export default function Block3Page() {
   }, []);
 
   const currentPct = useMemo(() => {
-    const hours: Record<string, number> = { A: 0, B: 0, C: 0, D: 0 };
-    let total = 0;
-    for (const key of CATEGORIES) {
-      const h = Number(step1[key]) || 0;
-      total += h;
-      const row = normalizeRow(step2Allocation[key]);
-      hours.A += (h * (row.A || 0)) / 100;
-      hours.B += (h * (row.B || 0)) / 100;
-      hours.C += (h * (row.C || 0)) / 100;
-      hours.D += (h * (row.D || 0)) / 100;
-    }
-    if (total === 0) return { A: 25, B: 25, C: 25, D: 25 };
-    return {
-      A: Math.round((hours.A / total) * 100),
-      B: Math.round((hours.B / total) * 100),
-      C: Math.round((hours.C / total) * 100),
-      D: Math.round((hours.D / total) * 100),
-    };
-  }, [step1, step2Allocation]);
+    const { A, B, C, D, E } = step2Totals;
+    const total = A + B + C + D + E;
+    if (total === 0) return { A: 0, B: 0, C: 0, D: 0, E: 0 };
+    const pA = Math.round((A / total) * 100);
+    const pB = Math.round((B / total) * 100);
+    const pC = Math.round((C / total) * 100);
+    const pD = Math.round((D / total) * 100);
+    const pE = 100 - pA - pB - pC - pD; // 端数調整で合計100%を保証
+    return { A: pA, B: pB, C: pC, D: pD, E: pE };
+  }, [step2Totals]);
 
   const futurePct = useMemo(() => {
-    let D = Math.max(0, Math.min(50, future.future_D ?? 0));
-    let C = Math.max(0, Math.min(40, future.future_C ?? 0));
-    let B = Math.max(0, Math.min(40, future.future_B ?? 0));
-    let A = 100 - D - C - B;
-    A = Math.max(0, Math.min(100, A));
-    const sum = A + B + C + D;
-    if (sum !== 100) {
-      D = Math.round((D / sum) * 100);
-      C = Math.round((C / sum) * 100);
-      B = Math.round((B / sum) * 100);
-      A = 100 - D - C - B;
-    }
-    return { A, B, C, D };
-  }, [future.future_D, future.future_C, future.future_B]);
+    // E は現在と同じ割合で固定
+    const E = currentPct.E;
+    const available = 100 - E; // A〜D で使える割合
 
-  const currentPieData = useMemo(
-    () =>
-      WORKS.map((w) => ({
-        name: w.label,
-        value: currentPct[w.id as keyof typeof currentPct],
-        color: w.color,
-      })),
-    [currentPct]
-  );
-  const futurePieData = useMemo(
-    () =>
-      WORKS.map((w) => ({
-        name: w.label,
-        value: futurePct[w.id as keyof typeof futurePct],
-        color: w.color,
-      })),
-    [futurePct]
-  );
+    // ユーザー入力は「A〜D の中での比率」として available に掛ける
+    const D_ratio = Math.max(0, Math.min(50, future.future_D ?? 0));
+    const C_ratio = Math.max(0, Math.min(40, future.future_C ?? 0));
+    const B_ratio = Math.max(0, Math.min(40, future.future_B ?? 0));
+    const A_ratio = Math.max(0, 100 - D_ratio - C_ratio - B_ratio);
+
+    const D = Math.round((D_ratio / 100) * available);
+    const C = Math.round((C_ratio / 100) * available);
+    const B = Math.round((B_ratio / 100) * available);
+    const A = available - D - C - B; // 端数調整
+
+    return { A: Math.max(0, A), B, C, D, E };
+  }, [future.future_D, future.future_C, future.future_B, currentPct.E]);
+
 
   const saveStep3 = async (extra?: { will_do?: string; will_quit?: string }) => {
     setSaving(true);
@@ -241,103 +184,129 @@ export default function Block3Page() {
           </section>
         )}
 
-        {/* 3-B: スライダー */}
-        {step === "sliders" && (
+        {/* 3-B: 数値入力 */}
+        {step === "sliders" && (() => {
+          const inputA = 100 - (future.future_D ?? 0) - (future.future_C ?? 0) - (future.future_B ?? 0);
+          return (
           <section className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-            <h2 className="mb-6 text-lg font-bold text-stone-800">10年後の理想（%）</h2>
-            <div className="space-y-6">
-              <div>
-                <label className="mb-1 block text-sm font-medium text-stone-700">D. 学習（0〜50%）</label>
-                <p className="mb-2 text-xs text-stone-500">10年後、どんなことを学んでいたいですか？</p>
-                <input
-                  type="range"
-                  min={0}
-                  max={50}
-                  value={future.future_D ?? 0}
-                  onChange={(e) => setFuture((f) => ({ ...f, future_D: parseInt(e.target.value, 10) }))}
-                  className="w-full"
-                />
-                <span className="text-sm font-medium text-stone-700">{future.future_D ?? 0}%</span>
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-stone-700">C. ギフト（0〜40%）</label>
-                <p className="mb-2 text-xs text-stone-500">社会や誰かのために、何かしていたいことはありますか？</p>
-                <input
-                  type="range"
-                  min={0}
-                  max={40}
-                  value={future.future_C ?? 0}
-                  onChange={(e) => setFuture((f) => ({ ...f, future_C: parseInt(e.target.value, 10) }))}
-                  className="w-full"
-                />
-                <span className="text-sm font-medium text-stone-700">{future.future_C ?? 0}%</span>
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-stone-700">B. 家事（0〜40%）</label>
-                <p className="mb-2 text-xs text-stone-500">家庭での役割は、10年後どう変わっていると思いますか？</p>
-                <input
-                  type="range"
-                  min={0}
-                  max={40}
-                  value={future.future_B ?? 0}
-                  onChange={(e) => setFuture((f) => ({ ...f, future_B: parseInt(e.target.value, 10) }))}
-                  className="w-full"
-                />
-                <span className="text-sm font-medium text-stone-700">{future.future_B ?? 0}%</span>
-              </div>
-              <div className="rounded-lg bg-stone-100 p-3">
-                <p className="text-sm font-medium text-stone-700">A. 有償（残り）</p>
-                <p className="text-2xl font-bold text-stone-800">{futurePct.A}%</p>
-                <p className="text-xs text-stone-500">D+C+Bの合計から自動。これでよいですか？</p>
+            <h2 className="mb-2 text-lg font-bold text-stone-800">10年後の理想（%）</h2>
+            <p className="mb-6 text-sm text-stone-500">D → C → B の順で入力してください。A（有償）は自動計算されます。合計が100%になるよう割り振ってください。</p>
+            <div className="space-y-4">
+              {[
+                { key: "future_D", label: "D. 学習", max: 50, hint: "10年後、どんなことを学んでいたいですか？" },
+                { key: "future_C", label: "C. ギフト", max: 40, hint: "社会や誰かのために、何かしていたいことはありますか？" },
+                { key: "future_B", label: "B. 家事", max: 40, hint: "家庭での役割は、10年後どう変わっていると思いますか？" },
+              ].map(({ key, label, max, hint }) => (
+                <div key={key} className="flex items-center gap-4 rounded-lg border border-stone-200 p-4">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-stone-700">{label}（0〜{max}%）</p>
+                    <p className="text-xs text-stone-400">{hint}</p>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      min={0}
+                      max={max}
+                      value={future[key as keyof Step3Data] ?? 0}
+                      onChange={(e) => {
+                        const v = Math.max(0, Math.min(max, parseInt(e.target.value, 10) || 0));
+                        setFuture((f) => ({ ...f, [key]: v }));
+                      }}
+                      className="w-16 rounded-lg border border-stone-300 px-2 py-2 text-center text-lg font-bold text-stone-800 focus:outline-none focus:ring-2 focus:ring-community"
+                    />
+                    <span className="text-stone-500">%</span>
+                  </div>
+                </div>
+              ))}
+
+              {/* A. 有償（自動計算） */}
+              <div className={`flex items-center gap-4 rounded-lg p-4 ${inputA < 0 ? "bg-red-50 border border-red-200" : "bg-stone-100 border border-stone-200"}`}>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-stone-700">A. 有償（自動計算）</p>
+                  <p className="text-xs text-stone-400">100 − D − C − B</p>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className={`text-lg font-bold ${inputA < 0 ? "text-red-600" : "text-stone-800"}`}>
+                    {inputA}
+                  </span>
+                  <span className="text-stone-500">%</span>
+                </div>
               </div>
             </div>
-            {futurePct.A + futurePct.B + futurePct.C + futurePct.D !== 100 && (
-              <p className="mt-2 text-sm text-amber-700">合計が100%になるよう調整してください。</p>
+
+            {inputA < 0 && (
+              <p className="mt-3 text-sm text-red-600">⚠️ 合計が100%を超えています。D・C・Bの値を減らしてください。</p>
             )}
             {error && <p className="mt-4 text-sm text-red-600" role="alert">{error}</p>}
             <div className="mt-8 flex justify-end gap-3">
               <button type="button" onClick={() => setStep("intro")} className="rounded-xl border border-stone-300 px-4 py-2 text-stone-600">戻る</button>
-              <button type="button" onClick={handleToCompare} className="rounded-xl bg-community px-6 py-2 text-white">比較を見る</button>
+              <button
+                type="button"
+                onClick={handleToCompare}
+                disabled={inputA < 0}
+                className="rounded-xl bg-community px-6 py-2 text-white disabled:opacity-40"
+              >
+                比較を見る
+              </button>
             </div>
           </section>
-        )}
+          );
+        })()}
 
         {/* 3-C: 2画面比較 */}
         {step === "compare" && (
           <section className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
             <h2 className="mb-6 text-lg font-bold text-stone-800">現在 vs 10年後</h2>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div>
-                <p className="mb-2 text-center text-sm font-medium text-stone-600">現在（As-Is）</p>
-                <div className="h-56">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={currentPieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius="80%">
-                        {currentPieData.map((_, i) => (
-                          <Cell key={i} fill={currentPieData[i].color} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(v) => [`${v ?? 0}%`, ""]} />
-                    </PieChart>
-                  </ResponsiveContainer>
+            <div className="grid grid-cols-2 gap-4">
+              {/* 現在 */}
+              <div className="rounded-xl border border-stone-200 p-4">
+                <p className="mb-4 text-center text-sm font-semibold text-stone-500">現在（As-Is）</p>
+                <div className="space-y-3">
+                  {WORKS.map((w) => {
+                    const pct = currentPct[w.id as keyof typeof currentPct];
+                    return (
+                      <div key={w.id}>
+                        <div className="mb-1 flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <span className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: w.color }} />
+                            <span className="text-xs text-stone-600">{w.label}</span>
+                          </div>
+                          <span className="text-sm font-bold text-stone-700">{pct}%</span>
+                        </div>
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-stone-100">
+                          <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: w.color }} />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-              <div>
-                <p className="mb-2 text-center text-sm font-medium text-stone-600">10年後（To-Be）</p>
-                <div className="h-56">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={futurePieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius="80%">
-                        {futurePieData.map((_, i) => (
-                          <Cell key={i} fill={futurePieData[i].color} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(v) => [`${v ?? 0}%`, ""]} />
-                    </PieChart>
-                  </ResponsiveContainer>
+
+              {/* 10年後 */}
+              <div className="rounded-xl border border-community/40 bg-green-50/40 p-4">
+                <p className="mb-4 text-center text-sm font-semibold text-community">10年後（To-Be）</p>
+                <div className="space-y-3">
+                  {WORKS.map((w) => {
+                    const pct = futurePct[w.id as keyof typeof futurePct];
+                    return (
+                      <div key={w.id}>
+                        <div className="mb-1 flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <span className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: w.color }} />
+                            <span className="text-xs text-stone-600">{w.label}</span>
+                          </div>
+                          <span className="text-sm font-bold text-community">{pct}%</span>
+                        </div>
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-stone-100">
+                          <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: w.color }} />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
+
             <div className="mt-8 flex justify-end gap-3">
               <button type="button" onClick={() => setStep("sliders")} className="rounded-xl border border-stone-300 px-4 py-2 text-stone-600">戻る</button>
               <button type="button" onClick={handleToWill} disabled={saving} className="rounded-xl bg-community px-6 py-2 text-white disabled:opacity-60">
@@ -351,6 +320,49 @@ export default function Block3Page() {
         {step === "will" && (
           <section className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
             <h2 className="mb-6 text-lg font-bold text-stone-800">意志の言語化</h2>
+
+            {/* 差分テーブル */}
+            <div className="mb-8 overflow-hidden rounded-xl border border-stone-200">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-stone-50 text-stone-500">
+                    <th className="px-4 py-2 text-left font-medium">分野</th>
+                    <th className="px-4 py-2 text-center font-medium">現在</th>
+                    <th className="px-4 py-2 text-center font-medium">10年後</th>
+                    <th className="px-4 py-2 text-center font-medium">変化</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-stone-100">
+                  {WORKS.map((w) => {
+                    const cur = currentPct[w.id as keyof typeof currentPct];
+                    const fut = futurePct[w.id as keyof typeof futurePct];
+                    const diff = fut - cur;
+                    return (
+                      <tr key={w.id} className="bg-white">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <span className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: w.color }} />
+                            <span className="font-medium text-stone-700">{w.label}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-center text-stone-600">{cur}%</td>
+                        <td className="px-4 py-3 text-center font-bold text-stone-800">{fut}%</td>
+                        <td className="px-4 py-3 text-center">
+                          {diff === 0 ? (
+                            <span className="text-stone-400">−</span>
+                          ) : diff > 0 ? (
+                            <span className="font-bold text-emerald-600">▲ +{diff}%</span>
+                          ) : (
+                            <span className="font-bold text-rose-500">▼ {diff}%</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
             <form onSubmit={handleWillSubmit} className="space-y-6">
               <div>
                 <label className="mb-1 block text-sm font-medium text-stone-700">
