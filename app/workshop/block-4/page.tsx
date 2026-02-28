@@ -4,43 +4,18 @@ import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 
 const WORKS = [
-  { id: "D", label: "D. 学習", color: "#86efac" },
-  { id: "C", label: "C. ギフト", color: "#52c47a" },
-  { id: "B", label: "B. 家事", color: "#2e9e5b" },
-  { id: "A", label: "A. 有償", color: "#1a6b3a" },
+  { id: "D", label: "D. 学習",   color: "#F97316" },  // orange — D. 学習
+  { id: "C", label: "C. ギフト", color: "#2E9E5B" },  // green  — C. ギフト
+  { id: "B", label: "B. 家事",   color: "#3B82F6" },  // blue   — B. 家事
+  { id: "A", label: "A. 有償",   color: "#78716C" },  // stone  — A. 有償
 ] as const;
 
-const CATEGORIES = [
-  "paid_work_hours",
-  "home_work_hours",
-  "care_hours",
-  "study_hours",
-  "leisure_hours",
-  "other_hours",
-] as const;
-
-type AllocationRow = { A: number; B: number; C: number; D: number };
-
-function normalizeRow(row: AllocationRow | undefined): AllocationRow {
-  if (!row) return { A: 100, B: 0, C: 0, D: 0 };
-  const a = Math.max(0, row.A ?? 0);
-  const b = Math.max(0, row.B ?? 0);
-  const c = Math.max(0, row.C ?? 0);
-  const d = Math.max(0, row.D ?? 0);
-  const sum = a + b + c + d || 1;
-  return {
-    A: Math.round((a / sum) * 100),
-    B: Math.round((b / sum) * 100),
-    C: Math.round((c / sum) * 100),
-    D: Math.round((d / sum) * 100),
-  };
-}
+type WorkTotals = { A: number; B: number; C: number; D: number; E: number };
 
 export default function Block4Page() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [step1, setStep1] = useState<Record<string, number>>({});
-  const [step2Allocation, setStep2Allocation] = useState<Record<string, AllocationRow>>({});
+  const [step2Totals, setStep2Totals] = useState<WorkTotals>({ A: 0, B: 0, C: 0, D: 0, E: 0 });
   const [step3, setStep3] = useState<Record<string, number>>({});
   const [saving, setSaving] = useState(false);
 
@@ -53,24 +28,15 @@ export default function Block4Page() {
       }
       const data = await res.json();
       const w = data.workshopData;
-      if (w?.step1 && typeof w.step1 === "object") {
-        const s = w.step1 as Record<string, number>;
-        setStep1({
-          paid_work_hours: s.paid_work_hours ?? 0,
-          home_work_hours: s.home_work_hours ?? 0,
-          care_hours: s.care_hours ?? 0,
-          study_hours: s.study_hours ?? 0,
-          leisure_hours: s.leisure_hours ?? 0,
-          other_hours: s.other_hours ?? 0,
+      if (w?.step2?.totals && typeof w.step2.totals === "object") {
+        const t = w.step2.totals as WorkTotals;
+        setStep2Totals({
+          A: Number(t.A) || 0,
+          B: Number(t.B) || 0,
+          C: Number(t.C) || 0,
+          D: Number(t.D) || 0,
+          E: Number(t.E) || 0,
         });
-      }
-      if (w?.step2?.allocation && typeof w.step2.allocation === "object") {
-        const alloc: Record<string, AllocationRow> = {};
-        for (const key of CATEGORIES) {
-          const row = w.step2.allocation[key];
-          if (row && typeof row === "object") alloc[key] = normalizeRow(row as AllocationRow);
-        }
-        setStep2Allocation(alloc);
       }
       if (w?.step3 && typeof w.step3 === "object") {
         const s = w.step3 as Record<string, number>;
@@ -85,31 +51,22 @@ export default function Block4Page() {
     })();
   }, []);
 
-  const { currentHours, currentTotal, futurePct, futureHours } = useMemo(() => {
-    const hours: Record<string, number> = { A: 0, B: 0, C: 0, D: 0 };
-    let total = 0;
-    for (const key of CATEGORIES) {
-      const h = Number(step1[key]) || 0;
-      total += h;
-      const row = normalizeRow(step2Allocation[key]);
-      hours.A += (h * (row.A || 0)) / 100;
-      hours.B += (h * (row.B || 0)) / 100;
-      hours.C += (h * (row.C || 0)) / 100;
-      hours.D += (h * (row.D || 0)) / 100;
-    }
-    const baseTotal = total || 500;
+  const { currentHours, adTotal, futurePct, futureHours } = useMemo(() => {
+    // 現在の時間（step2.totalsから直接取得）
+    const currentHours = {
+      A: step2Totals.A,
+      B: step2Totals.B,
+      C: step2Totals.C,
+      D: step2Totals.D,
+    };
+    // A〜D の合計時間をベースに将来時間を計算
+    const adTotal = step2Totals.A + step2Totals.B + step2Totals.C + step2Totals.D;
+    const baseTotal = adTotal || 500;
+
     let fD = Math.max(0, Math.min(50, step3.future_D ?? 0));
     let fC = Math.max(0, Math.min(40, step3.future_C ?? 0));
     let fB = Math.max(0, Math.min(40, step3.future_B ?? 0));
-    let fA = 100 - fD - fC - fB;
-    fA = Math.max(0, fA);
-    const fSum = fD + fC + fB + fA;
-    if (fSum !== 100 && fSum > 0) {
-      fD = Math.round((fD / fSum) * 100);
-      fC = Math.round((fC / fSum) * 100);
-      fB = Math.round((fB / fSum) * 100);
-      fA = 100 - fD - fC - fB;
-    }
+    let fA = Math.max(0, 100 - fD - fC - fB);
     const futurePct = { A: fA, B: fB, C: fC, D: fD };
     const futureHours = {
       A: Math.round((baseTotal * fA) / 100 * 10) / 10,
@@ -117,20 +74,15 @@ export default function Block4Page() {
       C: Math.round((baseTotal * fC) / 100 * 10) / 10,
       D: Math.round((baseTotal * fD) / 100 * 10) / 10,
     };
-    return {
-      currentHours: hours,
-      currentTotal: total,
-      futurePct,
-      futureHours,
-    };
-  }, [step1, step2Allocation, step3]);
+    return { currentHours, adTotal, futurePct, futureHours };
+  }, [step2Totals, step3]);
 
-  const baseTotal = currentTotal || 500;
   const tableRows = useMemo(() => {
+    const base = adTotal || 500;
     return WORKS.map((w) => {
-      const id: keyof AllocationRow = w.id;
+      const id = w.id as keyof typeof currentHours;
       const curH = Math.round((currentHours[id] ?? 0) * 10) / 10;
-      const curP = baseTotal ? Math.round(((currentHours[id] ?? 0) / baseTotal) * 100) : 0;
+      const curP = base ? Math.round(((currentHours[id] ?? 0) / base) * 100) : 0;
       const futH = futureHours[id] ?? 0;
       const futP = futurePct[id] ?? 0;
       const delta = Math.round((futH - curH) * 10) / 10;
@@ -143,7 +95,7 @@ export default function Block4Page() {
         delta,
       };
     });
-  }, [currentHours, futureHours, futurePct, baseTotal]);
+  }, [currentHours, futureHours, futurePct, adTotal]);
 
   const investmentDelta = useMemo(() => {
     const cur = (currentHours.D ?? 0) + (currentHours.C ?? 0);
@@ -227,9 +179,8 @@ export default function Block4Page() {
             <strong>投資時間（D+C）の変化：</strong> {investmentDelta >= 0 ? "+" : ""}{investmentDelta} 時間
           </p>
 
-          {/* 4-B: ミッチーコメント */}
+          {/* 4-B: コメント */}
           <div className="mt-8 rounded-xl border border-stone-100 bg-stone-50/50 p-6">
-            <h2 className="mb-2 text-sm font-bold text-stone-600">ミッチーからのコメント</h2>
             <p className="leading-relaxed text-stone-700">
               10年後、学習とギフトに今より{" "}
               <strong>{investmentDelta >= 0 ? "+" : ""}{investmentDelta} 時間</strong>{" "}

@@ -37,6 +37,9 @@ export async function GET() {
   const step2 = workshopData.step2 as Record<string, unknown> | null;
   const step3 = workshopData.step3 as Record<string, unknown> | null;
   const step4 = workshopData.step4 as Record<string, unknown> | null;
+  const step5 = workshopData.step5 as Record<string, unknown> | null;
+  const step6 = workshopData.step6 as Record<string, unknown> | null;
+  const step7 = workshopData.step7 as Record<string, unknown> | null;
   return NextResponse.json({
     workshopData: {
       id: workshopData.id,
@@ -46,6 +49,9 @@ export async function GET() {
       step2,
       step3,
       step4,
+      step5,
+      step6,
+      step7,
       completedBlocks: workshopData.completedBlocks,
       lastUpdated: workshopData.lastUpdated,
     },

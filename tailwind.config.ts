@@ -11,9 +11,10 @@ const config: Config = {
   	extend: {
   		colors: {
   			community: {
-  				DEFAULT: '#1A6B3A',
-  				light: '#2E9E5B',
-  				lighter: '#52C47A'
+  				DEFAULT: '#2E9E5B',  /* 進む・決定ボタン（旧lightを昇格） */
+  				dark:    '#1A6B3A',  /* hover / 強コントラスト用 */
+  				light:   '#52C47A',  /* ボタンhover（旧lighter） */
+  				lighter: '#DCFCE7',  /* calloutボックス背景tint */
   			},
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',

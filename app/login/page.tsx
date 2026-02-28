@@ -51,8 +51,7 @@ function LoginForm() {
       setError(data.error ?? "ログインに失敗しました。");
       return;
     }
-    router.push(from ?? roleDefaultPath(data.user?.role ?? "participant"));
-    router.refresh();
+    window.location.href = from ?? roleDefaultPath(data.user?.role ?? "participant");
   };
 
   if (checkingSession) {

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>サードエイジ カラーパレット＆デザイン提案</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            /* ─── Brand Green（進む・決定ボタン専用） ─── */
+            brand: {
+              DEFAULT: '#2E9E5B',
+              dark:    '#1A6B3A',
+              light:   '#4ADE80',
+              lighter: '#DCFCE7',
+            },
+            /* ─── Accent Orange（UI全体のハイライト） ─── */
+            accent: {
+              DEFAULT: '#F97316',
+              dark:    '#EA580C',
+              light:   '#FDBA74',
+              lighter: '#FFF7ED',
+            },
+            /* ─── Chart colors ─── */
+            chart: {
+              d: '#F97316',   /* D. 学習   = orange  */
+              c: '#2E9E5B',   /* C. ギフト  = green  */
+              b: '#3B82F6',   /* B. 家事   = blue   */
+              a: '#78716C',   /* A. 有償   = stone  ← "グレー"枠 */
+              e: '#C4B5A5',   /* E. その他  = light stone */
+            },
+          },
+          fontFamily: {
+            sans: ['"Hiragino Kaku Gothic ProN"', '"Noto Sans JP"', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif; }
+    .swatch { width:48px; height:48px; border-radius:8px; }
+    .swatch-sm { width:32px; height:32px; border-radius:6px; }
+
+    /* 擬似ドーナツチャート（CSS only） */
+    .donut {
+      width: 120px; height: 120px;
+      border-radius: 50%;
+      background: conic-gradient(
+        #F97316 0% 30%,   /* D 学習 30% */
+        #2E9E5B 30% 55%,  /* C ギフト 25% */
+        #3B82F6 55% 75%,  /* B 家事 20% */
+        #78716C 75% 100%  /* A 有償 25% */
+      );
+      position: relative;
+    }
+    .donut::after {
+      content: '';
+      width: 60px; height: 60px;
+      background: white;
+      border-radius: 50%;
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+    }
+  </style>
+</head>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<body class="bg-stone-200 p-8 space-y-10">
+
+  <h1 class="text-center text-2xl font-bold text-stone-700">カラーパレット提案</h1>
+  <p class="text-center text-sm text-stone-500 -mt-6">サードエイジへのギア・シフト ／ オレンジ基調 × グリーン決定ボタン</p>
+
+  <!-- ═══ 1. パレット一覧 ═══ -->
+  <section class="max-w-4xl mx-auto rounded-2xl bg-white p-8 shadow-sm">
+    <h2 class="text-sm font-bold text-stone-500 uppercase tracking-widest mb-6">1. カラーパレット</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+      <!-- Brand Green -->
+      <div>
+        <p class="text-xs font-bold text-stone-400 uppercase tracking-wide mb-3">Brand Green（進む・決定ボタン）</p>
+        <div class="space-y-2">
+          <div class="flex items-center gap-3">
+            <div class="swatch" style="background:#1A6B3A"></div>
+            <div>
+              <p class="text-xs font-bold text-stone-700">Dark <span class="font-normal text-stone-400">#1A6B3A</span></p>
+              <p class="text-[10px] text-stone-400">hover状態</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="swatch border-2 border-stone-100" style="background:#2E9E5B"></div>
+            <div>
+              <p class="text-xs font-bold text-stone-700">DEFAULT <span class="font-normal text-stone-400">#2E9E5B</span></p>
+              <p class="text-[10px] text-stone-400">ボタン背景・メイン</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="swatch" style="background:#4ADE80"></div>
+            <div>
+              <p class="text-xs font-bold text-stone-700">Light <span class="font-normal text-stone-400">#4ADE80</span></p>
+              <p class="text-[10px] text-stone-400">アイコン・バッジ</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="swatch border border-stone-100" style="background:#DCFCE7"></div>
+            <div>
+              <p class="text-xs font-bold text-stone-700">Lighter <span class="font-normal text-stone-400">#DCFCE7</span></p>
+              <p class="text-[10px] text-stone-400">背景tint</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Accent Orange -->
+      <div>
+        <p class="text-xs font-bold text-stone-400 uppercase tracking-wide mb-3">Accent Orange（UIハイライト全般）</p>
+        <div class="space-y-2">
+          <div class="flex items-center gap-3">
+            <div class="swatch" style="background:#EA580C"></div>
+            <div>
+              <p class="text-xs font-bold text-stone-700">Dark <span class="font-normal text-stone-400">#EA580C</span></p>
+              <p class="text-[10px] text-stone-400">強調テキスト</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="swatch border-2 border-stone-100" style="background:#F97316"></div>
+            <div>
+              <p class="text-xs font-bold text-stone-700">DEFAULT <span class="font-normal text-stone-400">#F97316</span></p>
+              <p class="text-[10px] text-stone-400">ラベル・数値・スライダー</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="swatch" style="background:#FDBA74"></div>
+            <div>
+              <p class="text-xs font-bold text-stone-700">Light <span class="font-normal text-stone-400">#FDBA74</span></p>
+              <p class="text-[10px] text-stone-400">バー・インジケーター</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="swatch border border-stone-100" style="background:#FFF7ED"></div>
+            <div>
+              <p class="text-xs font-bold text-stone-700">Lighter <span class="font-normal text-stone-400">#FFF7ED</span></p>
+              <p class="text-[10px] text-stone-400">ページ背景・callout bg</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div>
+        <p class="text-xs font-bold text-stone-400 uppercase tracking-wide mb-3">Chart（３色＋グレー）</p>
+        <div class="space-y-2">
+          <div class="flex items-center gap-3">
+            <div class="swatch" style="background:#F97316"></div>
+            <div>
+              <p class="text-xs font-bold text-stone-700">D. 学習 <span class="font-normal text-stone-400">#F97316</span></p>
+              <p class="text-[10px] text-stone-400">orange — エネルギー・成長</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="swatch" style="background:#2E9E5B"></div>
+            <div>
+              <p class="text-xs font-bold text-stone-700">C. ギフト <span class="font-normal text-stone-400">#2E9E5B</span></p>
+              <p class="text-[10px] text-stone-400">green — コミュニティ</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="swatch" style="background:#3B82F6"></div>
+            <div>
+              <p class="text-xs font-bold text-stone-700">B. 家事 <span class="font-normal text-stone-400">#3B82F6</span></p>
+              <p class="text-[10px] text-stone-400">blue — 家庭・安定</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="swatch" style="background:#78716C"></div>
+            <div>
+              <p class="text-xs font-bold text-stone-700">A. 有償 <span class="font-normal text-stone-400">#78716C</span></p>
+              <p class="text-[10px] text-stone-400">stone — 現実・グレー枠</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="swatch border border-stone-100" style="background:#C4B5A5"></div>
+            <div>
+              <p class="text-xs font-bold text-stone-700">E. その他 <span class="font-normal text-stone-400">#C4B5A5</span></p>
+              <p class="text-[10px] text-stone-400">light stone</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══ 2. ボタン一覧 ═══ -->
+  <section class="max-w-4xl mx-auto rounded-2xl bg-white p-8 shadow-sm">
+    <h2 class="text-sm font-bold text-stone-500 uppercase tracking-widest mb-6">2. ボタンスタイル</h2>
+    <div class="flex flex-wrap gap-4 items-center">
+
+      <!-- 進む・決定 → Green -->
+      <div class="text-center">
+        <button class="rounded-xl px-6 py-3 text-sm font-medium text-white shadow-sm" style="background:#2E9E5B">
+          STEP 4 へ進む →
+        </button>
+        <p class="mt-1.5 text-[10px] text-stone-400">進む・完了・保存して次へ<br><span class="font-mono">#2E9E5B</span></p>
+      </div>
+
+      <!-- AI実行・主要アクション → Orange -->
+      <div class="text-center">
+        <button class="rounded-xl px-6 py-3 text-sm font-medium text-white shadow-sm" style="background:#F97316">
+          AIで自動分類する
+        </button>
+        <p class="mt-1.5 text-[10px] text-stone-400">AI実行・確認・選択<br><span class="font-mono">#F97316</span></p>
+      </div>
+
+      <!-- ログイン → Green（最初のページ） -->
+      <div class="text-center">
+        <button class="rounded-xl px-6 py-3 text-sm font-medium text-white shadow-sm" style="background:#2E9E5B">
+          ログインしてはじめる
+        </button>
+        <p class="mt-1.5 text-[10px] text-stone-400">ログイン・Block 0<br><span class="font-mono">#2E9E5B</span></p>
+      </div>
+
+      <!-- 保存のみ → Outline -->
+      <div class="text-center">
+        <button class="rounded-xl border border-stone-300 bg-white px-5 py-3 text-sm text-stone-600">
+          ここまでを保存する
+        </button>
+        <p class="mt-1.5 text-[10px] text-stone-400">保存のみ・やり直す<br>outline</p>
+      </div>
+
+      <!-- テキストリンク系 -->
+      <div class="text-center">
+        <button class="text-sm font-medium" style="color:#2E9E5B">← Block 2 へ戻る</button>
+        <p class="mt-1.5 text-[10px] text-stone-400">ナビリンク<br>brand green text</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 3. 実画面イメージ ═══ -->
+  <div class="max-w-4xl mx-auto">
+    <h2 class="text-sm font-bold text-stone-500 uppercase tracking-widest mb-4 px-1">3. 画面イメージ（Block 3 風）</h2>
+
+    <!-- 薄オレンジ背景でのページ全体 -->
+    <div class="rounded-2xl p-6 min-h-96" style="background:#FFF7ED">
+
+      <!-- ナビ -->
+      <div class="mb-5 flex items-center justify-between">
+        <p class="text-xs text-stone-400">
+          <span class="font-medium" style="color:#2E9E5B">← Block 2</span>
+          <span class="mx-1">·</span> STEP 3：将来の時間配分
+        </p>
+        <span class="rounded-full px-3 py-0.5 text-[10px] font-bold text-white" style="background:#F97316">DAY 1</span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <!-- カード：スライダー -->
+        <div class="rounded-2xl bg-white p-6 shadow-sm">
+          <h2 class="text-base font-bold text-stone-800 mb-1">10年後の時間の使い方</h2>
+          <p class="text-xs text-stone-400 mb-5">スライダーを動かして理想の割合を設定</p>
+
+          <div class="space-y-4">
+            <div>
+              <div class="flex justify-between mb-1.5">
+                <span class="text-xs font-medium text-stone-700">D. 学習（Study）</span>
+                <span class="text-xs font-bold" style="color:#F97316">30%</span>
+              </div>
+              <div class="h-2 rounded-full bg-stone-100">
+                <div class="h-2 rounded-full" style="width:30%;background:#F97316"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1.5">
+                <span class="text-xs font-medium text-stone-700">C. ギフト（Gift）</span>
+                <span class="text-xs font-bold" style="color:#2E9E5B">25%</span>
+              </div>
+              <div class="h-2 rounded-full bg-stone-100">
+                <div class="h-2 rounded-full" style="width:25%;background:#2E9E5B"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1.5">
+                <span class="text-xs font-medium text-stone-700">B. 家事（Home）</span>
+                <span class="text-xs font-bold" style="color:#3B82F6">20%</span>
+              </div>
+              <div class="h-2 rounded-full bg-stone-100">
+                <div class="h-2 rounded-full" style="width:20%;background:#3B82F6"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1.5">
+                <span class="text-xs font-medium text-stone-700">A. 有償（Paid）</span>
+                <span class="text-xs font-bold text-stone-500">25%</span>
+              </div>
+              <div class="h-2 rounded-full bg-stone-100">
+                <div class="h-2 rounded-full" style="width:25%;background:#78716C"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- callout -->
+          <div class="mt-5 rounded-xl border px-4 py-3" style="background:#FFF7ED;border-color:#FDBA74">
+            <p class="text-xs text-stone-600 leading-relaxed">
+              <span class="font-bold" style="color:#EA580C">投資時間（D+C）：</span>
+              現在より <span class="font-bold" style="color:#F97316">+180 時間</span> 増やすことを選びましたね。
+            </p>
+          </div>
+        </div>
+
+        <!-- カード：ドーナツチャート -->
+        <div class="rounded-2xl bg-white p-6 shadow-sm">
+          <h2 class="text-base font-bold text-stone-800 mb-1">10年後のポートフォリオ</h2>
+          <p class="text-xs text-stone-400 mb-5">時間配分のイメージ</p>
+
+          <div class="flex items-center gap-6">
+            <div class="donut shrink-0"></div>
+            <div class="space-y-2 flex-1">
+              <div class="flex items-center gap-2">
+                <div class="h-2.5 w-2.5 rounded-full shrink-0" style="background:#F97316"></div>
+                <span class="text-xs text-stone-600 flex-1">D. 学習</span>
+                <span class="text-xs font-bold" style="color:#F97316">30%</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="h-2.5 w-2.5 rounded-full shrink-0" style="background:#2E9E5B"></div>
+                <span class="text-xs text-stone-600 flex-1">C. ギフト</span>
+                <span class="text-xs font-bold" style="color:#2E9E5B">25%</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="h-2.5 w-2.5 rounded-full shrink-0" style="background:#3B82F6"></div>
+                <span class="text-xs text-stone-600 flex-1">B. 家事</span>
+                <span class="text-xs font-bold" style="color:#3B82F6">20%</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="h-2.5 w-2.5 rounded-full shrink-0" style="background:#78716C"></div>
+                <span class="text-xs text-stone-600 flex-1">A. 有償</span>
+                <span class="text-xs font-bold text-stone-500">25%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- As-Is vs To-Be mini table -->
+          <div class="mt-5 rounded-xl border border-stone-100 bg-stone-50 p-3">
+            <p class="text-[10px] font-semibold uppercase tracking-wide text-stone-400 mb-2">変化サマリー</p>
+            <div class="grid grid-cols-3 gap-1 text-[10px]">
+              <span class="text-stone-400">項目</span>
+              <span class="text-right text-stone-400">現在</span>
+              <span class="text-right text-stone-400">10年後</span>
+
+              <div class="flex items-center gap-1 col-span-1">
+                <div class="h-1.5 w-1.5 rounded-full" style="background:#F97316"></div>
+                <span class="text-stone-600">D. 学習</span>
+              </div>
+              <span class="text-right text-stone-500">60h</span>
+              <span class="text-right font-bold" style="color:#F97316">+90h</span>
+
+              <div class="flex items-center gap-1 col-span-1">
+                <div class="h-1.5 w-1.5 rounded-full" style="background:#2E9E5B"></div>
+                <span class="text-stone-600">C. ギフト</span>
+              </div>
+              <span class="text-right text-stone-500">40h</span>
+              <span class="text-right font-bold" style="color:#2E9E5B">+85h</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ボタン行 -->
+      <div class="mt-4 flex gap-3">
+        <button class="rounded-xl border border-stone-300 bg-white px-5 py-2.5 text-sm text-stone-600">
+          ここまでを保存する
+        </button>
+        <button class="rounded-xl px-6 py-2.5 text-sm font-medium text-white shadow-sm" style="background:#2E9E5B">
+          STEP 4 へ進む →
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══ 4. Block 0 ログインイメージ ═══ -->
+  <div class="max-w-4xl mx-auto">
+    <h2 class="text-sm font-bold text-stone-500 uppercase tracking-widest mb-4 px-1">4. ログイン画面（グリーンが主役）</h2>
+    <div class="rounded-2xl p-8 flex flex-col items-center" style="background:#FFF7ED">
+      <div class="h-14 w-14 rounded-2xl flex items-center justify-center text-3xl shadow-md mb-4" style="background:#2E9E5B">⚙️</div>
+      <h1 class="text-2xl font-bold text-stone-900 mb-1">サードエイジへのギア・シフト</h1>
+      <p class="text-sm text-stone-400 mb-8">ミドルシニア向け 2日間ワークショップ</p>
+      <div class="w-full max-w-sm bg-white rounded-2xl shadow-md p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-stone-700 mb-1">メールアドレス</label>
+          <div class="rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-400">your@email.com</div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-stone-700 mb-1">パスワード</label>
+          <div class="rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-400">••••••••</div>
+        </div>
+        <button class="w-full rounded-xl py-3 text-sm font-bold text-white shadow-sm" style="background:#2E9E5B">
+          ログインしてはじめる
+        </button>
+        <p class="text-center text-xs text-stone-400">
+          アカウントをお持ちでない方は <span style="color:#2E9E5B;font-weight:600">新規登録</span>
+        </p>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

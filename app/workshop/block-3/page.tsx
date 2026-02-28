@@ -3,12 +3,14 @@
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 const WORKS = [
-  { id: "D", label: "D. 学習",   color: "#d97706" },  // amber  (Block 2 と統一)
-  { id: "C", label: "C. ギフト", color: "#2563eb" },  // blue
-  { id: "B", label: "B. 家事",   color: "#e11d48" },  // rose
-  { id: "A", label: "A. 有償",   color: "#1a6b3a" },  // green
-  { id: "E", label: "E. その他", color: "#a8a29e" },  // stone (Block 2 と統一)
+  { id: "D", label: "D. 学習",   color: "#F97316" },  // orange — D. 学習
+  { id: "C", label: "C. ギフト", color: "#2E9E5B" },  // green  — C. ギフト
+  { id: "B", label: "B. 家事",   color: "#3B82F6" },  // blue   — B. 家事
+  { id: "A", label: "A. 有償",   color: "#78716C" },  // stone  — A. 有償
+  { id: "E", label: "E. その他", color: "#C4B5A5" },  // lt.stone — E. その他
 ] as const;
+
+const WORKS_AD = WORKS.filter((w) => w.id !== "E");
 
 type Step3Data = {
   future_D?: number;
@@ -103,6 +105,26 @@ export default function Block3Page() {
     return { A: Math.max(0, A), B, C, D, E };
   }, [future.future_D, future.future_C, future.future_B, currentPct.E]);
 
+  // 現在の A〜D 比率（E を除外して正規化）
+  const currentAD = useMemo(() => {
+    const { A, B, C, D } = step2Totals;
+    const total = A + B + C + D;
+    if (total === 0) return { A: 0, B: 0, C: 0, D: 0 };
+    const pD = Math.round((D / total) * 100);
+    const pC = Math.round((C / total) * 100);
+    const pB = Math.round((B / total) * 100);
+    const pA = 100 - pD - pC - pB;
+    return { A: Math.max(0, pA), B: pB, C: pC, D: pD };
+  }, [step2Totals]);
+
+  // 10年後の A〜D 比率（入力値そのまま、合計100%）
+  const futureAD = useMemo(() => {
+    const D = Math.max(0, Math.min(50, future.future_D ?? 0));
+    const C = Math.max(0, Math.min(40, future.future_C ?? 0));
+    const B = Math.max(0, Math.min(40, future.future_B ?? 0));
+    const A = Math.max(0, 100 - D - C - B);
+    return { A, B, C, D };
+  }, [future.future_D, future.future_C, future.future_B]);
 
   const saveStep3 = async (extra?: { will_do?: string; will_quit?: string }) => {
     setSaving(true);
@@ -115,7 +137,7 @@ export default function Block3Page() {
         future_D: future.future_D,
         future_C: future.future_C,
         future_B: future.future_B,
-        future_A: futurePct.A,
+        future_A: futureAD.A,
         ...extra,
       }),
     });
@@ -162,10 +184,6 @@ export default function Block3Page() {
         {/* 3-A: 導入 */}
         {step === "intro" && (
           <section className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-            <div className="mb-6 flex justify-center">
-              <div className="h-24 w-24 rounded-full bg-community-light opacity-90" aria-hidden />
-            </div>
-            <h1 className="mb-4 text-center text-xl font-bold text-stone-800">ミッチー</h1>
             <p className="mb-4 leading-relaxed text-stone-700">
               これからが本番です。10年後、あなたはどんな時間の使い方をしていたいですか？
             </p>
@@ -262,8 +280,8 @@ export default function Block3Page() {
               <div className="rounded-xl border border-stone-200 p-4">
                 <p className="mb-4 text-center text-sm font-semibold text-stone-500">現在（As-Is）</p>
                 <div className="space-y-3">
-                  {WORKS.map((w) => {
-                    const pct = currentPct[w.id as keyof typeof currentPct];
+                  {WORKS_AD.map((w) => {
+                    const pct = currentAD[w.id as keyof typeof currentAD];
                     return (
                       <div key={w.id}>
                         <div className="mb-1 flex items-center justify-between">
@@ -286,8 +304,8 @@ export default function Block3Page() {
               <div className="rounded-xl border border-community/40 bg-green-50/40 p-4">
                 <p className="mb-4 text-center text-sm font-semibold text-community">10年後（To-Be）</p>
                 <div className="space-y-3">
-                  {WORKS.map((w) => {
-                    const pct = futurePct[w.id as keyof typeof futurePct];
+                  {WORKS_AD.map((w) => {
+                    const pct = futureAD[w.id as keyof typeof futureAD];
                     return (
                       <div key={w.id}>
                         <div className="mb-1 flex items-center justify-between">
@@ -305,6 +323,15 @@ export default function Block3Page() {
                   })}
                 </div>
               </div>
+            </div>
+
+            {/* E. その他（参考情報） */}
+            <div className="mt-4 flex items-center justify-between rounded-lg bg-stone-50 px-4 py-2 text-sm text-stone-400">
+              <div className="flex items-center gap-2">
+                <span className="inline-block h-2 w-2 rounded-full bg-stone-300" />
+                <span>E. その他（参考）</span>
+              </div>
+              <span>現在 {currentPct.E}% ／ 10年後も同じ割合</span>
             </div>
 
             <div className="mt-8 flex justify-end gap-3">
@@ -333,9 +360,9 @@ export default function Block3Page() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-stone-100">
-                  {WORKS.map((w) => {
-                    const cur = currentPct[w.id as keyof typeof currentPct];
-                    const fut = futurePct[w.id as keyof typeof futurePct];
+                  {WORKS_AD.map((w) => {
+                    const cur = currentAD[w.id as keyof typeof currentAD];
+                    const fut = futureAD[w.id as keyof typeof futureAD];
                     const diff = fut - cur;
                     return (
                       <tr key={w.id} className="bg-white">
@@ -361,6 +388,13 @@ export default function Block3Page() {
                   })}
                 </tbody>
               </table>
+              <div className="flex items-center justify-between bg-stone-50 px-4 py-2 text-xs text-stone-400">
+                <div className="flex items-center gap-2">
+                  <span className="inline-block h-2 w-2 rounded-full bg-stone-300" />
+                  <span>E. その他（参考）</span>
+                </div>
+                <span>現在 {currentPct.E}% ／ 10年後も同じ割合で変わらず</span>
+              </div>
             </div>
 
             <form onSubmit={handleWillSubmit} className="space-y-6">

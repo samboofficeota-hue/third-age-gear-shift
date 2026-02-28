@@ -17,29 +17,29 @@ const WORKS: {
     id: "A",
     label: "お金をもらうワーク",
     sub: "Paid Work",
-    selectedClass: "bg-primary border-primary text-primary-foreground",
-    dotClass: "bg-primary",
+    selectedClass: "bg-stone-500 border-stone-500 text-white",
+    dotClass: "bg-stone-500",
   },
   {
     id: "B",
     label: "家族のためのワーク",
     sub: "Home Work",
-    selectedClass: "bg-rose-500 border-rose-500 text-white",
-    dotClass: "bg-rose-500",
+    selectedClass: "bg-blue-500 border-blue-500 text-white",
+    dotClass: "bg-blue-500",
   },
   {
     id: "C",
     label: "社会に貢献するワーク",
     sub: "Gift Work",
-    selectedClass: "bg-blue-600 border-blue-600 text-white",
-    dotClass: "bg-blue-600",
+    selectedClass: "bg-community border-community text-white",
+    dotClass: "bg-community",
   },
   {
     id: "D",
     label: "自分を高めるワーク",
     sub: "Study Work",
-    selectedClass: "bg-amber-500 border-amber-500 text-white",
-    dotClass: "bg-amber-500",
+    selectedClass: "bg-orange-500 border-orange-500 text-white",
+    dotClass: "bg-orange-500",
   },
   {
     id: "E",
@@ -51,11 +51,11 @@ const WORKS: {
 ];
 
 const WORK_COLORS: Record<WorkType, string> = {
-  A: "#1a6b3a",
-  B: "#e11d48",
-  C: "#2563eb",
-  D: "#d97706",
-  E: "#a8a29e",
+  A: "#78716C",  // stone  — A. 有償
+  B: "#3B82F6",  // blue   — B. 家事
+  C: "#2E9E5B",  // green  — C. ギフト
+  D: "#F97316",  // orange — D. 学習
+  E: "#C4B5A5",  // lt.stone — E. その他
 };
 
 type Classification = { description: string; hours: number; workType: WorkType | null };
@@ -180,12 +180,8 @@ export default function Block2Page() {
         {/* ===== Intro ===== */}
         {step === "intro" && (
           <section className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-            <div className="mb-6 flex justify-center">
-              <div className="h-24 w-24 rounded-full bg-primary/20" aria-hidden />
-            </div>
-            <h1 className="mb-4 text-center text-xl font-bold text-stone-800">ミッチー</h1>
             <p className="mb-6 leading-relaxed text-stone-700">
-              書き出してもらった活動を、ハンディの4つのワークに分類します。ミッチーが自動で分類しますので、確認・修正してください。
+              書き出してもらった活動を、ハンディの4つのワークに分類します。AIが自動で分類しますので、確認・修正してください。
             </p>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {WORKS.filter((w) => w.id !== "E").map((w) => (
@@ -225,7 +221,7 @@ export default function Block2Page() {
 
             <div className="mt-6 flex justify-center">
               <Button onClick={handleClassify} disabled={!hasActivities}>
-                ミッチーに分類してもらう
+                AIで自動分類する
               </Button>
             </div>
           </section>
@@ -236,7 +232,7 @@ export default function Block2Page() {
           <section className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
             <div className="flex flex-col items-center gap-4 py-8">
               <div className="h-12 w-12 animate-spin rounded-full border-4 border-stone-200 border-t-primary" />
-              <p className="text-stone-600">ミッチーが分類中...</p>
+              <p className="text-stone-600">AIが分類中...</p>
               <p className="text-xs text-stone-400">少しお待ちください</p>
             </div>
           </section>
@@ -247,7 +243,7 @@ export default function Block2Page() {
           <section className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
             <h2 className="mb-1 text-lg font-bold text-stone-800">分類結果を確認する</h2>
             <p className="mb-1 text-sm text-stone-500">
-              ミッチーが分類しました。違うと思ったら変更してください。
+              AIが分類しました。違うと思ったら変更してください。
             </p>
             <p className="mb-6 text-xs text-stone-400">
               {classifiedCount} / {classifications.length} 件 分類済み

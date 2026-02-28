@@ -129,19 +129,12 @@ export default function Block0Page() {
         {/* 0-B: ウェルカム */}
         {step === "welcome" && (
           <section className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-            <div className="mb-6 flex justify-center">
-              <div
-                className="h-24 w-24 rounded-full bg-community-light opacity-90"
-                aria-hidden
-              />
-            </div>
-            <h1 className="mb-4 text-center text-xl font-bold text-stone-800">
-              ミッチー
+            <h1 className="mb-4 text-xl font-bold text-stone-800">
+              ようこそ
             </h1>
-            <p className="mb-6 whitespace-pre-wrap text-center leading-relaxed text-stone-700">
-              {`はじめまして。私はミッチーです。
-これから2日間、あなたの「次の30年」を一緒に設計していきます。
-まず、お名前を教えていただけますか？`}
+            <p className="mb-6 leading-relaxed text-stone-700">
+              これから2日間、あなたの「次の30年」を一緒に設計していきます。
+              まず、お名前を教えていただけますか？
             </p>
             <p className="mb-8 text-center text-sm text-stone-500">
               （次の画面でプロフィールを入力します）
@@ -176,7 +169,7 @@ export default function Block0Page() {
                     setProfile((p) => ({ ...p, name: e.target.value }))
                   }
                   className="w-full rounded-lg border border-stone-300 px-3 py-2"
-                  placeholder="ミッチーが呼びかける名前"
+                  placeholder="ニックネームでもOK"
                 />
               </div>
               <div>

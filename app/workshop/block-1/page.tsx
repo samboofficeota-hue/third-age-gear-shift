@@ -104,10 +104,6 @@ export default function Block1Page() {
         {/* ===== Intro ===== */}
         {step === "intro" && (
           <section className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-            <div className="mb-6 flex justify-center">
-              <div className="h-24 w-24 rounded-full bg-primary/20" aria-hidden />
-            </div>
-            <h1 className="mb-4 text-center text-xl font-bold text-stone-800">ミッチー</h1>
             <p className="mb-4 leading-relaxed text-stone-700">
               先月1ヶ月を思い出してください。朝起きてから夜寝るまで、どんなことに時間を使いましたか？
             </p>
