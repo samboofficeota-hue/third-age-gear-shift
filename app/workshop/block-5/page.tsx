@@ -6,13 +6,13 @@ import Link from "next/link";
 type Capitals = {
   human: { strengths: string; growth: string; score: number };
   social: { network: string; community: string; score: number };
-  financial: { other_income: boolean; detail: string };
+  financial: { other_income: boolean; detail: string; score: number };
 };
 
 const defaultCapitals = (): Capitals => ({
   human: { strengths: "", growth: "", score: 3 },
   social: { network: "", community: "", score: 3 },
-  financial: { other_income: false, detail: "" },
+  financial: { other_income: false, detail: "", score: 3 },
 });
 
 function ScoreInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
@@ -86,6 +86,7 @@ export default function Block5Page() {
           financial: {
             other_income: Boolean(c.financial?.other_income),
             detail: c.financial?.detail ?? "",
+            score: Number(c.financial?.score) || 3,
           },
         });
       }
@@ -109,6 +110,7 @@ export default function Block5Page() {
         social_score: capitals.social.score,
         financial_other_income: capitals.financial.other_income,
         financial_detail: capitals.financial.detail,
+        financial_score: capitals.financial.score,
       }),
     });
     setSaving(false);
@@ -133,10 +135,12 @@ export default function Block5Page() {
   const lowestCapital = (): { label: string; reason: string } => {
     const h = capitals.human.score;
     const s = capitals.social.score;
-    if (h <= s && h <= 3) {
+    const f = capitals.financial.score;
+    const min = Math.min(h, s, f);
+    if (h === min) {
       return { label: "人的資本", reason: "スキル・知識への投資を増やすことで、有償ワークやギフトワークの質が高まります。" };
     }
-    if (s < h && s <= 3) {
+    if (s === min) {
       return { label: "社会資本", reason: "社外とのつながりを広げることで、新しい機会やギフトワークの場が生まれます。" };
     }
     return { label: "金融資本", reason: "複数の収入源を検討することで、ポートフォリオの安定性が高まります。" };
@@ -172,42 +176,87 @@ export default function Block5Page() {
             </p>
 
             {/* 資本フロー図 */}
-            <div className="mb-6 rounded-xl border border-stone-200 bg-stone-50 p-5">
-              <div className="flex items-center gap-3 overflow-x-auto text-xs">
-                <div className="flex shrink-0 flex-col items-center gap-1">
-                  <div className="rounded-lg bg-community px-3 py-2 text-sm font-bold text-white">500時間</div>
-                  <span className="text-stone-500">時間</span>
-                </div>
-                <div className="shrink-0 text-stone-400">→</div>
-                <div className="flex shrink-0 flex-col gap-1.5">
-                  {[
-                    { label: "A. 有償", color: "#78716C" },
-                    { label: "B. 家事", color: "#3B82F6" },
-                    { label: "C. ギフト", color: "#2E9E5B" },
-                    { label: "D. 学習", color: "#F97316" },
-                  ].map((w) => (
-                    <div key={w.label} className="rounded px-2 py-1 text-xs font-medium text-white" style={{ backgroundColor: w.color }}>
-                      {w.label}
-                    </div>
-                  ))}
-                </div>
-                <div className="shrink-0 text-stone-400">→</div>
-                <div className="flex shrink-0 flex-col gap-2">
-                  {[
-                    { label: "人的資本", emoji: "🧠", desc: "スキル・知識・健康" },
-                    { label: "社会資本", emoji: "🤝", desc: "つながり・信頼" },
-                    { label: "金融資本", emoji: "💰", desc: "経済的な余力" },
-                  ].map((c) => (
-                    <div key={c.label} className="rounded border border-stone-300 bg-white px-2 py-1">
-                      <div className="text-xs font-medium text-stone-700">{c.emoji} {c.label}</div>
-                      <div className="text-xs text-stone-400">{c.desc}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <p className="mt-3 text-center text-xs text-stone-400">
-                あなたの時間の使い方が、3つの資本をどう育てているかを確認します
-              </p>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-stone-400">
+              図：人生というプロジェクトの原理（山口周）
+            </p>
+            <div className="mb-6 overflow-x-auto rounded-xl border border-stone-100 bg-stone-50 p-3">
+              <svg
+                viewBox="0 0 570 440"
+                style={{ minWidth: 460 }}
+                className="w-full"
+                aria-label="4つの資本の関係図"
+              >
+                <defs>
+                  <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                    <polygon points="0 0, 8 3, 0 6" fill="#6B7280" />
+                  </marker>
+                  <marker id="arr-or" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                    <polygon points="0 0, 8 3, 0 6" fill="#F97316" />
+                  </marker>
+                </defs>
+
+                {/* 時間資本 outer container (midpoint y = 8 + 360/2 = 188) */}
+                <rect x="8" y="8" width="196" height="360" rx="10" fill="#FAFAF9" stroke="#A8A29E" strokeWidth="2" />
+                <text x="106" y="26" textAnchor="middle" fontWeight="bold" fontSize="13" fill="#1C1917">時間資本</text>
+
+                {/* A - Paid Work (y=38, center y=72) */}
+                <rect x="18" y="38" width="166" height="68" rx="6" fill="#F5F5F4" stroke="#78716C" strokeWidth="1.5" />
+                <text x="29" y="58" fontWeight="bold" fontSize="13" fill="#78716C">A</text>
+                <text x="47" y="58" fontSize="11" fill="#1C1917">お金をもらうワーク</text>
+                <text x="29" y="73" fontSize="10" fill="#78716C">Paid Work</text>
+                <text x="29" y="88" fontSize="9" fill="#B4A99B">収入・給与・報酬</text>
+
+                {/* B - Home Work (y=116, center y=150) */}
+                <rect x="18" y="116" width="166" height="68" rx="6" fill="#EFF6FF" stroke="#3B82F6" strokeWidth="1.5" />
+                <text x="29" y="136" fontWeight="bold" fontSize="13" fill="#3B82F6">B</text>
+                <text x="47" y="136" fontSize="11" fill="#1C1917">家族のためのワーク</text>
+                <text x="29" y="151" fontSize="10" fill="#78716C">Home Work</text>
+                <text x="29" y="166" fontSize="9" fill="#B4A99B">家族・家事・育児</text>
+
+                {/* C - Gift Work (y=194, center y=228) */}
+                <rect x="18" y="194" width="166" height="68" rx="6" fill="#F0FDF4" stroke="#2E9E5B" strokeWidth="1.5" />
+                <text x="29" y="214" fontWeight="bold" fontSize="13" fill="#2E9E5B">C</text>
+                <text x="47" y="214" fontSize="11" fill="#1C1917">社会に貢献するワーク</text>
+                <text x="29" y="229" fontSize="10" fill="#78716C">Gift Work</text>
+                <text x="29" y="244" fontSize="9" fill="#B4A99B">ボランティア・NPO</text>
+
+                {/* D - Study Work (y=272, center y=306) */}
+                <rect x="18" y="272" width="166" height="68" rx="6" fill="#FFF7ED" stroke="#F97316" strokeWidth="1.5" />
+                <text x="29" y="292" fontWeight="bold" fontSize="13" fill="#F97316">D</text>
+                <text x="47" y="292" fontSize="11" fill="#1C1917">自分を高めるワーク</text>
+                <text x="29" y="307" fontSize="10" fill="#78716C">Study Work</text>
+                <text x="29" y="322" fontSize="9" fill="#B4A99B">学習・スキルアップ</text>
+
+                {/* 人的資本 (center y=151+37.5=188.5 ≈ container midpoint 188) */}
+                <rect x="328" y="151" width="230" height="75" rx="8" fill="white" stroke="#F97316" strokeWidth="1.5" />
+                <text x="443" y="172" textAnchor="middle" fontWeight="bold" fontSize="13" fill="#1C1917">人的資本</text>
+                <text x="342" y="190" fontSize="11" fill="#57534E">● スキル</text>
+                <text x="342" y="205" fontSize="11" fill="#57534E">● 知識</text>
+                <text x="342" y="220" fontSize="11" fill="#57534E">● 経験</text>
+
+                {/* 社会資本 */}
+                <rect x="328" y="253" width="230" height="75" rx="8" fill="white" stroke="#3B82F6" strokeWidth="1.5" />
+                <text x="443" y="274" textAnchor="middle" fontWeight="bold" fontSize="13" fill="#1C1917">社会資本</text>
+                <text x="342" y="292" fontSize="11" fill="#57534E">● 信用・評判</text>
+                <text x="342" y="307" fontSize="11" fill="#57534E">● ネットワーク</text>
+                <text x="342" y="322" fontSize="11" fill="#57534E">● 友人・家族関係</text>
+
+                {/* 金融資本 */}
+                <rect x="328" y="355" width="230" height="75" rx="8" fill="white" stroke="#78716C" strokeWidth="1.5" />
+                <text x="443" y="376" textAnchor="middle" fontWeight="bold" fontSize="13" fill="#1C1917">金融資本</text>
+                <text x="342" y="394" fontSize="11" fill="#57534E">● 現金</text>
+                <text x="342" y="409" fontSize="11" fill="#57534E">● 株式・債券</text>
+                <text x="342" y="424" fontSize="11" fill="#57534E">● 不動産等</text>
+
+                {/* Arrow: 時間資本 → 人的資本 (horizontal, y=188) */}
+                <line x1="206" y1="188" x2="326" y2="188" stroke="#F97316" strokeWidth="2" markerEnd="url(#arr-or)" />
+
+                {/* Vertical: 人的資本(bottom=226) → 社会資本(top=253) */}
+                <line x1="443" y1="228" x2="443" y2="251" stroke="#6B7280" strokeWidth="1.5" markerEnd="url(#arr)" />
+
+                {/* Vertical: 社会資本(bottom=328) → 金融資本(top=355) */}
+                <line x1="443" y1="330" x2="443" y2="353" stroke="#6B7280" strokeWidth="1.5" markerEnd="url(#arr)" />
+              </svg>
             </div>
 
             <div className="flex justify-center">
@@ -354,6 +403,12 @@ export default function Block5Page() {
                     placeholder="例：不動産収入、投資、副業の準備をしている..."
                   />
                 </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-stone-700">
+                    現在の充実度（1＝低い　5＝高い）
+                  </label>
+                  <ScoreInput value={capitals.financial.score} onChange={(v) => setCapitals((c) => ({ ...c, financial: { ...c.financial, score: v } }))} />
+                </div>
               </div>
             </div>
 
@@ -384,18 +439,7 @@ export default function Block5Page() {
               <div className="mb-6 space-y-4">
                 <CapitalBar label="🧠 人的資本" score={capitals.human.score} color="#2E9E5B" />
                 <CapitalBar label="🤝 社会資本" score={capitals.social.score} color="#3B82F6" />
-                <div className="flex items-center gap-3">
-                  <span className="w-24 text-sm text-stone-600">💰 金融資本</span>
-                  <div className="flex-1">
-                    <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${
-                      capitals.financial.other_income
-                        ? "bg-community/10 text-community"
-                        : "bg-amber-50 text-amber-700"
-                    }`}>
-                      {capitals.financial.other_income ? "複数の収入源あり" : "現在は有償ワークのみ"}
-                    </span>
-                  </div>
-                </div>
+                <CapitalBar label="💰 金融資本" score={capitals.financial.score} color="#78716C" />
                 {(capitals.human.score <= 2 || capitals.social.score <= 2) && (
                   <p className="text-xs text-rose-600">※ 赤いバーは要注意の資本です</p>
                 )}

@@ -25,7 +25,7 @@ type Phase = {
 type Capitals = {
   human: { strengths: string; growth: string; score: number };
   social: { network: string; community: string; score: number };
-  financial: { other_income: boolean; detail: string };
+  financial: { other_income: boolean; detail: string; score: number };
 };
 
 export default function Block8Page() {
@@ -348,17 +348,21 @@ export default function Block8Page() {
               {/* 金融資本 */}
               <div className="rounded-xl border border-stone-200 p-4">
                 <p className="mb-3 font-semibold text-stone-800">💰 金融資本</p>
-                <span
-                  className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
-                    capitals?.financial?.other_income
-                      ? "bg-community/10 text-community"
-                      : "bg-amber-50 text-amber-700"
-                  }`}
-                >
-                  {capitals?.financial?.other_income ? "複数の収入源あり" : "現在は有償ワークのみ"}
-                </span>
+                <div className="mb-3 flex items-center gap-1">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <div
+                      key={n}
+                      className={`h-2.5 flex-1 rounded-full ${
+                        n <= (capitals?.financial?.score ?? 0) ? "bg-stone-500" : "bg-stone-100"
+                      }`}
+                    />
+                  ))}
+                  <span className="ml-2 text-xs font-bold text-stone-500">
+                    {capitals?.financial?.score ?? "-"}/5
+                  </span>
+                </div>
                 {capitals?.financial?.detail && (
-                  <p className="mt-2 text-xs text-stone-600">{capitals.financial.detail}</p>
+                  <p className="text-xs text-stone-600">{capitals.financial.detail}</p>
                 )}
               </div>
             </div>
