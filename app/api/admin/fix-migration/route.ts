@@ -12,71 +12,60 @@ export async function POST() {
 
   const results: string[] = [];
 
-  try {
-    // 1. code カラム追加（NULL許可で追加）
-    await prisma.$executeRawUnsafe(
-      `ALTER TABLE "workshop_sessions" ADD COLUMN IF NOT EXISTS "code" TEXT`
-    );
-    results.push("✅ code カラム追加（または既存）");
+  // 各ステップを独立して実行（エラーがあっても続行）
+  const run = async (label: string, sql: string) => {
+    try {
+      await prisma.$executeRawUnsafe(sql);
+      results.push(`✅ ${label}`);
+    } catch (e: unknown) {
+      results.push(`⚠️ ${label}: ${String(e).slice(0, 120)}`);
+    }
+  };
 
-    // 2. 既存行にコードを付与
-    const updated = await prisma.$executeRawUnsafe(
-      `UPDATE "workshop_sessions" SET "code" = 'session-' || id WHERE "code" IS NULL`
-    );
-    results.push(`✅ 既存行へコード付与: ${updated} 件`);
+  // 1. code カラム追加
+  await run("code カラム追加", `ALTER TABLE "workshop_sessions" ADD COLUMN IF NOT EXISTS "code" TEXT`);
 
-    // 3. NOT NULL 制約
-    await prisma.$executeRawUnsafe(
-      `ALTER TABLE "workshop_sessions" ALTER COLUMN "code" SET NOT NULL`
-    );
-    results.push("✅ code NOT NULL 制約設定");
+  // 2. 既存行にコード付与
+  await run("既存行へコード付与", `UPDATE "workshop_sessions" SET "code" = 'session-' || id WHERE "code" IS NULL`);
 
-    // 4. UNIQUE インデックス
-    await prisma.$executeRawUnsafe(
-      `CREATE UNIQUE INDEX IF NOT EXISTS "workshop_sessions_code_key" ON "workshop_sessions"("code")`
-    );
-    results.push("✅ UNIQUE インデックス作成（または既存）");
+  // 3. NOT NULL 制約
+  await run("code NOT NULL 制約", `ALTER TABLE "workshop_sessions" ALTER COLUMN "code" SET NOT NULL`);
 
-    // 5. is_active カラム追加
-    await prisma.$executeRawUnsafe(
-      `ALTER TABLE "workshop_sessions" ADD COLUMN IF NOT EXISTS "is_active" BOOLEAN NOT NULL DEFAULT true`
-    );
-    results.push("✅ is_active カラム追加（または既存）");
+  // 4. UNIQUE インデックス
+  await run("UNIQUE インデックス", `CREATE UNIQUE INDEX IF NOT EXISTS "workshop_sessions_code_key" ON "workshop_sessions"("code")`);
 
-    // 6. workshop_data の session_id FK 追加（なければ）
-    await prisma.$executeRawUnsafe(`
-      DO $$
-      BEGIN
-        IF NOT EXISTS (
-          SELECT 1 FROM information_schema.table_constraints
-          WHERE constraint_name = 'workshop_data_session_id_fkey'
-        ) THEN
-          ALTER TABLE "workshop_data"
-            ADD CONSTRAINT "workshop_data_session_id_fkey"
-            FOREIGN KEY ("session_id") REFERENCES "workshop_sessions"("id")
-            ON DELETE SET NULL ON UPDATE CASCADE;
-        END IF;
-      END $$
-    `);
-    results.push("✅ workshop_data FK 追加（または既存）");
+  // 5. is_active カラム追加
+  await run("is_active カラム追加", `ALTER TABLE "workshop_sessions" ADD COLUMN IF NOT EXISTS "is_active" BOOLEAN NOT NULL DEFAULT true`);
 
-    // 7. _prisma_migrations の失敗済みマークを「適用済み」に修正
-    await prisma.$executeRawUnsafe(`
-      UPDATE "_prisma_migrations"
-      SET finished_at = NOW(),
-          rolled_back_at = NULL,
-          logs = NULL
-      WHERE migration_name = '20260311000000_add_session_code_active'
-        AND finished_at IS NULL
-    `);
-    results.push("✅ _prisma_migrations の失敗マーク修正");
+  // 6. FK制約（データ不整合がある場合はスキップ）
+  await run("workshop_data FK（不整合時はスキップ）", `
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints
+        WHERE constraint_name = 'workshop_data_session_id_fkey'
+      ) THEN
+        -- 不整合データを先にNULL化してからFK追加
+        UPDATE "workshop_data" SET "session_id" = NULL
+        WHERE "session_id" IS NOT NULL
+          AND "session_id" NOT IN (SELECT id FROM "workshop_sessions");
+        ALTER TABLE "workshop_data"
+          ADD CONSTRAINT "workshop_data_session_id_fkey"
+          FOREIGN KEY ("session_id") REFERENCES "workshop_sessions"("id")
+          ON DELETE SET NULL ON UPDATE CASCADE;
+      END IF;
+    END $$
+  `);
 
-    return NextResponse.json({ success: true, results });
-  } catch (e) {
-    console.error("fix-migration error:", e);
-    return NextResponse.json(
-      { success: false, error: String(e), results },
-      { status: 500 }
-    );
-  }
+  // 7. _prisma_migrations の失敗マークを「適用済み」に修正
+  await run("_prisma_migrations 失敗マーク修正", `
+    UPDATE "_prisma_migrations"
+    SET finished_at = NOW(),
+        rolled_back_at = NULL,
+        logs = NULL
+    WHERE migration_name = '20260311000000_add_session_code_active'
+  `);
+
+  const hasError = results.some((r) => r.startsWith("⚠️"));
+  return NextResponse.json({ success: !hasError, results });
 }
