@@ -25,8 +25,8 @@ function ScoreInput({ value, onChange }: { value: number; onChange: (v: number) 
           onClick={() => onChange(n)}
           className={`h-9 w-9 rounded-full text-sm font-bold transition ${
             value === n
-              ? "bg-community text-white"
-              : "bg-stone-100 text-stone-500 hover:bg-stone-200"
+              ? "bg-[#00ff88] text-[#0a0e1a] font-bold"
+              : "bg-[#0f1420] text-[#708070] hover:bg-[#141a2a]"
           }`}
         >
           {n}
@@ -40,14 +40,14 @@ function CapitalBar({ label, score, color }: { label: string; score: number; col
   const isLow = score <= 2;
   return (
     <div className="flex items-center gap-3">
-      <span className="w-24 text-sm text-stone-600">{label}</span>
-      <div className="h-3 flex-1 overflow-hidden rounded-full bg-stone-100">
+      <span className="w-24 text-sm text-[#a0c0b0]">{label}</span>
+      <div className="h-3 flex-1 overflow-hidden rounded-full bg-[#0f1420]">
         <div
           className="h-full rounded-full transition-all"
           style={{ width: `${(score / 5) * 100}%`, backgroundColor: isLow ? "#e11d48" : color }}
         />
       </div>
-      <span className={`w-6 text-right text-sm font-bold ${isLow ? "text-rose-600" : "text-stone-700"}`}>
+      <span className={`w-6 text-right text-sm font-bold ${isLow ? "text-rose-600" : "text-[#a0c0b0]"}`}>
         {score}
       </span>
     </div>
@@ -149,16 +149,16 @@ export default function Block5Page() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-stone-500">読み込み中...</p>
+        <p className="text-[#708070]">読み込み中...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-stone-50 px-4 py-8 md:px-8">
+    <div className="min-h-screen px-4 py-8 md:px-8">
       <div className="mx-auto max-w-2xl">
-        <p className="mb-4 text-sm text-stone-500">
-          <Link href="/workshop/block-4" className="text-community hover:underline">
+        <p className="mb-4 text-sm text-[#708070]">
+          <Link href="/workshop/block-4" className="text-[#00ff88] hover:underline">
             ← Block 4
           </Link>
           {" · "}
@@ -167,19 +167,19 @@ export default function Block5Page() {
 
         {/* 5-A: 導入 */}
         {step === "intro" && (
-          <section className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-            <p className="mb-4 leading-relaxed text-stone-700">
+          <section className="rounded-xl border border-[rgba(0,255,136,0.2)] bg-[#141a2a] p-8 shadow-sm">
+            <p className="mb-4 leading-relaxed text-[#a0c0b0]">
               DAY 2 へようこそ。今日は「資本」の視点で、あなたの未来を設計します。
             </p>
-            <p className="mb-6 leading-relaxed text-stone-700">
+            <p className="mb-6 leading-relaxed text-[#a0c0b0]">
               あなたが使う時間（500時間）は、3つの資本に変換されています。その現状を確認しましょう。
             </p>
 
             {/* 資本フロー図 */}
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-stone-400">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#708070]">
               図：人生というプロジェクトの原理（山口周）
             </p>
-            <div className="mb-6 overflow-x-auto rounded-xl border border-stone-100 bg-stone-50 p-3">
+            <div className="mb-6 overflow-x-auto rounded-xl border border-[rgba(0,255,136,0.2)] bg-[#0f1420] p-3">
               <svg
                 viewBox="0 0 570 440"
                 style={{ minWidth: 460 }}
@@ -263,7 +263,7 @@ export default function Block5Page() {
               <button
                 type="button"
                 onClick={() => setStep("form")}
-                className="rounded-xl bg-community px-6 py-3 text-white transition hover:bg-community-light"
+                className="rounded-xl bg-[#00ff88] px-6 py-3 text-[#0a0e1a] font-bold transition hover:bg-[#00cc6a]"
               >
                 資本の現状を入力する
               </button>
@@ -275,41 +275,41 @@ export default function Block5Page() {
         {step === "form" && (
           <section className="space-y-6">
             {/* 人的資本 */}
-            <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+            <div className="rounded-xl border border-[rgba(0,255,136,0.2)] bg-[#141a2a] p-6 shadow-sm">
               <div className="mb-4 flex items-center gap-3">
                 <span className="text-2xl">🧠</span>
                 <div>
-                  <h2 className="text-lg font-bold text-stone-800">人的資本</h2>
-                  <p className="text-xs text-stone-500">スキル・知識・健康など、あなた自身の強み</p>
+                  <h2 className="text-lg font-bold text-[#e0f0e8]">人的資本</h2>
+                  <p className="text-xs text-[#708070]">スキル・知識・健康など、あなた自身の強み</p>
                 </div>
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-stone-700">
+                  <label className="mb-1 block text-sm font-medium text-[#a0c0b0]">
                     今、誇れるスキル・知識は何ですか？
                   </label>
                   <textarea
                     rows={2}
                     value={capitals.human.strengths}
                     onChange={(e) => setCapitals((c) => ({ ...c, human: { ...c.human, strengths: e.target.value } }))}
-                    className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-[rgba(0,255,136,0.2)] px-3 py-2 text-sm"
                     placeholder="例：プロジェクト管理の経験、語学力、専門的な技術知識..."
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-stone-700">
+                  <label className="mb-1 block text-sm font-medium text-[#a0c0b0]">
                     伸ばしたいスキルは何ですか？
                   </label>
                   <textarea
                     rows={2}
                     value={capitals.human.growth}
                     onChange={(e) => setCapitals((c) => ({ ...c, human: { ...c.human, growth: e.target.value } }))}
-                    className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-[rgba(0,255,136,0.2)] px-3 py-2 text-sm"
                     placeholder="例：デジタルマーケティング、コーチング、健康管理..."
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-stone-700">
+                  <label className="mb-2 block text-sm font-medium text-[#a0c0b0]">
                     現在の充実度（1＝低い　5＝高い）
                   </label>
                   <ScoreInput value={capitals.human.score} onChange={(v) => setCapitals((c) => ({ ...c, human: { ...c.human, score: v } }))} />
@@ -318,41 +318,41 @@ export default function Block5Page() {
             </div>
 
             {/* 社会資本 */}
-            <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+            <div className="rounded-xl border border-[rgba(0,255,136,0.2)] bg-[#141a2a] p-6 shadow-sm">
               <div className="mb-4 flex items-center gap-3">
                 <span className="text-2xl">🤝</span>
                 <div>
-                  <h2 className="text-lg font-bold text-stone-800">社会資本</h2>
-                  <p className="text-xs text-stone-500">信頼できるつながり・コミュニティへの貢献</p>
+                  <h2 className="text-lg font-bold text-[#e0f0e8]">社会資本</h2>
+                  <p className="text-xs text-[#708070]">信頼できるつながり・コミュニティへの貢献</p>
                 </div>
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-stone-700">
+                  <label className="mb-1 block text-sm font-medium text-[#a0c0b0]">
                     信頼できる社外のつながりはありますか？
                   </label>
                   <textarea
                     rows={2}
                     value={capitals.social.network}
                     onChange={(e) => setCapitals((c) => ({ ...c, social: { ...c.social, network: e.target.value } }))}
-                    className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-[rgba(0,255,136,0.2)] px-3 py-2 text-sm"
                     placeholder="例：業界の知人、異業種交流会のメンバー、地域の仲間..."
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-stone-700">
+                  <label className="mb-1 block text-sm font-medium text-[#a0c0b0]">
                     貢献できているコミュニティはありますか？
                   </label>
                   <textarea
                     rows={2}
                     value={capitals.social.community}
                     onChange={(e) => setCapitals((c) => ({ ...c, social: { ...c.social, community: e.target.value } }))}
-                    className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-[rgba(0,255,136,0.2)] px-3 py-2 text-sm"
                     placeholder="例：NPO、地域活動、業界団体、趣味のグループ..."
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-stone-700">
+                  <label className="mb-2 block text-sm font-medium text-[#a0c0b0]">
                     現在の充実度（1＝低い　5＝高い）
                   </label>
                   <ScoreInput value={capitals.social.score} onChange={(v) => setCapitals((c) => ({ ...c, social: { ...c.social, score: v } }))} />
@@ -361,17 +361,17 @@ export default function Block5Page() {
             </div>
 
             {/* 金融資本 */}
-            <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+            <div className="rounded-xl border border-[rgba(0,255,136,0.2)] bg-[#141a2a] p-6 shadow-sm">
               <div className="mb-4 flex items-center gap-3">
                 <span className="text-2xl">💰</span>
                 <div>
-                  <h2 className="text-lg font-bold text-stone-800">金融資本</h2>
-                  <p className="text-xs text-stone-500">有償ワーク以外の経済的な基盤</p>
+                  <h2 className="text-lg font-bold text-[#e0f0e8]">金融資本</h2>
+                  <p className="text-xs text-[#708070]">有償ワーク以外の経済的な基盤</p>
                 </div>
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-stone-700">
+                  <label className="mb-2 block text-sm font-medium text-[#a0c0b0]">
                     有償ワーク以外の収入源はありますか？
                   </label>
                   <div className="flex gap-3">
@@ -382,8 +382,8 @@ export default function Block5Page() {
                         onClick={() => setCapitals((c) => ({ ...c, financial: { ...c.financial, other_income: value } }))}
                         className={`flex-1 rounded-lg border py-2 text-sm font-medium transition ${
                           capitals.financial.other_income === value
-                            ? "border-community bg-community/10 text-community"
-                            : "border-stone-300 text-stone-600 hover:bg-stone-50"
+                            ? "border-[#00ff88] bg-[rgba(0,255,136,0.1)] text-[#00ff88]"
+                            : "border-[rgba(0,255,136,0.2)] text-[#a0c0b0] hover:bg-[#0f1420]"
                         }`}
                       >
                         {label}
@@ -392,19 +392,19 @@ export default function Block5Page() {
                   </div>
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-stone-700">
+                  <label className="mb-1 block text-sm font-medium text-[#a0c0b0]">
                     詳しく教えてください（任意）
                   </label>
                   <textarea
                     rows={2}
                     value={capitals.financial.detail}
                     onChange={(e) => setCapitals((c) => ({ ...c, financial: { ...c.financial, detail: e.target.value } }))}
-                    className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-[rgba(0,255,136,0.2)] px-3 py-2 text-sm"
                     placeholder="例：不動産収入、投資、副業の準備をしている..."
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-stone-700">
+                  <label className="mb-2 block text-sm font-medium text-[#a0c0b0]">
                     現在の充実度（1＝低い　5＝高い）
                   </label>
                   <ScoreInput value={capitals.financial.score} onChange={(v) => setCapitals((c) => ({ ...c, financial: { ...c.financial, score: v } }))} />
@@ -414,14 +414,14 @@ export default function Block5Page() {
 
             {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
             <div className="flex justify-end gap-3">
-              <button type="button" onClick={() => setStep("intro")} className="rounded-xl border border-stone-300 px-4 py-2 text-stone-600">
+              <button type="button" onClick={() => setStep("intro")} className="rounded-xl border border-[rgba(0,255,136,0.2)] px-4 py-2 text-[#a0c0b0]">
                 戻る
               </button>
               <button
                 type="button"
                 onClick={handleToReview}
                 disabled={saving}
-                className="rounded-xl bg-community px-6 py-2 text-white disabled:opacity-60"
+                className="rounded-xl bg-[#00ff88] px-6 py-2 text-[#0a0e1a] font-bold disabled:opacity-60"
               >
                 {saving ? "保存中..." : "確認する"}
               </button>
@@ -433,8 +433,8 @@ export default function Block5Page() {
         {step === "review" && (() => {
           const lowest = lowestCapital();
           return (
-            <section className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-              <h2 className="mb-6 text-lg font-bold text-stone-800">資本の現状サマリー</h2>
+            <section className="rounded-xl border border-[rgba(0,255,136,0.2)] bg-[#141a2a] p-8 shadow-sm">
+              <h2 className="mb-6 text-lg font-bold text-[#e0f0e8]">資本の現状サマリー</h2>
 
               <div className="mb-6 space-y-4">
                 <CapitalBar label="🧠 人的資本" score={capitals.human.score} color="#2E9E5B" />
@@ -445,25 +445,25 @@ export default function Block5Page() {
                 )}
               </div>
 
-              <div className="mb-6 rounded-xl border border-community/30 bg-green-50/40 p-5">
-                <p className="leading-relaxed text-stone-700">
+              <div className="mb-6 rounded-xl border border-[#00ff88]/30 bg-[rgba(0,255,136,0.05)] p-5">
+                <p className="leading-relaxed text-[#a0c0b0]">
                   データを見ると、<strong>{lowest.label}</strong>が手薄に見えます。{lowest.reason}
                 </p>
-                <p className="mt-2 text-stone-600">
+                <p className="mt-2 text-[#a0c0b0]">
                   次のステップで、この資本をどう循環させるかを一緒に考えましょう。
                 </p>
               </div>
 
               {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
               <div className="flex justify-end gap-3">
-                <button type="button" onClick={() => setStep("form")} className="rounded-xl border border-stone-300 px-4 py-2 text-stone-600">
+                <button type="button" onClick={() => setStep("form")} className="rounded-xl border border-[rgba(0,255,136,0.2)] px-4 py-2 text-[#a0c0b0]">
                   戻る
                 </button>
                 <button
                   type="button"
                   onClick={handleToBlock6}
                   disabled={saving}
-                  className="rounded-xl bg-community px-6 py-3 text-white transition hover:bg-community-light disabled:opacity-60"
+                  className="rounded-xl bg-[#00ff88] px-6 py-3 text-[#0a0e1a] font-bold transition hover:bg-[#00cc6a] disabled:opacity-60"
                 >
                   {saving ? "保存中..." : "STEP 6 へ進む"}
                 </button>

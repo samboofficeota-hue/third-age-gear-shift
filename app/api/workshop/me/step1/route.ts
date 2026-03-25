@@ -4,12 +4,27 @@ import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 
 type Activity = { description: string; hours: number };
-type Step1Body = { activities?: unknown[] };
+type Step1Body = {
+  activities?: unknown[];
+  weekdayActivities?: unknown[];
+  weekendActivities?: unknown[];
+  monthlyExtras?: unknown[];
+};
 
 function toNum(v: unknown): number {
   if (typeof v === "number" && Number.isFinite(v)) return Math.max(0, Math.min(500, v));
   if (typeof v === "string") return Math.max(0, Math.min(500, parseFloat(v) || 0));
   return 0;
+}
+
+function parseActivities(raw: unknown): Activity[] {
+  return (Array.isArray(raw) ? raw : [])
+    .filter((a): a is Record<string, unknown> => typeof a === "object" && a !== null)
+    .map((a) => ({
+      description: String(a.description ?? "").trim().slice(0, 200),
+      hours: toNum(a.hours),
+    }))
+    .filter((a) => a.description || a.hours > 0);
 }
 
 export async function PATCH(request: Request) {
@@ -35,16 +50,19 @@ export async function PATCH(request: Request) {
     );
   }
 
-  const activities: Activity[] = (Array.isArray(body.activities) ? body.activities : [])
-    .filter((a): a is Record<string, unknown> => typeof a === "object" && a !== null)
-    .map((a) => ({
-      description: String(a.description ?? "").trim().slice(0, 200),
-      hours: toNum(a.hours),
-    }))
-    .filter((a) => a.description || a.hours > 0);
+  const activities        = parseActivities(body.activities);
+  const weekdayActivities = parseActivities(body.weekdayActivities);
+  const weekendActivities = parseActivities(body.weekendActivities);
+  const monthlyExtras     = parseActivities(body.monthlyExtras);
 
   const total = activities.reduce((sum, a) => sum + a.hours, 0);
-  const step1: Record<string, unknown> = { activities, total };
+  const step1: Record<string, unknown> = {
+    activities,
+    total,
+    weekdayActivities,
+    weekendActivities,
+    monthlyExtras,
+  };
 
   const isCompleted = activities.length > 0 && total > 0;
   const completedBlocks =

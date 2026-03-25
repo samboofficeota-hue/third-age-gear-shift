@@ -145,7 +145,7 @@ export default function Block8Page() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-stone-500">読み込み中...</p>
+        <p className="text-[#708070]">読み込み中...</p>
       </div>
     );
   }
@@ -160,13 +160,13 @@ export default function Block8Page() {
         }
       `}</style>
 
-      <div className="min-h-screen bg-stone-50 px-4 py-8 md:px-8">
+      <div className="min-h-screen px-4 py-8 md:px-8">
         <div className="mx-auto max-w-3xl">
 
           {/* ナビ */}
           <div className="no-print mb-6 flex items-center justify-between">
-            <p className="text-sm text-stone-500">
-              <Link href="/workshop/block-7" className="text-community hover:underline">
+            <p className="text-sm text-[#708070]">
+              <Link href="/workshop/block-7" className="text-[#00ff88] hover:underline">
                 ← Block 7
               </Link>
               {" · "}
@@ -175,26 +175,26 @@ export default function Block8Page() {
             <button
               type="button"
               onClick={() => window.print()}
-              className="rounded-xl bg-community px-4 py-2 text-sm text-white transition hover:bg-community-light"
+              className="rounded-xl bg-[#00ff88] px-4 py-2 text-sm text-[#0a0e1a] font-bold transition hover:bg-[#00cc6a]"
             >
               印刷・PDF保存
             </button>
           </div>
 
           {/* ===== 表紙 ===== */}
-          <section className="mb-6 rounded-2xl border border-stone-200 bg-white p-10 shadow-sm text-center">
-            <p className="mb-1 text-xs text-stone-400">サードエイジへのギア・シフト</p>
-            <h1 className="mb-2 text-3xl font-bold text-stone-800">自分の経営計画書</h1>
+          <section className="mb-6 rounded-xl border border-[rgba(0,255,136,0.2)] bg-[#141a2a] p-10 shadow-sm text-center">
+            <p className="mb-1 text-xs text-[#708070]">サードエイジ じぶん戦略講座</p>
+            <h1 className="mb-2 text-3xl font-bold text-[#e0f0e8]">自分の経営計画書</h1>
             {profileName && (
-              <p className="mb-6 text-xl text-stone-600">{profileName}</p>
+              <p className="mb-6 text-xl text-[#a0c0b0]">{profileName}</p>
             )}
-            <p className="text-sm text-stone-400">{today}</p>
+            <p className="text-sm text-[#708070]">{today}</p>
             <div className="mt-8 flex flex-wrap justify-center gap-2">
               {["時間のポートフォリオ", "3つの資本", "Will/Must/Can", "5年間の移行計画"].map(
                 (label) => (
                   <span
                     key={label}
-                    className="rounded-full border border-community/30 bg-community/5 px-3 py-1 text-xs text-community"
+                    className="rounded-full border border-[#00ff88]/30 bg-[rgba(0,255,136,0.05)] px-3 py-1 text-xs text-[#00ff88]"
                   >
                     {label}
                   </span>
@@ -204,9 +204,9 @@ export default function Block8Page() {
           </section>
 
           {/* ===== 時間のポートフォリオ ===== */}
-          <section className="mb-6 rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-            <h2 className="mb-6 flex items-center gap-2 text-lg font-bold text-stone-800">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-community text-xs font-bold text-white">
+          <section className="mb-6 rounded-xl border border-[rgba(0,255,136,0.2)] bg-[#141a2a] p-8 shadow-sm">
+            <h2 className="mb-6 flex items-center gap-2 text-lg font-bold text-[#e0f0e8]">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#00ff88] text-xs font-bold text-[#0a0e1a] font-bold">
                 1
               </span>
               時間のポートフォリオ
@@ -215,7 +215,7 @@ export default function Block8Page() {
             <div className="grid grid-cols-2 gap-8">
               {/* 現在 */}
               <div>
-                <p className="mb-3 text-sm font-semibold text-stone-600">現在の配分（A〜D）</p>
+                <p className="mb-3 text-sm font-semibold text-[#a0c0b0]">現在の配分（A〜D）</p>
                 <div className="space-y-3">
                   {WORKS_AD.map((w) => {
                     const h = currentAlloc.hours[w.id];
@@ -226,11 +226,11 @@ export default function Block8Page() {
                           <span className="font-medium" style={{ color: w.color }}>
                             {w.label}
                           </span>
-                          <span className="text-stone-500">
+                          <span className="text-[#708070]">
                             {h}h ({pct}%)
                           </span>
                         </div>
-                        <div className="h-2 w-full overflow-hidden rounded-full bg-stone-100">
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-[#0f1420]">
                           <div
                             className="h-2 rounded-full"
                             style={{ width: `${pct}%`, backgroundColor: w.color }}
@@ -241,7 +241,7 @@ export default function Block8Page() {
                   })}
                 </div>
                 {step2Totals.E > 0 && (
-                  <p className="mt-2 text-xs text-stone-400">
+                  <p className="mt-2 text-xs text-[#708070]">
                     その他: {step2Totals.E}h（参考）
                   </p>
                 )}
@@ -249,7 +249,7 @@ export default function Block8Page() {
 
               {/* 10年後 */}
               <div>
-                <p className="mb-3 text-sm font-semibold text-stone-600">10年後の理想配分</p>
+                <p className="mb-3 text-sm font-semibold text-[#a0c0b0]">10年後の理想配分</p>
                 <div className="space-y-3">
                   {WORKS_AD.map((w) => {
                     const pct = futureAlloc[w.id];
@@ -259,9 +259,9 @@ export default function Block8Page() {
                           <span className="font-medium" style={{ color: w.color }}>
                             {w.label}
                           </span>
-                          <span className="text-stone-500">{pct}%</span>
+                          <span className="text-[#708070]">{pct}%</span>
                         </div>
-                        <div className="h-2 w-full overflow-hidden rounded-full bg-stone-100">
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-[#0f1420]">
                           <div
                             className="h-2 rounded-full"
                             style={{ width: `${pct}%`, backgroundColor: w.color }}
@@ -276,9 +276,9 @@ export default function Block8Page() {
           </section>
 
           {/* ===== 3つの資本 ===== */}
-          <section className="mb-6 rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-            <h2 className="mb-6 flex items-center gap-2 text-lg font-bold text-stone-800">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-community text-xs font-bold text-white">
+          <section className="mb-6 rounded-xl border border-[rgba(0,255,136,0.2)] bg-[#141a2a] p-8 shadow-sm">
+            <h2 className="mb-6 flex items-center gap-2 text-lg font-bold text-[#e0f0e8]">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#00ff88] text-xs font-bold text-[#0a0e1a] font-bold">
                 2
               </span>
               3つの資本の現状
@@ -286,92 +286,92 @@ export default function Block8Page() {
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               {/* 人的資本 */}
-              <div className="rounded-xl border border-stone-200 p-4">
-                <p className="mb-3 font-semibold text-stone-800">🧠 人的資本</p>
+              <div className="rounded-xl border border-[rgba(0,255,136,0.2)] p-4">
+                <p className="mb-3 font-semibold text-[#e0f0e8]">🧠 人的資本</p>
                 <div className="mb-3 flex items-center gap-1">
                   {[1, 2, 3, 4, 5].map((n) => (
                     <div
                       key={n}
                       className={`h-2.5 flex-1 rounded-full ${
-                        n <= (capitals?.human?.score ?? 0) ? "bg-community" : "bg-stone-100"
+                        n <= (capitals?.human?.score ?? 0) ? "bg-[#00ff88]" : "bg-[#0f1420]"
                       }`}
                     />
                   ))}
-                  <span className="ml-2 text-xs font-bold text-stone-500">
+                  <span className="ml-2 text-xs font-bold text-[#708070]">
                     {capitals?.human?.score ?? "-"}/5
                   </span>
                 </div>
                 {capitals?.human?.strengths && (
-                  <p className="text-xs text-stone-600">
-                    <span className="font-medium text-stone-500">強み：</span>
+                  <p className="text-xs text-[#a0c0b0]">
+                    <span className="font-medium text-[#708070]">強み：</span>
                     {capitals.human.strengths}
                   </p>
                 )}
                 {capitals?.human?.growth && (
-                  <p className="mt-1 text-xs text-stone-600">
-                    <span className="font-medium text-stone-500">伸ばしたい：</span>
+                  <p className="mt-1 text-xs text-[#a0c0b0]">
+                    <span className="font-medium text-[#708070]">伸ばしたい：</span>
                     {capitals.human.growth}
                   </p>
                 )}
               </div>
 
               {/* 社会資本 */}
-              <div className="rounded-xl border border-stone-200 p-4">
-                <p className="mb-3 font-semibold text-stone-800">🤝 社会資本</p>
+              <div className="rounded-xl border border-[rgba(0,255,136,0.2)] p-4">
+                <p className="mb-3 font-semibold text-[#e0f0e8]">🤝 社会資本</p>
                 <div className="mb-3 flex items-center gap-1">
                   {[1, 2, 3, 4, 5].map((n) => (
                     <div
                       key={n}
                       className={`h-2.5 flex-1 rounded-full ${
-                        n <= (capitals?.social?.score ?? 0) ? "bg-blue-500" : "bg-stone-100"
+                        n <= (capitals?.social?.score ?? 0) ? "bg-blue-500" : "bg-[#0f1420]"
                       }`}
                     />
                   ))}
-                  <span className="ml-2 text-xs font-bold text-stone-500">
+                  <span className="ml-2 text-xs font-bold text-[#708070]">
                     {capitals?.social?.score ?? "-"}/5
                   </span>
                 </div>
                 {capitals?.social?.network && (
-                  <p className="text-xs text-stone-600">
-                    <span className="font-medium text-stone-500">つながり：</span>
+                  <p className="text-xs text-[#a0c0b0]">
+                    <span className="font-medium text-[#708070]">つながり：</span>
                     {capitals.social.network}
                   </p>
                 )}
                 {capitals?.social?.community && (
-                  <p className="mt-1 text-xs text-stone-600">
-                    <span className="font-medium text-stone-500">コミュニティ：</span>
+                  <p className="mt-1 text-xs text-[#a0c0b0]">
+                    <span className="font-medium text-[#708070]">コミュニティ：</span>
                     {capitals.social.community}
                   </p>
                 )}
               </div>
 
               {/* 金融資本 */}
-              <div className="rounded-xl border border-stone-200 p-4">
-                <p className="mb-3 font-semibold text-stone-800">💰 金融資本</p>
+              <div className="rounded-xl border border-[rgba(0,255,136,0.2)] p-4">
+                <p className="mb-3 font-semibold text-[#e0f0e8]">💰 金融資本</p>
                 <div className="mb-3 flex items-center gap-1">
                   {[1, 2, 3, 4, 5].map((n) => (
                     <div
                       key={n}
                       className={`h-2.5 flex-1 rounded-full ${
-                        n <= (capitals?.financial?.score ?? 0) ? "bg-stone-500" : "bg-stone-100"
+                        n <= (capitals?.financial?.score ?? 0) ? "bg-stone-500" : "bg-[#0f1420]"
                       }`}
                     />
                   ))}
-                  <span className="ml-2 text-xs font-bold text-stone-500">
+                  <span className="ml-2 text-xs font-bold text-[#708070]">
                     {capitals?.financial?.score ?? "-"}/5
                   </span>
                 </div>
                 {capitals?.financial?.detail && (
-                  <p className="text-xs text-stone-600">{capitals.financial.detail}</p>
+                  <p className="text-xs text-[#a0c0b0]">{capitals.financial.detail}</p>
                 )}
               </div>
             </div>
           </section>
 
           {/* ===== Will / Must / Can ===== */}
-          <section className="mb-6 rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-            <h2 className="mb-6 flex items-center gap-2 text-lg font-bold text-stone-800">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-community text-xs font-bold text-white">
+          <section className="mb-6 rounded-xl border border-[rgba(0,255,136,0.2)] bg-[#141a2a] p-8 shadow-sm">
+            <h2 className="mb-6 flex items-center gap-2 text-lg font-bold text-[#e0f0e8]">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#00ff88] text-xs font-bold text-[#0a0e1a] font-bold">
                 3
               </span>
               Will / Must / Can と資本循環
@@ -383,11 +383,11 @@ export default function Block8Page() {
                 { label: "Must", color: "#e11d48", value: step6.must ?? "" },  // rose（警告色として維持）
                 { label: "Can", color: "#3B82F6", value: step6.can ?? "" },   // blue
               ].map(({ label, color, value }) => (
-                <div key={label} className="rounded-xl border border-stone-100 bg-stone-50 p-4">
+                <div key={label} className="rounded-xl border border-[rgba(0,255,136,0.2)] bg-[#0f1420] p-4">
                   <p className="mb-2 text-sm font-bold" style={{ color }}>
                     {label}
                   </p>
-                  <p className="text-xs leading-relaxed text-stone-600 whitespace-pre-wrap">
+                  <p className="text-xs leading-relaxed text-[#a0c0b0] whitespace-pre-wrap">
                     {value || "（未入力）"}
                   </p>
                 </div>
@@ -395,9 +395,9 @@ export default function Block8Page() {
             </div>
 
             {step6.ideal_loop && (
-              <div className="rounded-xl border border-community/20 bg-green-50/40 p-4">
-                <p className="mb-1 text-xs font-semibold text-community">理想のループ</p>
-                <p className="text-sm leading-relaxed text-stone-700 whitespace-pre-wrap">
+              <div className="rounded-xl border border-[#00ff88]/20 bg-[rgba(0,255,136,0.05)] p-4">
+                <p className="mb-1 text-xs font-semibold text-[#00ff88]">理想のループ</p>
+                <p className="text-sm leading-relaxed text-[#a0c0b0] whitespace-pre-wrap">
                   {step6.ideal_loop}
                 </p>
               </div>
@@ -405,9 +405,9 @@ export default function Block8Page() {
           </section>
 
           {/* ===== 5年間の移行計画 ===== */}
-          <section className="mb-6 rounded-2xl border border-stone-200 bg-white p-8 shadow-sm page-break">
-            <h2 className="mb-6 flex items-center gap-2 text-lg font-bold text-stone-800">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-community text-xs font-bold text-white">
+          <section className="mb-6 rounded-xl border border-[rgba(0,255,136,0.2)] bg-[#141a2a] p-8 shadow-sm page-break">
+            <h2 className="mb-6 flex items-center gap-2 text-lg font-bold text-[#e0f0e8]">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#00ff88] text-xs font-bold text-[#0a0e1a] font-bold">
                 4
               </span>
               5年間の移行計画
@@ -441,7 +441,7 @@ export default function Block8Page() {
                   {phases.map((p, i) => (
                     <div
                       key={p.phase_number}
-                      className="flex gap-4 rounded-xl border border-stone-100 p-5"
+                      className="flex gap-4 rounded-xl border border-[rgba(0,255,136,0.2)] p-5"
                     >
                       <div
                         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
@@ -451,21 +451,21 @@ export default function Block8Page() {
                       </div>
                       <div className="flex-1">
                         <div className="mb-2 flex items-baseline gap-2">
-                          <p className="font-semibold text-stone-800">{p.name}</p>
-                          <p className="text-xs text-stone-400">{p.duration_months}ヶ月</p>
+                          <p className="font-semibold text-[#e0f0e8]">{p.name}</p>
+                          <p className="text-xs text-[#708070]">{p.duration_months}ヶ月</p>
                         </div>
                         {p.key_actions.filter(Boolean).length > 0 && (
                           <ul className="mb-2 space-y-0.5">
                             {p.key_actions.filter(Boolean).map((a, j) => (
-                              <li key={j} className="flex items-start gap-1 text-sm text-stone-600">
-                                <span className="font-bold text-stone-300">{j + 1}.</span> {a}
+                              <li key={j} className="flex items-start gap-1 text-sm text-[#a0c0b0]">
+                                <span className="font-bold text-[#708070]">{j + 1}.</span> {a}
                               </li>
                             ))}
                           </ul>
                         )}
                         {p.success_definition && (
-                          <div className="rounded-lg bg-stone-50 px-3 py-2">
-                            <p className="text-xs text-stone-500">
+                          <div className="rounded-lg bg-[#0f1420] px-3 py-2">
+                            <p className="text-xs text-[#708070]">
                               <span className="font-medium">成功の定義：</span>
                               {p.success_definition}
                             </p>
@@ -477,23 +477,23 @@ export default function Block8Page() {
                 </div>
               </>
             ) : (
-              <p className="text-sm text-stone-400">（Block 7 で移行計画を入力してください）</p>
+              <p className="text-sm text-[#708070]">（Block 7 で移行計画を入力してください）</p>
             )}
 
             {/* 明日の第一歩 */}
             {firstStep && (
-              <div className="mt-6 rounded-xl border-2 border-community/40 bg-community/5 p-5">
-                <p className="mb-2 text-sm font-bold text-community">明日の第一歩</p>
-                <p className="leading-relaxed text-stone-800 whitespace-pre-wrap">{firstStep}</p>
+              <div className="mt-6 rounded-xl border-2 border-[#00ff88]/40 bg-[rgba(0,255,136,0.05)] p-5">
+                <p className="mb-2 text-sm font-bold text-[#00ff88]">明日の第一歩</p>
+                <p className="leading-relaxed text-[#e0f0e8] whitespace-pre-wrap">{firstStep}</p>
               </div>
             )}
           </section>
 
           {/* ===== ファシリテーターメッセージ ===== */}
-          <section className="mb-8 rounded-2xl border border-community/30 bg-white p-8 shadow-sm">
-            <h2 className="mb-6 text-lg font-bold text-stone-800">ファシリテーターより</h2>
+          <section className="mb-8 rounded-xl border border-[#00ff88]/30 bg-[#141a2a] p-8 shadow-sm">
+            <h2 className="mb-6 text-lg font-bold text-[#e0f0e8]">ファシリテーターより</h2>
 
-            <div className="space-y-4 leading-relaxed text-stone-700">
+            <div className="space-y-4 leading-relaxed text-[#a0c0b0]">
               <p>{mitchieMessage.name}、2日間のワークショップ、本当によく取り組まれました。</p>
 
               {step6.will && (
@@ -514,7 +514,7 @@ export default function Block8Page() {
                 </p>
               )}
 
-              <p className="mt-2 font-semibold text-community">
+              <p className="mt-2 font-semibold text-[#00ff88]">
                 この経営計画書が、あなたの羅針盤となることを願っています。
               </p>
             </div>
@@ -525,7 +525,7 @@ export default function Block8Page() {
             <button
               type="button"
               onClick={() => window.print()}
-              className="rounded-xl bg-community px-10 py-3 text-white transition hover:bg-community-light"
+              className="rounded-xl bg-[#00ff88] px-10 py-3 text-[#0a0e1a] font-bold transition hover:bg-[#00cc6a]"
             >
               印刷・PDF保存
             </button>

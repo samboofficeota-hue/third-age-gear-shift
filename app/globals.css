@@ -2,95 +2,90 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ─── Brand token (CSS変数) ─── */
-:root {
-  --community:         #2E9E5B;
-  --community-dark:    #1A6B3A;
-  --community-light:   #52C47A;
-  --community-lighter: #DCFCE7;
-}
-
-/* ─── ページ背景：薄オレンジ ─── */
+/* ─── ページ背景：ダーク + グリーングリッド ─── */
 body {
-  @apply bg-orange-50 text-stone-900 antialiased;
+  background-color: #0a0e1a;
+  background-image:
+    linear-gradient(rgba(0, 255, 136, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 136, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  color: #e0f0e8;
+  @apply antialiased;
 }
 
 @layer base {
   :root {
     /* ── Layout ── */
-    --background:          0 0% 100%;       /* カード・ポップオーバーは白 */
-    --foreground:          20 14.3% 4.1%;
+    --background:          228 46% 7%;      /* #0a0e1a ページ背景 */
+    --foreground:          150 25% 90%;     /* #e0f0e8 本文テキスト */
 
     /* ── Card / Popover ── */
-    --card:                0 0% 100%;
-    --card-foreground:     20 14.3% 4.1%;
-    --popover:             0 0% 100%;
-    --popover-foreground:  20 14.3% 4.1%;
+    --card:                225 35% 12%;     /* #141a2a カード背景 */
+    --card-foreground:     150 25% 90%;
+    --popover:             225 35% 12%;
+    --popover-foreground:  150 25% 90%;
 
-    /* ── Primary = Brand Green（進む・決定ボタン） ── */
-    --primary:             144 55% 40%;     /* #2E9E5B */
-    --primary-foreground:  0 0% 100%;       /* 白テキスト */
+    /* ── Primary = Neon Green ── */
+    --primary:             153 100% 50%;    /* #00ff88 */
+    --primary-foreground:  228 46% 7%;      /* #0a0e1a 背景色テキスト */
 
     /* ── Secondary / Muted ── */
-    --secondary:           30 33% 96%;      /* warm off-white */
-    --secondary-foreground: 24 9.8% 10%;
-    --muted:               30 20% 94%;
-    --muted-foreground:    25 5.3% 44.7%;
+    --secondary:           226 39% 9%;      /* #0f1420 パネル背景 */
+    --secondary-foreground: 150 18% 69%;   /* #a0c0b0 */
+    --muted:               226 39% 9%;
+    --muted-foreground:    120 6% 47%;      /* #708070 */
 
-    /* ── Accent（shadcn hover等） ── */
-    --accent:              25 95% 96%;      /* orange-50 tint */
-    --accent-foreground:   24 9.8% 10%;
+    /* ── Accent（hover tint） ── */
+    --accent:              153 35% 8%;      /* neon-green-subtle 近似 */
+    --accent-foreground:   153 100% 50%;    /* #00ff88 */
 
     /* ── Destructive ── */
     --destructive:         0 84.2% 60.2%;
-    --destructive-foreground: 60 9.1% 97.8%;
+    --destructive-foreground: 0 0% 100%;
 
     /* ── Border / Input / Ring ── */
-    --border:              25 30% 88%;      /* 薄オレンジ寄りのborder */
-    --input:               25 30% 88%;
-    --ring:                144 55% 40%;     /* フォーカスリング = green */
+    --border:              153 50% 11%;     /* rgba(0,255,136,0.2) 近似 */
+    --input:               153 50% 11%;
+    --ring:                153 100% 50%;    /* フォーカスリング = neon green */
 
     /* ── Chart（ワーク種別カラー） ─────────────────
        chart-1 : D. 学習   = orange  #F97316  hsl(25 95% 53%)
-       chart-2 : C. ギフト  = green   #2E9E5B  hsl(144 55% 40%)
+       chart-2 : C. ギフト  = neon    #00ff88  hsl(153 100% 50%)
        chart-3 : B. 家事   = blue    #3B82F6  hsl(217 91% 60%)
        chart-4 : A. 有償   = stone   #78716C  hsl(27 5% 45%)
        chart-5 : E. その他  = lt.stone #C4B5A5  hsl(30 18% 71%)
     ─────────────────────────────────────────────── */
     --chart-1: 25 95% 53%;
-    --chart-2: 144 55% 40%;
+    --chart-2: 153 100% 50%;
     --chart-3: 217 91% 60%;
     --chart-4: 27 5% 45%;
     --chart-5: 30 18% 71%;
 
     --radius: 0.5rem;
   }
+}
 
-  /* ── Dark mode（将来用・最小限） ── */
-  .dark {
-    --background:          20 14.3% 4.1%;
-    --foreground:          60 9.1% 97.8%;
-    --card:                20 14.3% 4.1%;
-    --card-foreground:     60 9.1% 97.8%;
-    --popover:             20 14.3% 4.1%;
-    --popover-foreground:  60 9.1% 97.8%;
-    --primary:             60 9.1% 97.8%;
-    --primary-foreground:  24 9.8% 10%;
-    --secondary:           12 6.5% 15.1%;
-    --secondary-foreground: 60 9.1% 97.8%;
-    --muted:               12 6.5% 15.1%;
-    --muted-foreground:    24 5.4% 63.9%;
-    --accent:              12 6.5% 15.1%;
-    --accent-foreground:   60 9.1% 97.8%;
-    --destructive:         0 62.8% 30.6%;
-    --destructive-foreground: 60 9.1% 97.8%;
-    --border:              12 6.5% 15.1%;
-    --input:               12 6.5% 15.1%;
-    --ring:                24 5.7% 82.9%;
-    --chart-1: 25 95% 53%;
-    --chart-2: 144 55% 40%;
-    --chart-3: 217 91% 60%;
-    --chart-4: 27 5% 45%;
-    --chart-5: 30 18% 71%;
+/* ─── グローアニメーション（ヒーロー背景用） ─── */
+@keyframes neon-pulse {
+  0%, 100% { opacity: 0.3; }
+  50%       { opacity: 0.6; }
+}
+
+@layer utilities {
+  .animate-neon-pulse {
+    animation: neon-pulse 4s ease-in-out infinite;
+  }
+
+  /* neon-green グロー影 */
+  .shadow-neon {
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.2), 0 8px 32px rgba(0, 0, 0, 0.4);
+  }
+  .shadow-neon-strong {
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.4), 0 8px 32px rgba(0, 0, 0, 0.4);
+  }
+
+  /* テキストグロー */
+  .text-glow-neon {
+    text-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
   }
 }

@@ -6,16 +6,26 @@ const config: Config = {
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./lib/**/*.{js,ts}",
   ],
   theme: {
   	extend: {
   		colors: {
-  			community: {
-  				DEFAULT: '#2E9E5B',  /* 進む・決定ボタン（旧lightを昇格） */
-  				dark:    '#1A6B3A',  /* hover / 強コントラスト用 */
-  				light:   '#52C47A',  /* ボタンhover（旧lighter） */
-  				lighter: '#DCFCE7',  /* calloutボックス背景tint */
+  			/* ── ブランドカラー（ネオングリーン × ダーク） ── */
+  			neon: {
+  				DEFAULT: '#00ff88',   /* メインアクセント */
+  				dim:     '#00cc6a',   /* hover / グラデ終端 */
   			},
+  			'bg-dark':  '#0a0e1a',    /* ページ背景 */
+  			'bg-panel': '#0f1420',    /* ナビ・テーブルヘッダー */
+  			'bg-card':  '#141a2a',    /* カード背景 */
+
+  			/* ── テキスト ── */
+  			'text-base':      '#e0f0e8',
+  			'text-secondary': '#a0c0b0',
+  			'text-muted-game': '#708070',
+
+  			/* ── shadcn/ui CSS変数 ── */
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {
@@ -60,6 +70,9 @@ const config: Config = {
   		fontFamily: {
   			sans: [
   				'var(--font-noto-sans-jp)',
+  				'-apple-system',
+  				'BlinkMacSystemFont',
+  				'Segoe UI',
   				'sans-serif'
   			]
   		},
@@ -67,6 +80,16 @@ const config: Config = {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
+  		},
+  		boxShadow: {
+  			'neon':        '0 0 20px rgba(0,255,136,0.2), 0 8px 32px rgba(0,0,0,0.4)',
+  			'neon-strong': '0 0 20px rgba(0,255,136,0.4), 0 8px 32px rgba(0,0,0,0.4)',
+  			'neon-glow':   '0 0 15px rgba(0,255,136,0.3)',
+  			'card-dark':   '0 8px 32px rgba(0,0,0,0.4)',
+  		},
+  		backgroundImage: {
+  			'neon-bar': 'linear-gradient(90deg, #00ff88, #00cc6a)',
+  			'neon-fade': 'linear-gradient(90deg, transparent, #00ff88, transparent)',
   		}
   	}
   },

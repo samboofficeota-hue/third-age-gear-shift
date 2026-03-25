@@ -108,16 +108,16 @@ export default function Block7Page() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-stone-500">読み込み中...</p>
+        <p className="text-[#708070]">読み込み中...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-stone-50 px-4 py-8 md:px-8">
+    <div className="min-h-screen px-4 py-8 md:px-8">
       <div className="mx-auto max-w-2xl">
-        <p className="mb-4 text-sm text-stone-500">
-          <Link href="/workshop/block-6" className="text-community hover:underline">
+        <p className="mb-4 text-sm text-[#708070]">
+          <Link href="/workshop/block-6" className="text-[#00ff88] hover:underline">
             ← Block 6
           </Link>
           {" · "}
@@ -126,15 +126,15 @@ export default function Block7Page() {
 
         {/* 7-A: 導入 */}
         {step === "intro" && (
-          <section className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-            <p className="mb-4 leading-relaxed text-stone-700">
+          <section className="rounded-xl border border-[rgba(0,255,136,0.2)] bg-[#141a2a] p-8 shadow-sm">
+            <p className="mb-4 leading-relaxed text-[#a0c0b0]">
               いよいよ最後のステップです。
             </p>
-            <p className="mb-6 leading-relaxed text-stone-700">
+            <p className="mb-6 leading-relaxed text-[#a0c0b0]">
               あなたには、これから<strong>30,000時間</strong>の移行原資があります。
               この時間をどう使うか、5年間（60ヶ月）の計画を3つのPhaseに分けて設計しましょう。
             </p>
-            <div className="mb-6 rounded-xl bg-stone-50 p-4">
+            <div className="mb-6 rounded-xl bg-[#0f1420] p-4">
               <div className="flex items-center gap-2">
                 {[1, 2, 3].map((n, i) => (
                   <div key={n} className="flex items-center gap-2">
@@ -144,18 +144,18 @@ export default function Block7Page() {
                     >
                       {n}
                     </div>
-                    <span className="text-sm text-stone-600">{["種まき期", "成長期", "展開期"][i]}</span>
-                    {n < 3 && <span className="text-stone-300">→</span>}
+                    <span className="text-sm text-[#a0c0b0]">{["種まき期", "成長期", "展開期"][i]}</span>
+                    {n < 3 && <span className="text-[#708070]">→</span>}
                   </div>
                 ))}
               </div>
-              <p className="mt-2 text-xs text-stone-400">合計60ヶ月（5年間）になるよう設計します</p>
+              <p className="mt-2 text-xs text-[#708070]">合計60ヶ月（5年間）になるよう設計します</p>
             </div>
             <div className="flex justify-center">
               <button
                 type="button"
                 onClick={() => setStep("phases")}
-                className="rounded-xl bg-community px-6 py-3 text-white transition hover:bg-community-light"
+                className="rounded-xl bg-[#00ff88] px-6 py-3 text-[#0a0e1a] font-bold transition hover:bg-[#00cc6a]"
               >
                 計画を立てる
               </button>
@@ -167,8 +167,8 @@ export default function Block7Page() {
         {step === "phases" && (
           <section className="space-y-4">
             {/* タイムライン */}
-            <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
-              <p className="mb-2 text-sm font-medium text-stone-600">タイムライン（合計 {totalMonths} ヶ月 / 60ヶ月）</p>
+            <div className="rounded-xl border border-[rgba(0,255,136,0.2)] bg-[#141a2a] p-4 shadow-sm">
+              <p className="mb-2 text-sm font-medium text-[#a0c0b0]">タイムライン（合計 {totalMonths} ヶ月 / 60ヶ月）</p>
               <div className="flex h-8 overflow-hidden rounded-lg">
                 {phases.map((p, i) => (
                   <div
@@ -185,7 +185,7 @@ export default function Block7Page() {
                 ))}
                 {totalMonths < 60 && (
                   <div
-                    className="flex items-center justify-center bg-stone-100 text-xs text-stone-400"
+                    className="flex items-center justify-center bg-[#0f1420] text-xs text-[#708070]"
                     style={{ width: `${((60 - totalMonths) / 60) * 100}%` }}
                   >
                     残{60 - totalMonths}ヶ月
@@ -205,7 +205,7 @@ export default function Block7Page() {
                   type="button"
                   onClick={() => setActivePhase(i)}
                   className={`flex-1 rounded-xl py-2 text-sm font-bold transition ${
-                    activePhase === i ? "text-white" : "bg-white text-stone-500 border border-stone-200"
+                    activePhase === i ? "text-white" : "bg-[#141a2a] text-[#708070] border border-[rgba(0,255,136,0.2)]"
                   }`}
                   style={activePhase === i ? { backgroundColor: PHASE_COLORS[i] } : {}}
                 >
@@ -217,7 +217,7 @@ export default function Block7Page() {
             {/* 選択中のPhase入力 */}
             {phases.map((p, i) => (
               <div key={p.phase_number} className={activePhase === i ? "block" : "hidden"}>
-                <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+                <div className="rounded-xl border border-[rgba(0,255,136,0.2)] bg-[#141a2a] p-6 shadow-sm">
                   <div
                     className="mb-4 h-1 w-12 rounded-full"
                     style={{ backgroundColor: PHASE_COLORS[i] }}
@@ -225,21 +225,21 @@ export default function Block7Page() {
                   <div className="space-y-5">
                     {/* Phaseの名前 */}
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-stone-700">
+                      <label className="mb-1 block text-sm font-medium text-[#a0c0b0]">
                         Phase {p.phase_number} の名前
                       </label>
                       <input
                         type="text"
                         value={p.name}
                         onChange={(e) => updatePhase(i, { name: e.target.value })}
-                        className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
+                        className="w-full rounded-lg border border-[rgba(0,255,136,0.2)] px-3 py-2 text-sm"
                         placeholder="例：種まき期、準備期、旅立ち期..."
                       />
                     </div>
 
                     {/* 期間 */}
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-stone-700">
+                      <label className="mb-1 block text-sm font-medium text-[#a0c0b0]">
                         期間：<strong>{p.duration_months} ヶ月</strong>
                       </label>
                       <input
@@ -249,16 +249,16 @@ export default function Block7Page() {
                         step={3}
                         value={p.duration_months}
                         onChange={(e) => updatePhase(i, { duration_months: Number(e.target.value) })}
-                        className="w-full accent-community"
+                        className="w-full accent-[#00ff88]"
                       />
-                      <div className="flex justify-between text-xs text-stone-400">
+                      <div className="flex justify-between text-xs text-[#708070]">
                         <span>3ヶ月</span><span>54ヶ月</span>
                       </div>
                     </div>
 
                     {/* 増やすワーク */}
                     <div>
-                      <label className="mb-2 block text-sm font-medium text-stone-700">
+                      <label className="mb-2 block text-sm font-medium text-[#a0c0b0]">
                         このPhaseで増やすワーク
                       </label>
                       <div className="flex flex-wrap gap-2">
@@ -270,7 +270,7 @@ export default function Block7Page() {
                             className={`rounded-full px-3 py-1 text-xs font-medium transition ${
                               p.increase_work.includes(w.id)
                                 ? "text-white"
-                                : "bg-stone-100 text-stone-500"
+                                : "bg-[#0f1420] text-[#708070]"
                             }`}
                             style={p.increase_work.includes(w.id) ? { backgroundColor: w.color } : {}}
                           >
@@ -282,7 +282,7 @@ export default function Block7Page() {
 
                     {/* 減らすワーク */}
                     <div>
-                      <label className="mb-2 block text-sm font-medium text-stone-700">
+                      <label className="mb-2 block text-sm font-medium text-[#a0c0b0]">
                         このPhaseで減らすワーク
                       </label>
                       <div className="flex flex-wrap gap-2">
@@ -294,7 +294,7 @@ export default function Block7Page() {
                             className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
                               p.decrease_work.includes(w.id)
                                 ? "border-rose-400 bg-rose-50 text-rose-600"
-                                : "border-stone-200 bg-white text-stone-500"
+                                : "border-[rgba(0,255,136,0.2)] bg-[#141a2a] text-[#708070]"
                             }`}
                           >
                             {w.label}
@@ -305,13 +305,13 @@ export default function Block7Page() {
 
                     {/* 最重要アクション */}
                     <div>
-                      <label className="mb-2 block text-sm font-medium text-stone-700">
+                      <label className="mb-2 block text-sm font-medium text-[#a0c0b0]">
                         最重要アクション（3つまで）
                       </label>
                       <div className="space-y-2">
                         {[0, 1, 2].map((j) => (
                           <div key={j} className="flex items-center gap-2">
-                            <span className="w-5 text-center text-xs font-bold text-stone-400">{j + 1}</span>
+                            <span className="w-5 text-center text-xs font-bold text-[#708070]">{j + 1}</span>
                             <input
                               type="text"
                               value={p.key_actions[j] ?? ""}
@@ -320,7 +320,7 @@ export default function Block7Page() {
                                 actions[j] = e.target.value;
                                 updatePhase(i, { key_actions: actions });
                               }}
-                              className="flex-1 rounded-lg border border-stone-300 px-3 py-2 text-sm"
+                              className="flex-1 rounded-lg border border-[rgba(0,255,136,0.2)] px-3 py-2 text-sm"
                               placeholder={`アクション ${j + 1}`}
                             />
                           </div>
@@ -330,14 +330,14 @@ export default function Block7Page() {
 
                     {/* 成功の定義 */}
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-stone-700">
+                      <label className="mb-1 block text-sm font-medium text-[#a0c0b0]">
                         このPhaseの成功の定義
                       </label>
                       <textarea
                         rows={2}
                         value={p.success_definition}
                         onChange={(e) => updatePhase(i, { success_definition: e.target.value })}
-                        className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
+                        className="w-full rounded-lg border border-[rgba(0,255,136,0.2)] px-3 py-2 text-sm"
                         placeholder="どうなったらこのPhaseが成功といえますか？"
                       />
                     </div>
@@ -347,12 +347,12 @@ export default function Block7Page() {
                 {/* Phase切り替えボタン */}
                 <div className="flex justify-between">
                   {i > 0 ? (
-                    <button type="button" onClick={() => setActivePhase(i - 1)} className="rounded-xl border border-stone-300 px-4 py-2 text-sm text-stone-600">
+                    <button type="button" onClick={() => setActivePhase(i - 1)} className="rounded-xl border border-[rgba(0,255,136,0.2)] px-4 py-2 text-sm text-[#a0c0b0]">
                       ← Phase {p.phase_number - 1}
                     </button>
                   ) : <div />}
                   {i < 2 ? (
-                    <button type="button" onClick={() => setActivePhase(i + 1)} className="rounded-xl border border-stone-300 px-4 py-2 text-sm text-stone-600">
+                    <button type="button" onClick={() => setActivePhase(i + 1)} className="rounded-xl border border-[rgba(0,255,136,0.2)] px-4 py-2 text-sm text-[#a0c0b0]">
                       Phase {p.phase_number + 1} →
                     </button>
                   ) : <div />}
@@ -362,14 +362,14 @@ export default function Block7Page() {
 
             {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
             <div className="flex justify-end gap-3">
-              <button type="button" onClick={() => setStep("intro")} className="rounded-xl border border-stone-300 px-4 py-2 text-stone-600">
+              <button type="button" onClick={() => setStep("intro")} className="rounded-xl border border-[rgba(0,255,136,0.2)] px-4 py-2 text-[#a0c0b0]">
                 戻る
               </button>
               <button
                 type="button"
                 onClick={handlePhasesNext}
                 disabled={saving || totalMonths > 60}
-                className="rounded-xl bg-community px-6 py-2 text-white disabled:opacity-40"
+                className="rounded-xl bg-[#00ff88] px-6 py-2 text-[#0a0e1a] font-bold disabled:opacity-40"
               >
                 {saving ? "保存中..." : "完成させる"}
               </button>
@@ -379,13 +379,13 @@ export default function Block7Page() {
 
         {/* 7-D: 最終コメント + 第一歩 */}
         {step === "final" && (
-          <section className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-            <h2 className="mb-6 text-lg font-bold text-stone-800">移行計画の完成</h2>
+          <section className="rounded-xl border border-[rgba(0,255,136,0.2)] bg-[#141a2a] p-8 shadow-sm">
+            <h2 className="mb-6 text-lg font-bold text-[#e0f0e8]">移行計画の完成</h2>
 
             {/* Phase サマリー */}
             <div className="mb-6 space-y-3">
               {phases.map((p, i) => (
-                <div key={p.phase_number} className="flex items-start gap-3 rounded-xl border border-stone-200 p-4">
+                <div key={p.phase_number} className="flex items-start gap-3 rounded-xl border border-[rgba(0,255,136,0.2)] p-4">
                   <div
                     className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
                     style={{ backgroundColor: PHASE_COLORS[i] }}
@@ -393,12 +393,12 @@ export default function Block7Page() {
                     {p.phase_number}
                   </div>
                   <div className="flex-1">
-                    <p className="font-medium text-stone-800">{p.name}</p>
-                    <p className="text-xs text-stone-500">{p.duration_months} ヶ月</p>
+                    <p className="font-medium text-[#e0f0e8]">{p.name}</p>
+                    <p className="text-xs text-[#708070]">{p.duration_months} ヶ月</p>
                     {p.key_actions.filter(Boolean).length > 0 && (
                       <ul className="mt-1 space-y-0.5">
                         {p.key_actions.filter(Boolean).map((a, j) => (
-                          <li key={j} className="text-xs text-stone-600">• {a}</li>
+                          <li key={j} className="text-xs text-[#a0c0b0]">• {a}</li>
                         ))}
                       </ul>
                     )}
@@ -407,38 +407,38 @@ export default function Block7Page() {
               ))}
             </div>
 
-            <div className="mb-6 rounded-xl border border-community/30 bg-green-50/40 p-5">
-              <p className="leading-relaxed text-stone-700">
+            <div className="mb-6 rounded-xl border border-[#00ff88]/30 bg-[rgba(0,255,136,0.05)] p-5">
+              <p className="leading-relaxed text-[#a0c0b0]">
                 移行計画が完成しました。{phases[0].name}・{phases[1].name}・{phases[2].name}という3つのPhaseで、着実に理想のポートフォリオへ近づいていけます。
               </p>
-              <p className="mt-2 leading-relaxed text-stone-700">
+              <p className="mt-2 leading-relaxed text-[#a0c0b0]">
                 最後にひとつ教えてください——
               </p>
             </div>
 
             <div className="mb-6">
-              <label className="mb-1 block text-sm font-medium text-stone-700">
+              <label className="mb-1 block text-sm font-medium text-[#a0c0b0]">
                 Phase 1 の最初の一歩として、<strong>明日からできること</strong>は何ですか？
               </label>
               <textarea
                 rows={3}
                 value={firstStep}
                 onChange={(e) => setFirstStep(e.target.value)}
-                className="w-full rounded-lg border border-stone-300 px-3 py-2"
+                className="w-full rounded-lg border border-[rgba(0,255,136,0.2)] px-3 py-2"
                 placeholder="小さくてもOKです。明日の自分が実際にできることを書いてください。"
               />
             </div>
 
             {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
             <div className="flex justify-end gap-3">
-              <button type="button" onClick={() => setStep("phases")} className="rounded-xl border border-stone-300 px-4 py-2 text-stone-600">
+              <button type="button" onClick={() => setStep("phases")} className="rounded-xl border border-[rgba(0,255,136,0.2)] px-4 py-2 text-[#a0c0b0]">
                 戻る
               </button>
               <button
                 type="button"
                 onClick={handleFinish}
                 disabled={saving}
-                className="rounded-xl bg-community px-6 py-3 text-white transition hover:bg-community-light disabled:opacity-60"
+                className="rounded-xl bg-[#00ff88] px-6 py-3 text-[#0a0e1a] font-bold transition hover:bg-[#00cc6a] disabled:opacity-60"
               >
                 {saving ? "保存中..." : "経営計画書を作成する"}
               </button>

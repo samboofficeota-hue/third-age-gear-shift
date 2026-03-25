@@ -70,16 +70,16 @@ function RegisterForm() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-stone-50 px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center px-4">
       <div className="mb-8 text-center">
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-2xl text-primary-foreground shadow-md">
           ⚙️
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-stone-900">
-          サードエイジへのギア・シフト
+        <h1 className="text-2xl font-bold tracking-tight text-[#e0f0e8]">
+          サードエイジ じぶん戦略講座
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          ミドルシニア向け 2日間ワークショップ
+          ミドルシニア社員向け　キャリア戦略プログラム
         </p>
       </div>
 

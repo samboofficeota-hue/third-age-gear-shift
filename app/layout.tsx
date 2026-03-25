@@ -8,8 +8,8 @@ const notoSansJP = Noto_Sans_JP({
 });
 
 export const metadata: Metadata = {
-  title: "サードエイジへのギア・シフト",
-  description: "ミドルシニア向けキャリア研修",
+  title: "サードエイジ じぶん戦略講座",
+  description: "ミドルシニア社員向け　キャリア戦略プログラム",
 };
 
 export default function RootLayout({

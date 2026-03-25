@@ -84,16 +84,16 @@ export default function Block6Page() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-stone-500">読み込み中...</p>
+        <p className="text-[#708070]">読み込み中...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-stone-50 px-4 py-8 md:px-8">
+    <div className="min-h-screen px-4 py-8 md:px-8">
       <div className="mx-auto max-w-2xl">
-        <p className="mb-4 text-sm text-stone-500">
-          <Link href="/workshop/block-5" className="text-community hover:underline">
+        <p className="mb-4 text-sm text-[#708070]">
+          <Link href="/workshop/block-5" className="text-[#00ff88] hover:underline">
             ← Block 5
           </Link>
           {" · "}
@@ -102,14 +102,14 @@ export default function Block6Page() {
 
         {/* 6-A: 導入 */}
         {step === "intro" && (
-          <section className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-            <p className="mb-4 leading-relaxed text-stone-700">
+          <section className="rounded-xl border border-[rgba(0,255,136,0.2)] bg-[#141a2a] p-8 shadow-sm">
+            <p className="mb-4 leading-relaxed text-[#a0c0b0]">
               資本の現状が見えましたね。次は、その資本をどう循環させるかを設計します。
             </p>
-            <p className="mb-6 leading-relaxed text-stone-700">
+            <p className="mb-6 leading-relaxed text-[#a0c0b0]">
               まず「Will（やりたいこと）・Must（やらなければならないこと）・Can（できること）」の3つを整理しましょう。この3つが重なるところに、あなたの「強み×貢献」があります。
             </p>
-            <div className="mb-6 rounded-xl border border-stone-200 bg-stone-50 p-4">
+            <div className="mb-6 rounded-xl border border-[rgba(0,255,136,0.2)] bg-[#0f1420] p-4">
               <div className="flex justify-around gap-2 text-center">
                 {[
                   { label: "Will", desc: "やりたいこと", color: "#F97316" },           // orange
@@ -123,7 +123,7 @@ export default function Block6Page() {
                     >
                       {item.label}
                     </div>
-                    <p className="whitespace-pre-line text-xs text-stone-500">{item.desc}</p>
+                    <p className="whitespace-pre-line text-xs text-[#708070]">{item.desc}</p>
                   </div>
                 ))}
               </div>
@@ -132,7 +132,7 @@ export default function Block6Page() {
               <button
                 type="button"
                 onClick={() => setStep("will_must_can")}
-                className="rounded-xl bg-community px-6 py-3 text-white transition hover:bg-community-light"
+                className="rounded-xl bg-[#00ff88] px-6 py-3 text-[#0a0e1a] font-bold transition hover:bg-[#00cc6a]"
               >
                 整理を始める
               </button>
@@ -142,16 +142,16 @@ export default function Block6Page() {
 
         {/* 6-B: Will / Must / Can 入力 */}
         {step === "will_must_can" && (
-          <section className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-            <h2 className="mb-2 text-lg font-bold text-stone-800">Will / Must / Can の整理</h2>
-            <p className="mb-6 text-sm text-stone-500">10年後に向けた、あなた自身の軸を言語化してください。</p>
+          <section className="rounded-xl border border-[rgba(0,255,136,0.2)] bg-[#141a2a] p-8 shadow-sm">
+            <h2 className="mb-2 text-lg font-bold text-[#e0f0e8]">Will / Must / Can の整理</h2>
+            <p className="mb-6 text-sm text-[#708070]">10年後に向けた、あなた自身の軸を言語化してください。</p>
 
             <div className="space-y-5">
               <div>
                 <label className="mb-1 block text-sm font-bold text-amber-700">
                   Will — やりたいこと
                 </label>
-                <p className="mb-2 text-xs text-stone-400">10年後に向けて、本当にやりたいことは？</p>
+                <p className="mb-2 text-xs text-[#708070]">10年後に向けて、本当にやりたいことは？</p>
                 <textarea
                   rows={3}
                   value={data.will}
@@ -165,7 +165,7 @@ export default function Block6Page() {
                 <label className="mb-1 block text-sm font-bold text-rose-700">
                   Must — やらなければならないこと
                 </label>
-                <p className="mb-2 text-xs text-stone-400">今の状況で外せない責任・義務は？</p>
+                <p className="mb-2 text-xs text-[#708070]">今の状況で外せない責任・義務は？</p>
                 <textarea
                   rows={3}
                   value={data.must}
@@ -179,7 +179,7 @@ export default function Block6Page() {
                 <label className="mb-1 block text-sm font-bold text-blue-700">
                   Can — できること・できるようになりたいこと
                 </label>
-                <p className="mb-2 text-xs text-stone-400">自分の強み、これから身につけたい能力は？</p>
+                <p className="mb-2 text-xs text-[#708070]">自分の強み、これから身につけたい能力は？</p>
                 <textarea
                   rows={3}
                   value={data.can}
@@ -192,14 +192,14 @@ export default function Block6Page() {
 
             {error && <p className="mt-4 text-sm text-red-600" role="alert">{error}</p>}
             <div className="mt-8 flex justify-end gap-3">
-              <button type="button" onClick={() => setStep("intro")} className="rounded-xl border border-stone-300 px-4 py-2 text-stone-600">
+              <button type="button" onClick={() => setStep("intro")} className="rounded-xl border border-[rgba(0,255,136,0.2)] px-4 py-2 text-[#a0c0b0]">
                 戻る
               </button>
               <button
                 type="button"
                 onClick={handleWillMustCanNext}
                 disabled={saving}
-                className="rounded-xl bg-community px-6 py-2 text-white disabled:opacity-60"
+                className="rounded-xl bg-[#00ff88] px-6 py-2 text-[#0a0e1a] font-bold disabled:opacity-60"
               >
                 {saving ? "保存中..." : "次へ"}
               </button>
@@ -209,48 +209,48 @@ export default function Block6Page() {
 
         {/* 6-C: ループ構造の記述 */}
         {step === "loop" && (
-          <section className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-            <h2 className="mb-2 text-lg font-bold text-stone-800">資本の循環を描く</h2>
-            <p className="mb-6 text-sm text-stone-500">
+          <section className="rounded-xl border border-[rgba(0,255,136,0.2)] bg-[#141a2a] p-8 shadow-sm">
+            <h2 className="mb-2 text-lg font-bold text-[#e0f0e8]">資本の循環を描く</h2>
+            <p className="mb-6 text-sm text-[#708070]">
               あなたのワークと資本の流れを言葉で表現しましょう。「〇〇をすることで、□□が増え、それが△△につながる」という形で書いてみてください。
             </p>
 
             <div className="space-y-5">
               <div>
-                <label className="mb-1 block text-sm font-medium text-stone-700">
+                <label className="mb-1 block text-sm font-medium text-[#a0c0b0]">
                   今のあなたの資本の循環（現状のループ）
                 </label>
-                <p className="mb-2 text-xs text-stone-400">
+                <p className="mb-2 text-xs text-[#708070]">
                   例：「有償ワークで収入を得る → 生活を維持 → 学習に時間を使えない → 人的資本が伸びにくい」
                 </p>
                 <textarea
                   rows={4}
                   value={data.loop_description}
                   onChange={(e) => setData((d) => ({ ...d, loop_description: e.target.value }))}
-                  className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-[rgba(0,255,136,0.2)] px-3 py-2 text-sm"
                   placeholder="現状の資本の流れを自由に書いてください..."
                 />
               </div>
 
-              <div className="rounded-lg border border-community/30 bg-green-50/40 p-4">
-                <p className="text-sm text-stone-700">
+              <div className="rounded-lg border border-[#00ff88]/30 bg-[rgba(0,255,136,0.05)] p-4">
+                <p className="text-sm text-[#a0c0b0]">
                   今の循環に気づけましたか？ 次は、10年後に向けた「理想のループ」を描きましょう。
                   学習ワークが人的資本を増やし、それがギフトワークにつながり、社会資本が育つ——そんな好循環を目指しましょう。
                 </p>
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-stone-700">
+                <label className="mb-1 block text-sm font-medium text-[#a0c0b0]">
                   10年後の理想の循環（目指すループ）
                 </label>
-                <p className="mb-2 text-xs text-stone-400">
+                <p className="mb-2 text-xs text-[#708070]">
                   例：「学習ワークで専門性を高める → 社外でのつながりが増える → ギフトワークの機会が生まれる → 社会資本が育つ → さらに学習の動機が高まる」
                 </p>
                 <textarea
                   rows={4}
                   value={data.ideal_loop}
                   onChange={(e) => setData((d) => ({ ...d, ideal_loop: e.target.value }))}
-                  className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-[rgba(0,255,136,0.2)] px-3 py-2 text-sm"
                   placeholder="10年後に実現したい資本の流れを自由に書いてください..."
                 />
               </div>
@@ -258,14 +258,14 @@ export default function Block6Page() {
 
             {error && <p className="mt-4 text-sm text-red-600" role="alert">{error}</p>}
             <div className="mt-8 flex justify-end gap-3">
-              <button type="button" onClick={() => setStep("will_must_can")} className="rounded-xl border border-stone-300 px-4 py-2 text-stone-600">
+              <button type="button" onClick={() => setStep("will_must_can")} className="rounded-xl border border-[rgba(0,255,136,0.2)] px-4 py-2 text-[#a0c0b0]">
                 戻る
               </button>
               <button
                 type="button"
                 onClick={handleLoopNext}
                 disabled={saving}
-                className="rounded-xl bg-community px-6 py-2 text-white disabled:opacity-60"
+                className="rounded-xl bg-[#00ff88] px-6 py-2 text-[#0a0e1a] font-bold disabled:opacity-60"
               >
                 {saving ? "保存中..." : "確認する"}
               </button>
@@ -275,8 +275,8 @@ export default function Block6Page() {
 
         {/* 6-D: 確認 + ミッチーコメント */}
         {step === "done" && (
-          <section className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-            <h2 className="mb-6 text-lg font-bold text-stone-800">Will / Must / Can と循環の確認</h2>
+          <section className="rounded-xl border border-[rgba(0,255,136,0.2)] bg-[#141a2a] p-8 shadow-sm">
+            <h2 className="mb-6 text-lg font-bold text-[#e0f0e8]">Will / Must / Can と循環の確認</h2>
 
             <div className="mb-6 space-y-4">
               {[
@@ -284,32 +284,32 @@ export default function Block6Page() {
                 { label: "Must", color: "#e11d48", value: data.must },  // rose
                 { label: "Can", color: "#3B82F6", value: data.can },    // blue
               ].map(({ label, color, value }) => (
-                <div key={label} className="rounded-lg border border-stone-200 p-4">
+                <div key={label} className="rounded-lg border border-[rgba(0,255,136,0.2)] p-4">
                   <p className="mb-1 text-xs font-bold" style={{ color }}>{label}</p>
-                  <p className="text-sm text-stone-700 whitespace-pre-wrap">{value || "（未入力）"}</p>
+                  <p className="text-sm text-[#a0c0b0] whitespace-pre-wrap">{value || "（未入力）"}</p>
                 </div>
               ))}
-              <div className="rounded-lg border border-stone-200 p-4">
-                <p className="mb-1 text-xs font-bold text-stone-500">理想のループ</p>
-                <p className="text-sm text-stone-700 whitespace-pre-wrap">{data.ideal_loop || "（未入力）"}</p>
+              <div className="rounded-lg border border-[rgba(0,255,136,0.2)] p-4">
+                <p className="mb-1 text-xs font-bold text-[#708070]">理想のループ</p>
+                <p className="text-sm text-[#a0c0b0] whitespace-pre-wrap">{data.ideal_loop || "（未入力）"}</p>
               </div>
             </div>
 
-            <div className="mb-6 rounded-xl border border-community/30 bg-green-50/40 p-5">
-              <p className="leading-relaxed text-stone-700">
+            <div className="mb-6 rounded-xl border border-[#00ff88]/30 bg-[rgba(0,255,136,0.05)] p-5">
+              <p className="leading-relaxed text-[#a0c0b0]">
                 素晴らしいビジョンですね。では、そこに向けてPhaseを設計しましょう。
                 次のステップでは、5年間の移行計画を具体的に描いていきます。
               </p>
             </div>
 
             <div className="flex justify-end gap-3">
-              <button type="button" onClick={() => setStep("loop")} className="rounded-xl border border-stone-300 px-4 py-2 text-stone-600">
+              <button type="button" onClick={() => setStep("loop")} className="rounded-xl border border-[rgba(0,255,136,0.2)] px-4 py-2 text-[#a0c0b0]">
                 戻る
               </button>
               <button
                 type="button"
                 onClick={handleToBlock7}
-                className="rounded-xl bg-community px-6 py-3 text-white transition hover:bg-community-light"
+                className="rounded-xl bg-[#00ff88] px-6 py-3 text-[#0a0e1a] font-bold transition hover:bg-[#00cc6a]"
               >
                 STEP 7 へ進む
               </button>

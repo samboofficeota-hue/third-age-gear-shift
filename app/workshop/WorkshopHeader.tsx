@@ -20,19 +20,19 @@ export function WorkshopHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-10 border-b border-stone-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+    <header className="sticky top-0 z-10 border-b border-[rgba(0,255,136,0.2)] bg-[#0a0e1a]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0a0e1a]/80">
       <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4 md:px-8">
         <Link
           href="/workshop/block-0"
-          className="text-sm font-medium text-stone-700 hover:text-stone-900"
+          className="text-sm font-medium text-[#a0c0b0] hover:text-[#00ff88]"
         >
-          サードエイジへのギア・シフト
+          サードエイジ じぶん戦略講座
         </Link>
         <button
           type="button"
           onClick={handleLogout}
           disabled={loggingOut}
-          className="rounded-lg px-3 py-1.5 text-sm text-stone-600 transition hover:bg-stone-100 hover:text-stone-800 disabled:opacity-60"
+          className="rounded-lg px-3 py-1.5 text-sm text-[#a0c0b0] transition hover:bg-[#0f1420] hover:text-[#e0f0e8] disabled:opacity-60"
         >
           {loggingOut ? "ログアウト中..." : "ログアウト"}
         </button>

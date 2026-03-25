@@ -128,16 +128,16 @@ export default function Block4Page() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-stone-500">読み込み中...</p>
+        <p className="text-[#708070]">読み込み中...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-stone-50 px-4 py-8 md:px-8">
+    <div className="min-h-screen px-4 py-8 md:px-8">
       <div className="mx-auto max-w-2xl">
-        <p className="mb-4 text-sm text-stone-500">
-          <Link href="/workshop/block-3" className="text-community hover:underline">
+        <p className="mb-4 text-sm text-[#708070]">
+          <Link href="/workshop/block-3" className="text-[#00ff88] hover:underline">
             ← Block 3
           </Link>
           {" · "}
@@ -145,29 +145,29 @@ export default function Block4Page() {
         </p>
 
         {/* 4-A: 比較ダッシュボード */}
-        <section className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-          <h1 className="mb-6 text-xl font-bold text-stone-800">DAY 1 まとめ</h1>
+        <section className="rounded-xl border border-[rgba(0,255,136,0.2)] bg-[#141a2a] p-8 shadow-sm">
+          <h1 className="mb-6 text-xl font-bold text-[#e0f0e8]">DAY 1 まとめ</h1>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-stone-200">
-                  <th className="pb-2 text-left font-medium text-stone-600">項目</th>
-                  <th className="pb-2 text-right font-medium text-stone-600">As-Is（現在）</th>
-                  <th className="pb-2 text-right font-medium text-stone-600">To-Be（10年後）</th>
-                  <th className="pb-2 text-right font-medium text-stone-600">Δ変化</th>
+                <tr className="border-b border-[rgba(0,255,136,0.2)]">
+                  <th className="pb-2 text-left font-medium text-[#a0c0b0]">項目</th>
+                  <th className="pb-2 text-right font-medium text-[#a0c0b0]">As-Is（現在）</th>
+                  <th className="pb-2 text-right font-medium text-[#a0c0b0]">To-Be（10年後）</th>
+                  <th className="pb-2 text-right font-medium text-[#a0c0b0]">Δ変化</th>
                 </tr>
               </thead>
               <tbody>
                 {tableRows.map((row) => (
-                  <tr key={row.label} className="border-b border-stone-100">
-                    <td className="py-2 text-stone-800">{row.label}</td>
-                    <td className="py-2 text-right text-stone-600">
+                  <tr key={row.label} className="border-b border-[rgba(0,255,136,0.1)]">
+                    <td className="py-2 text-[#e0f0e8]">{row.label}</td>
+                    <td className="py-2 text-right text-[#a0c0b0]">
                       {row.asIsHours} 時間（{row.asIsPct}%）
                     </td>
-                    <td className="py-2 text-right text-stone-600">
+                    <td className="py-2 text-right text-[#a0c0b0]">
                       {row.toBeHours} 時間（{row.toBePct}%）
                     </td>
-                    <td className={`py-2 text-right font-medium ${row.delta >= 0 ? "text-community" : "text-stone-700"}`}>
+                    <td className={`py-2 text-right font-medium ${row.delta >= 0 ? "text-[#00ff88]" : "text-[#a0c0b0]"}`}>
                       {row.delta >= 0 ? "+" : ""}{row.delta} 時間
                     </td>
                   </tr>
@@ -175,13 +175,13 @@ export default function Block4Page() {
               </tbody>
             </table>
           </div>
-          <p className="mt-4 rounded-lg bg-community-lighter/20 px-3 py-2 text-sm text-stone-700">
+          <p className="mt-4 rounded-lg bg-[rgba(0,255,136,0.1)] px-3 py-2 text-sm text-[#a0c0b0]">
             <strong>投資時間（D+C）の変化：</strong> {investmentDelta >= 0 ? "+" : ""}{investmentDelta} 時間
           </p>
 
           {/* 4-B: コメント */}
-          <div className="mt-8 rounded-xl border border-stone-100 bg-stone-50/50 p-6">
-            <p className="leading-relaxed text-stone-700">
+          <div className="mt-8 rounded-xl border border-[rgba(0,255,136,0.2)] bg-[#0f1420] p-6">
+            <p className="leading-relaxed text-[#a0c0b0]">
               10年後、学習とギフトに今より{" "}
               <strong>{investmentDelta >= 0 ? "+" : ""}{investmentDelta} 時間</strong>{" "}
               多く投資することを選びましたね。それはどんな未来につながると思いますか？ DAY 2 では、4つの資本とその循環を一緒に見ていきましょう。
@@ -197,14 +197,14 @@ export default function Block4Page() {
               type="button"
               onClick={saveStep4}
               disabled={saving}
-              className="rounded-xl border border-stone-300 px-4 py-2 text-stone-600 disabled:opacity-60"
+              className="rounded-xl border border-[rgba(0,255,136,0.2)] px-4 py-2 text-[#a0c0b0] disabled:opacity-60"
             >
               {saving ? "保存中..." : "ここまでを保存する"}
             </button>
             <button
               type="button"
               onClick={handleDay2}
-              className="rounded-xl bg-community px-6 py-3 text-white transition hover:bg-community-light"
+              className="rounded-xl bg-[#00ff88] px-6 py-3 text-[#0a0e1a] font-bold transition hover:bg-[#00cc6a]"
             >
               DAY 2 へ進む
             </button>

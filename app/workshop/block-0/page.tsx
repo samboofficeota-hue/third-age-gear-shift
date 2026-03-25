@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 
 const AGE_OPTIONS = [
-  { value: "40s", label: "40代" },
-  { value: "50s", label: "50代" },
-  { value: "60s", label: "60代前半" },
+  { value: "40s_early", label: "40代前半" },
+  { value: "40s_late",  label: "40代後半" },
+  { value: "50s_early", label: "50代前半" },
+  { value: "50s_late",  label: "50代後半" },
+  { value: "60s_early", label: "60代前半" },
 ] as const;
 
 const FEELING_OPTIONS = [
@@ -13,6 +15,7 @@ const FEELING_OPTIONS = [
   { value: "期待", label: "期待" },
   { value: "面倒くさい", label: "面倒くさい" },
   { value: "ワクワク", label: "ワクワク" },
+  { value: "眠い", label: "眠い" },
   { value: "よくわからない", label: "よくわからない" },
 ] as const;
 
@@ -110,7 +113,7 @@ export default function Block0Page() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-stone-500">読み込み中...</p>
+        <p className="text-[#708070]">読み込み中...</p>
       </div>
     );
   }
@@ -124,26 +127,31 @@ export default function Block0Page() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50 px-4 py-8 md:px-8">
+    <div className="min-h-screen px-4 py-8 md:px-8">
       <div className="mx-auto max-w-2xl">
         {/* 0-B: ウェルカム */}
         {step === "welcome" && (
-          <section className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-            <h1 className="mb-4 text-xl font-bold text-stone-800">
-              ようこそ
-            </h1>
-            <p className="mb-6 leading-relaxed text-stone-700">
-              これから2日間、あなたの「次の30年」を一緒に設計していきます。
-              まず、お名前を教えていただけますか？
+          <section className="rounded-xl border border-[rgba(0,255,136,0.2)] bg-[#141a2a] p-8 shadow-sm">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-[#00ff88]">
+              ミドルシニア社員向け　キャリア戦略プログラム
             </p>
-            <p className="mb-8 text-center text-sm text-stone-500">
+            <h1 className="mb-4 text-2xl font-bold text-[#e0f0e8]">
+              サードエイジ じぶん戦略講座
+            </h1>
+            <p className="mb-6 leading-relaxed text-[#a0c0b0]">
+              このままでいたい気持ちと、これからは変わりたいという気持ち。<br />
+              その交差点に立つ今のミドルシニアの地図は、誰が持っているのか？<br />
+              義務と責任のセカンドエイジを越え、自己実現のサードエイジへ──<br />
+              次の30年に向けた「じぶん戦略」を、自身の手で描く2日間の講座です。
+            </p>
+            <p className="mb-8 text-center text-sm text-[#708070]">
               （次の画面でプロフィールを入力します）
             </p>
             <div className="flex justify-center">
               <button
                 type="button"
                 onClick={handleStart}
-                className="rounded-xl bg-community px-6 py-3 text-white transition hover:bg-community-light"
+                className="rounded-xl bg-[#00ff88] px-6 py-3 text-[#0a0e1a] font-bold transition hover:bg-[#00cc6a]"
               >
                 はじめましょう
               </button>
@@ -153,13 +161,13 @@ export default function Block0Page() {
 
         {/* 0-C: プロフィール入力 */}
         {step === "profile" && (
-          <section className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-            <h2 className="mb-6 text-lg font-bold text-stone-800">
+          <section className="rounded-xl border border-[rgba(0,255,136,0.2)] bg-[#141a2a] p-8 shadow-sm">
+            <h2 className="mb-6 text-lg font-bold text-[#e0f0e8]">
               プロフィール
             </h2>
             <form onSubmit={handleSubmitProfile} className="space-y-6">
               <div>
-                <label className="mb-1 block text-sm font-medium text-stone-600">
+                <label className="mb-1 block text-sm font-medium text-[#a0c0b0]">
                   お名前（呼び方）
                 </label>
                 <input
@@ -168,13 +176,13 @@ export default function Block0Page() {
                   onChange={(e) =>
                     setProfile((p) => ({ ...p, name: e.target.value }))
                   }
-                  className="w-full rounded-lg border border-stone-300 px-3 py-2"
+                  className="w-full rounded-lg border border-[rgba(0,255,136,0.2)] bg-[#0f1420] px-3 py-2 text-[#e0f0e8] placeholder:text-[#708070] leading-[1.7]"
                   placeholder="ニックネームでもOK"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-stone-600">
-                  年齢
+                <label className="mb-1 block text-sm font-medium text-[#a0c0b0]">
+                  年代
                 </label>
                 <select
                   value={profile.age_group ?? ""}
@@ -184,18 +192,18 @@ export default function Block0Page() {
                       age_group: e.target.value || undefined,
                     }))
                   }
-                  className="w-full rounded-lg border border-stone-300 px-3 py-2"
+                  className="w-full rounded-lg border border-[rgba(0,255,136,0.2)] bg-[#0f1420] px-3 py-2 text-[#e0f0e8] leading-[1.7]"
                 >
-                  <option value="">選択してください</option>
+                  <option value="" className="bg-[#0f1420] text-[#708070]">選択してください</option>
                   {AGE_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>
+                    <option key={o.value} value={o.value} className="bg-[#0f1420] text-[#e0f0e8]">
                       {o.label}
                     </option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-stone-600">
+                <label className="mb-1 block text-sm font-medium text-[#a0c0b0]">
                   現在の職種・役割
                 </label>
                 <input
@@ -204,12 +212,12 @@ export default function Block0Page() {
                   onChange={(e) =>
                     setProfile((p) => ({ ...p, role: e.target.value }))
                   }
-                  className="w-full rounded-lg border border-stone-300 px-3 py-2"
+                  className="w-full rounded-lg border border-[rgba(0,255,136,0.2)] bg-[#0f1420] px-3 py-2 text-[#e0f0e8] placeholder:text-[#708070] leading-[1.7]"
                   placeholder="自由記入"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-stone-600">
+                <label className="mb-1 block text-sm font-medium text-[#a0c0b0]">
                   会社員歴（年）
                 </label>
                 <input
@@ -224,12 +232,12 @@ export default function Block0Page() {
                       years_of_service: v === "" ? undefined : parseInt(v, 10),
                     }));
                   }}
-                  className="w-full rounded-lg border border-stone-300 px-3 py-2"
+                  className="w-full rounded-lg border border-[rgba(0,255,136,0.2)] bg-[#0f1420] px-3 py-2 text-[#e0f0e8] placeholder:text-[#708070] leading-[1.7]"
                   placeholder="勤続年数"
                 />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-stone-600">
+                <label className="mb-2 block text-sm font-medium text-[#a0c0b0]">
                   今の気持ち（複数可）
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -240,8 +248,8 @@ export default function Block0Page() {
                       onClick={() => handleFeelingToggle(o.value)}
                       className={`rounded-full px-4 py-2 text-sm transition ${
                         profile.initial_feeling?.includes(o.value)
-                          ? "bg-community text-white"
-                          : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+                          ? "bg-[#00ff88] text-[#0a0e1a] font-bold"
+                          : "bg-[#0f1420] text-[#a0c0b0] hover:bg-[#141a2a]"
                       }`}
                     >
                       {o.label}
@@ -253,14 +261,14 @@ export default function Block0Page() {
                 <button
                   type="button"
                   onClick={() => setStep("welcome")}
-                  className="rounded-xl border border-stone-300 px-4 py-2 text-stone-600"
+                  className="rounded-xl border border-[rgba(0,255,136,0.2)] px-4 py-2 text-[#a0c0b0]"
                 >
                   戻る
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="rounded-xl bg-community px-6 py-2 text-white disabled:opacity-60"
+                  className="rounded-xl bg-[#00ff88] px-6 py-2 text-[#0a0e1a] font-bold disabled:opacity-60"
                 >
                   {saving ? "保存中..." : "保存して次へ"}
                 </button>
@@ -271,31 +279,31 @@ export default function Block0Page() {
 
         {/* 0-D: 研修の進め方 */}
         {step === "flow" && (
-          <section className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-            <p className="mb-4 rounded-lg bg-community-lighter/20 px-3 py-2 text-sm text-stone-700">
-              プロフィールはサーバー（データベース）に保存されました。
-            </p>
-            <h2 className="mb-4 text-lg font-bold text-stone-800">
-              研修の進め方
+          <section className="rounded-xl border border-[rgba(0,255,136,0.2)] bg-[#141a2a] p-8 shadow-sm">
+            <h2 className="mb-4 text-xl font-bold text-[#e0f0e8]">
+              {profile.name ? `${profile.name}さん、` : ""}この講座の流れは次の通りです
             </h2>
-            <p className="mb-6 text-stone-600">
-              2日間で7つのSTEPを進めます。途中で中断しても、再開できます。データは保存されます。
+            <p className="mb-6 leading-[1.7] text-[#a0c0b0]">
+              3時間×2日間の段階的プログラムです。<br />
+              DAY 1 の後、DAY 2 に向けた「宿題」があります。
             </p>
-            <ul className="mb-8 list-inside list-disc space-y-1 text-sm text-stone-600">
-              <li>STEP 1：500時間の棚卸し</li>
-              <li>STEP 2：4つのワークへの仕分け</li>
-              <li>STEP 3：10年後のポートフォリオ設計</li>
-              <li>STEP 4：As-Is / To-Be サマリー</li>
-              <li>STEP 5：4つの資本の監査</li>
-              <li>STEP 6：資本循環の構造化</li>
-              <li>STEP 7：5年間の移行計画</li>
-              <li>アウトプット：自分の経営計画書</li>
-            </ul>
+            <div className="mb-8 space-y-4">
+              <div className="rounded-lg border border-[rgba(0,255,136,0.2)] bg-[#0f1420] p-4">
+                <p className="mb-1 text-xs font-bold uppercase tracking-widest text-[#00ff88]">DAY 1</p>
+                <p className="mb-1 font-bold text-[#e0f0e8]">「はたらく」ポートフォリオ</p>
+                <p className="text-sm text-[#a0c0b0]">4つの「WORK」ポートフォリオ分析をもとに、やりたいこと・すべきことなど活動を言語化</p>
+              </div>
+              <div className="rounded-lg border border-[rgba(0,255,136,0.2)] bg-[#0f1420] p-4">
+                <p className="mb-1 text-xs font-bold uppercase tracking-widest text-[#00ff88]">DAY 2</p>
+                <p className="mb-1 font-bold text-[#e0f0e8]">「ギアシフト」戦略シート</p>
+                <p className="text-sm text-[#a0c0b0]">自分に内在する「MVV」を言語化して、これから実現したいミッションと行動計画を策定</p>
+              </div>
+            </div>
             <div className="flex justify-center">
               <button
                 type="button"
                 onClick={handleStartDay1}
-                className="rounded-xl bg-community px-6 py-3 text-white transition hover:bg-community-light"
+                className="rounded-xl bg-[#00ff88] px-6 py-3 text-[#0a0e1a] font-bold transition hover:bg-[#00cc6a]"
               >
                 DAY 1 を始める
               </button>
