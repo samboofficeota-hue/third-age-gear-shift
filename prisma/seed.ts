@@ -5,7 +5,7 @@
  */
 import { config } from "dotenv";
 import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 // 常に .env.local / .env を読む（override: false なので既存の env は上書きしない）。
 config({ path: ".env.local", override: false });

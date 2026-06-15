@@ -1,4 +1,4 @@
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import * as jose from "jose";
 import { cookies } from "next/headers";
 
