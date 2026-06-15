@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     create: {
       userId: session.sub,
       sessionId: workshopSession.id,
-      completedBlocks: [],
+      completedPhases: [],
     },
   });
 

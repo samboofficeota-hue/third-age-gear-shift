@@ -15,115 +15,69 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+// 5フェーズ構成（id は lib/phases.ts の PHASE_IDS と一致）。
+// 説明文は管理者向けの概要。詳細ワーク内容は今後のステップで追記。
 const BLOCK_META = [
   {
-    id: "block_0",
-    shortLabel: "Block 0",
-    label: "Block 0：オンボーディング",
-    step: "オンボーディング",
-    description: "受講生プロフィールの入力。研修の進め方を確認してから STEP 1 へ進む。",
-    tasks: [
-      "ウェルカムメッセージの確認",
-      "プロフィール入力（名前・年齢・職種・勤続年数・今の気持ち）",
-      "研修の流れ（STEP 1〜7）の確認",
-    ],
-    inputs: ["名前（呼び方）", "年齢区分（40代 / 50代 / 60代前半）", "現在の職種・役割", "会社員歴（年）", "今の気持ち（複数選択可）"],
-    output: "プロフィールを保存 → DAY 1 スタート",
+    id: "pre",
+    shortLabel: "事前課題",
+    label: "事前課題",
+    step: "PRE",
+    description: "事前アンケート（スマホ対応）と じぶん紹介ワークシート。最初から開放。",
+    tasks: ["事前アンケートに回答", "じぶん紹介を作成（Day1で発表）"],
+    inputs: ["事前アンケート（§A〜D）", "じぶん紹介（名前・3ポイント・生い立ち・今の会社/仕事）"],
+    output: "事前アンケート回答 ＋ じぶん紹介を保存",
+    day: "事前",
+  },
+  {
+    id: "day1",
+    shortLabel: "Day 1",
+    label: "Day 1：じぶん分解・じぶん分析",
+    step: "DAY 1",
+    description: "じぶん分解（分人シェア／コミュニティポートフォリオ）と じぶん分析（好き得意／はたらくの原点／会社とじぶんの一致点）。",
+    tasks: ["分人シェア・コミュニティポートフォリオを記入", "好き得意マトリクス・はたらくの原点・一致点を記入"],
+    inputs: ["分人シェア表", "コミュニティポートフォリオ", "好き得意 2×2", "はたらくの原点 A/B", "会社とじぶんの一致点"],
+    output: "Day1 ワークシートを保存",
     day: "DAY 1",
   },
   {
-    id: "block_1",
-    shortLabel: "Block 1",
-    label: "Block 1：500時間の棚卸し",
-    step: "STEP 1",
-    description: "先月 1 ヶ月に時間を使ったことを 1 行ずつ自由に書き出す。合計約 500 時間になるまで積み上げる。",
-    tasks: ["活動内容と時間数を 1 行ずつ入力", "合計時間のリアルタイム表示（500h 目安）", "行の追加・削除で自由に編集"],
-    inputs: ["どんな内容？（自由記述）", "何時間？（数値）"],
-    output: "活動リスト（activities 配列）と合計時間を保存",
-    day: "DAY 1",
+    id: "homework",
+    shortLabel: "宿題",
+    label: "宿題：みらいシナリオ",
+    step: "HOMEWORK",
+    description: "2040年のじぶんがいる社会を言語化（Vision／Issue／Reason）。AIが伴走（予定）。",
+    tasks: ["#1 Vision（だれが・なにを・どう）を記入", "#2 Issue・#3 Reason を記入"],
+    inputs: ["みらいシナリオ（複数可）"],
+    output: "みらいシナリオを保存",
+    day: "宿題",
   },
   {
-    id: "block_2",
-    shortLabel: "Block 2",
-    label: "Block 2：4つのワークの仕分け",
-    step: "STEP 2",
-    description: "STEP 1 で入力した各カテゴリの時間を、4 種類のワーク（A 有償・B 家事・C ギフト・D 学習）に % で割り振る。",
-    tasks: ["各カテゴリを A / B / C / D の 4 ワークに % で配分（合計 100%）", "円グラフで現在のワーク割合をリアルタイム確認"],
-    inputs: ["カテゴリ × 4 ワーク の配分比率（6 カテゴリ分）"],
-    output: "4 ワーク別の時間割合データを保存",
-    day: "DAY 1",
-  },
-  {
-    id: "block_3",
-    shortLabel: "Block 3",
-    label: "Block 3：10年後のポートフォリオ設計",
-    step: "STEP 3",
-    description: "10 年後に理想とする 4 ワーク割合を入力。現在との比較グラフで「変化の方向性」を可視化する。",
-    tasks: ["10 年後の A / B / C / D 理想比率を入力", "現在 vs 10 年後の比較グラフを確認", "変化の方向性をコメントで確認"],
-    inputs: ["10 年後の各ワーク理想比率（A / B / C / D）"],
-    output: "将来ポートフォリオデータを保存",
-    day: "DAY 1",
-  },
-  {
-    id: "block_4",
-    shortLabel: "Block 4",
-    label: "Block 4：As-Is / To-Be サマリー",
-    step: "STEP 4",
-    description: "現在（As-Is）と理想（To-Be）のギャップを自由記述で言語化する。コメントで気づきを深掘り。",
-    tasks: ["現状の課題・感想を自由記述（As-Is）", "理想の姿・変えたいことを自由記述（To-Be）", "コメントでさらに深掘り"],
-    inputs: ["As-Is テキスト（自由記述）", "To-Be テキスト（自由記述）"],
-    output: "As-Is / To-Be サマリーを保存 → DAY 1 終了",
-    day: "DAY 1",
-  },
-  {
-    id: "block_5",
-    shortLabel: "Block 5",
-    label: "Block 5：4つの資本の監査",
-    step: "STEP 5",
-    description: "人的・社会・経済・身体の 4 資本を自己評価。レーダーチャートで現在の資本バランスを可視化する。",
-    tasks: ["4 資本それぞれを 5 段階で自己評価", "レーダーチャートでバランスを確認", "各資本の具体的なメモを記入"],
-    inputs: ["人的資本スコア 1〜5", "社会資本スコア 1〜5", "経済資本スコア 1〜5", "身体資本スコア 1〜5", "各資本の補足メモ"],
-    output: "4 資本スコアデータを保存",
+    id: "day2",
+    shortLabel: "Day 2",
+    label: "Day 2：ビジョン・資本・シフト戦略",
+    step: "DAY 2",
+    description: "ビジョン策定／資本戦略（Wish-Can-Shall）／シフト戦略。（内容は改良中）",
+    tasks: ["じぶんビジョンを策定", "資本戦略を棚卸し", "シフト戦略・一歩目を決める"],
+    inputs: ["ビジョン策定シート", "資本戦略シート", "シフト戦略シート"],
+    output: "Day2 ワークシートを保存",
     day: "DAY 2",
   },
   {
-    id: "block_6",
-    shortLabel: "Block 6",
-    label: "Block 6：資本循環の構造化",
-    step: "STEP 6",
-    description: "4 つの資本がどう循環しているかを構造化する。循環の強みと課題を言語化する。",
-    tasks: ["資本間の循環・連携の強さを入力", "ループの強化ポイントを言語化する"],
-    inputs: ["資本循環の説明テキスト（自由記述）"],
-    output: "資本循環データを保存",
-    day: "DAY 2",
-  },
-  {
-    id: "block_7",
-    shortLabel: "Block 7",
-    label: "Block 7：5年間の移行計画",
-    step: "STEP 7",
-    description: "今後 5 年間の具体的なアクションを、1 年後・3 年後・5 年後のマイルストーンで計画する。",
-    tasks: ["1 年後・3 年後・5 年後のマイルストーンを記入", "各フェーズの具体的アクションを入力", "アクションの実現可能性をコメントで確認"],
-    inputs: ["1 年後の計画テキスト", "3 年後の計画テキスト", "5 年後の計画テキスト"],
-    output: "5 年間移行計画データを保存",
-    day: "DAY 2",
-  },
-  {
-    id: "block_8",
-    shortLabel: "Block 8",
-    label: "Block 8：経営計画書の出力",
-    step: "アウトプット",
-    description: "全 STEP のデータをもとに「自分の経営計画書」を生成。PDFダウンロード（予定）。",
-    tasks: ["全 STEP のデータを一覧表示", "総括コメントを表示", "経営計画書として PDF 出力（予定）"],
-    inputs: ["（新規入力なし。既存データの統合・出力）"],
-    output: "自分の経営計画書 PDF",
-    day: "DAY 2",
+    id: "post",
+    shortLabel: "事後課題",
+    label: "事後課題",
+    step: "POST",
+    description: "事後アンケート（§A〜D共通＋§E研修評価）。スマホ対応。",
+    tasks: ["事後アンケートに回答"],
+    inputs: ["事後アンケート（§A〜E）"],
+    output: "事後アンケート回答を保存",
+    day: "事後",
   },
 ] as const;
 
 type BlockStatus = "LOCKED" | "PREVIEW" | "OPEN" | "CLOSED";
 type BlockInfo = { blockId: string; status: BlockStatus; openedAt: string | null };
-type Participant = { id: string; email: string; name: string | null; completedBlocks: string[]; lastUpdated: string | null };
+type Participant = { id: string; email: string; name: string | null; completedPhases: string[]; lastUpdated: string | null };
 type SessionInfo = { id: string; name: string | null; code: string; isActive: boolean; createdAt: string; participantCount: number };
 
 const STATUS_LABEL: Record<BlockStatus, string> = {
@@ -150,8 +104,8 @@ function formatDate(iso: string) {
 }
 
 function ParticipantModal({ participant, onClose }: { participant: Participant; onClose: () => void }) {
-  const completedSet = new Set(participant.completedBlocks);
-  const progress = Math.round((participant.completedBlocks.length / 9) * 100);
+  const completedSet = new Set(participant.completedPhases);
+  const progress = Math.round((participant.completedPhases.length / 5) * 100);
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-md">
@@ -170,8 +124,8 @@ function ParticipantModal({ participant, onClose }: { participant: Participant; 
         <div className="space-y-4">
           <div>
             <div className="mb-2 flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">完了ブロック</span>
-              <span className="font-bold">{participant.completedBlocks.length} / 9</span>
+              <span className="text-muted-foreground">完了フェーズ</span>
+              <span className="font-bold">{participant.completedPhases.length} / 5</span>
             </div>
             <Progress value={progress} className="h-2" />
             <p className="mt-2 text-xs text-muted-foreground">最終更新：{formatTime(participant.lastUpdated)}</p>
@@ -214,7 +168,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
-  const [selectedBlockId, setSelectedBlockId] = useState<string>("block_0");
+  const [selectedBlockId, setSelectedBlockId] = useState<string>("pre");
   const [sideTab, setSideTab] = useState<"blocks" | "participants" | "sessions">("blocks");
   const [modalParticipant, setModalParticipant] = useState<Participant | null>(null);
   const [newSessionName, setNewSessionName] = useState("");
@@ -301,7 +255,7 @@ export default function AdminPage() {
   };
 
   const totalParticipants = participants.length;
-  const completionCount = (blockId: string) => participants.filter((p) => p.completedBlocks.includes(blockId)).length;
+  const completionCount = (blockId: string) => participants.filter((p) => p.completedPhases.includes(blockId)).length;
   const selectedMeta = BLOCK_META.find((m) => m.id === selectedBlockId) ?? BLOCK_META[0];
   const selectedBlock = blocks.find((b) => b.blockId === selectedBlockId);
   const selectedStatus: BlockStatus = selectedBlock?.status ?? "LOCKED";
@@ -434,7 +388,7 @@ export default function AdminPage() {
                 <p className="px-4 py-8 text-center text-xs text-muted-foreground">受講生が登録されていません</p>
               ) : (
                 participants.map((p) => {
-                  const progress = Math.round((p.completedBlocks.length / 9) * 100);
+                  const progress = Math.round((p.completedPhases.length / 5) * 100);
                   return (
                     <button key={p.id} type="button" onClick={() => setModalParticipant(p)}
                       className="w-full px-4 py-3 text-left transition-colors hover:bg-accent/50">
@@ -444,7 +398,7 @@ export default function AdminPage() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-xs font-medium">{p.name ?? p.email}</p>
-                          <p className="text-[10px] text-muted-foreground">{p.completedBlocks.length}/9 完了</p>
+                          <p className="text-[10px] text-muted-foreground">{p.completedPhases.length}/5 完了</p>
                         </div>
                         <span className="text-xs font-medium text-muted-foreground">{progress}%</span>
                       </div>

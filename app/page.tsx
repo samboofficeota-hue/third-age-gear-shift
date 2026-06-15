@@ -10,10 +10,10 @@ export default function Home() {
         ミドルシニア向け 2日間ワークショップ用ウェブアプリ（開発中）
       </p>
       <Link
-        href="/workshop/block-0"
+        href="/workshop"
         className="rounded-xl bg-community px-6 py-3 text-white transition hover:bg-community-light"
       >
-        ログインしてオンボーディングを始める
+        ログインして始める
       </Link>
     </main>
   );

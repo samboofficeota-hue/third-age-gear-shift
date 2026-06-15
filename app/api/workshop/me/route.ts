@@ -20,39 +20,32 @@ export async function GET() {
 
   if (!workshopData) {
     // ユーザーが実際に存在するか確認（JWT が古い場合に FK エラーを防ぐ）
-    const userExists = await prisma.user.findUnique({ where: { id: session.sub }, select: { id: true } });
+    const userExists = await prisma.user.findUnique({
+      where: { id: session.sub },
+      select: { id: true },
+    });
     if (!userExists) {
       return NextResponse.json({ error: "ログインしてください。" }, { status: 401 });
     }
     workshopData = await prisma.workshopData.create({
       data: {
         userId: session.sub,
-        completedBlocks: [],
+        completedPhases: [],
       },
     });
   }
 
-  const profile = workshopData.profile as Record<string, unknown> | null;
-  const step1 = workshopData.step1 as Record<string, unknown> | null;
-  const step2 = workshopData.step2 as Record<string, unknown> | null;
-  const step3 = workshopData.step3 as Record<string, unknown> | null;
-  const step4 = workshopData.step4 as Record<string, unknown> | null;
-  const step5 = workshopData.step5 as Record<string, unknown> | null;
-  const step6 = workshopData.step6 as Record<string, unknown> | null;
-  const step7 = workshopData.step7 as Record<string, unknown> | null;
   return NextResponse.json({
     workshopData: {
       id: workshopData.id,
       sessionId: workshopData.sessionId,
-      profile,
-      step1,
-      step2,
-      step3,
-      step4,
-      step5,
-      step6,
-      step7,
-      completedBlocks: workshopData.completedBlocks,
+      profile: workshopData.profile,
+      pre: workshopData.pre,
+      day1: workshopData.day1,
+      homework: workshopData.homework,
+      day2: workshopData.day2,
+      post: workshopData.post,
+      completedPhases: workshopData.completedPhases,
       lastUpdated: workshopData.lastUpdated,
     },
   });

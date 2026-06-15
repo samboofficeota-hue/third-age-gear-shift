@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 
 function roleDefaultPath(role: string): string {
   if (role === "admin" || role === "facilitator") return "/admin";
-  return "/workshop/block-0";
+  return "/workshop";
 }
 
 function LoginForm() {

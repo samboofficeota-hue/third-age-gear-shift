@@ -29,7 +29,7 @@ export default function JoinPage() {
         .then((r) => r.json())
         .catch(() => ({}));
       if (wd?.workshopData?.sessionId) {
-        router.replace("/workshop/block-0");
+        router.replace("/workshop");
       }
     })();
   }, [router]);
@@ -53,7 +53,7 @@ export default function JoinPage() {
       return;
     }
 
-    router.push("/workshop/block-0");
+    router.push("/workshop");
     router.refresh();
   };
 

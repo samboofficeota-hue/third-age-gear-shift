@@ -24,7 +24,7 @@ export async function GET(request: Request) {
     include: {
       workshopData: {
         select: {
-          completedBlocks: true,
+          completedPhases: true,
           lastUpdated: true,
           profile: true,
           sessionId: true,
@@ -41,7 +41,7 @@ export async function GET(request: Request) {
         id: u.id,
         email: u.email,
         name: (profile?.name as string) ?? null,
-        completedBlocks: u.workshopData?.completedBlocks ?? [],
+        completedPhases: u.workshopData?.completedPhases ?? [],
         lastUpdated: u.workshopData?.lastUpdated ?? null,
       };
     }),

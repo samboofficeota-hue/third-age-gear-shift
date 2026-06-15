@@ -89,3 +89,88 @@ body {
     text-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
   }
 }
+
+/* ════════════════════════════════════════════════════════════
+   ワークシート（A4横スライド型）フォーマット基盤
+   画面: 1920幅の暗いステージにシート(1123×794px=A4横@96dpi)を中央配置
+   印刷: @page A4 landscape にシートが1:1で収まる
+   ════════════════════════════════════════════════════════════ */
+
+/* 画面用：シートを並べる暗いステージ（印刷では透明化） */
+.worksheet-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 32px 16px 64px;
+  min-height: 100vh;
+}
+
+/* A4横シート（210×297mm の横向き = 297×210mm = 1123×794px @96dpi） */
+.print-sheet {
+  width: 1123px;
+  min-height: 794px;
+  box-sizing: border-box;
+  margin: 0 auto;
+  padding: 40px 56px;
+  background: #ffffff;
+  color: #1a1a1a;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  /* 画面の狭い環境でも崩さない：縮小はbrowser zoom/ユーザー操作に委ねる */
+}
+
+/* シート内テキストは黒系で統一（ダークテーマの継承を断つ） */
+.print-sheet :where(h1, h2, h3, h4, p, span, div, label, td, th, li) {
+  color: inherit;
+}
+
+@media print {
+  /* グリッド背景・ダークテーマを白に */
+  body {
+    background: #fff !important;
+    background-image: none !important;
+    color: #111 !important;
+  }
+  /* 画面専用UI（ヘッダー・ボタン・ステージ余白）を隠す */
+  .no-print {
+    display: none !important;
+  }
+  /* 色を印刷でも保持 */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  /* ステージの装飾を消す */
+  .worksheet-stage {
+    display: block;
+    padding: 0 !important;
+    min-height: 0 !important;
+    gap: 0 !important;
+  }
+  /* シート = 1ページ。ページ枠を埋める */
+  .print-sheet {
+    width: 100% !important;
+    min-height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+  /* 2枚目以降のシートは改ページ */
+  .print-sheet + .print-sheet {
+    break-before: page;
+  }
+  .page-break-before {
+    break-before: page;
+  }
+  .avoid-break {
+    break-inside: avoid;
+  }
+}
+
+@page {
+  size: A4 landscape;
+  margin: 12mm;
+}

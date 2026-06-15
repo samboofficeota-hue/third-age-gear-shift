@@ -20,10 +20,10 @@ export function WorkshopHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-10 border-b border-[rgba(0,255,136,0.2)] bg-[#0a0e1a]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0a0e1a]/80">
-      <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4 md:px-8">
+    <header className="no-print sticky top-0 z-10 border-b border-[rgba(0,255,136,0.2)] bg-[#0a0e1a]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0a0e1a]/80">
+      <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 md:px-8">
         <Link
-          href="/workshop/block-0"
+          href="/workshop"
           className="text-sm font-medium text-[#a0c0b0] hover:text-[#00ff88]"
         >
           サードエイジ じぶん戦略講座

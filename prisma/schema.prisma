@@ -53,15 +53,12 @@ model WorkshopData {
   sessionId      String?          @map("session_id")
   session        WorkshopSession? @relation(fields: [sessionId], references: [id])
   profile        Json?    // { name, age_group, role, years_of_service, initial_feeling[] }
-  step1          Json?    // 500時間棚卸し
-  step2          Json?    // 4ワーク仕分け
-  step3          Json?    // 10年後ポートフォリオ
-  step4          Json?    // As-Is/To-Be
-  step5          Json?    // 4つの資本
-  step6          Json?    // 資本循環
-  step7          Json?    // 5年間移行計画
-  michiDialogues Json?    @map("michi_dialogues") // [{ block, role, content, timestamp }]
-  completedBlocks String[] @map("completed_blocks") // ["block_0", "block_1", ...]
+  pre            Json?    // 事前: { survey, profileSlide(じぶん紹介) }
+  day1           Json?    // Day1: { bunkai(じぶん分解), bunseki(じぶん分析) }
+  homework       Json?    // 宿題: { scenarios: [みらいシナリオ...] }
+  day2           Json?    // Day2: { vision, capital, shift }
+  post           Json?    // 事後: { surveyImmediate, survey3mo }
+  completedPhases String[] @map("completed_phases") // ["pre","day1","homework","day2","post"]
   lastUpdated    DateTime @updatedAt @map("last_updated")
 
   @@map("workshop_data")

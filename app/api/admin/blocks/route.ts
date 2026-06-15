@@ -1,18 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
+import { PHASE_IDS } from "@/lib/phases";
 
-const BLOCK_IDS = [
-  "block_0",
-  "block_1",
-  "block_2",
-  "block_3",
-  "block_4",
-  "block_5",
-  "block_6",
-  "block_7",
-  "block_8",
-];
+const BLOCK_IDS = PHASE_IDS;
 
 async function getOrCreateDefaultSession() {
   let ws = await prisma.workshopSession.findFirst({
