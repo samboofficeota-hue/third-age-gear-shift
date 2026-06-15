@@ -34,7 +34,7 @@ function getSecretKey(): Uint8Array {
   const secret = getJwtSecret();
   if (secret.length < 32) {
     throw new Error(
-      `JWT_SECRET must be at least 32 characters (got ${secret.length}). Check Railway Variables: name must be exactly JWT_SECRET.`
+      `JWT_SECRET must be at least 32 characters (got ${secret.length}). Check your environment variables (Vercel → Settings → Environment Variables): name must be exactly JWT_SECRET.`
     );
   }
   return new TextEncoder().encode(secret.slice(0, 64));
