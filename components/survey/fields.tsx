@@ -17,13 +17,13 @@ function QuestionFrame({
   children: React.ReactNode;
 }) {
   return (
-    <fieldset className="rounded-xl border border-[rgba(0,255,136,0.25)] bg-[#141a2a] p-5">
-      <legend className="px-1 text-[17px] font-semibold leading-relaxed text-[#e0f0e8]">
+    <div className="rounded-xl border border-[rgba(0,255,136,0.25)] bg-[#141a2a] p-5">
+      <p className="text-[17px] font-semibold leading-relaxed text-[#e0f0e8]">
         {label}
-      </legend>
-      {hint && <p className="mb-2 text-sm text-[#a0c0b0]">{hint}</p>}
-      <div className="mt-3">{children}</div>
-    </fieldset>
+      </p>
+      {hint && <p className="mt-1.5 text-sm text-[#a0c0b0]">{hint}</p>}
+      <div className="mt-4">{children}</div>
+    </div>
   );
 }
 

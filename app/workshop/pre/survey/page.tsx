@@ -62,7 +62,7 @@ export default function PreSurveyPage() {
   };
 
   const renderChoice = (q: ChoiceQuestion) => (
-    <section key={q.key} className="space-y-3">
+    <section key={q.key} className="space-y-5">
       <h2 className="text-sm font-bold text-primary">{q.title}</h2>
       <SingleChoice
         label={q.text}
@@ -129,7 +129,7 @@ export default function PreSurveyPage() {
       )}
 
       {/* 年代（属性） */}
-      <section className="space-y-3">
+      <section className="space-y-5">
         <h2 className="text-lg font-bold text-primary">属性</h2>
         <SingleChoice
           label={PRE_NENDAI.text}
@@ -142,7 +142,7 @@ export default function PreSurveyPage() {
 
       {/* §A〜C 5段階 */}
       {PRE_SCALE_SECTIONS.map((section) => (
-        <section key={section.id} className="space-y-3">
+        <section key={section.id} className="space-y-5">
           <h2 className="text-lg font-bold text-primary">
             §{section.id}　{section.title}
           </h2>
@@ -161,7 +161,7 @@ export default function PreSurveyPage() {
       ))}
 
       {/* §D 単一選択 */}
-      <section className="space-y-3">
+      <section className="space-y-5">
         <h2 className="text-lg font-bold text-primary">
           §D　{PRE_CHOICE.title}
         </h2>
@@ -183,7 +183,7 @@ export default function PreSurveyPage() {
             {f.showKoyou && renderChoice(REASON_KOYOU)}
             {f.showChusho && renderChoice(CHALLENGE_CHUSHO)}
             {f.showSupport && (
-              <section className="space-y-3">
+              <section className="space-y-5">
                 <h2 className="text-lg font-bold text-primary">{SUPPORT.title}</h2>
                 <MultiChoice
                   label={SUPPORT.text}
