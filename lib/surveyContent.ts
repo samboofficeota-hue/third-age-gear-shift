@@ -183,6 +183,20 @@ export function preReasonFlags(answers: Record<string, unknown>) {
   };
 }
 
+/**
+ * §D の変更などで非表示になった分岐設問の回答を取り除く。
+ * （例: §D=④で図4に答えた後 §D=③へ変えると、図4の回答 d_chusho が残るのを防ぐ）
+ */
+export function pruneReasonAnswers<T extends Record<string, unknown>>(answers: T): T {
+  const f = preReasonFlags(answers);
+  const next = { ...answers } as Record<string, unknown>;
+  if (!f.showTenshoku) delete next[REASON_TENSHOKU.key];
+  if (!f.showKoyou) delete next[REASON_KOYOU.key];
+  if (!f.showChusho) delete next[CHALLENGE_CHUSHO.key];
+  if (!f.showSupport) delete next[SUPPORT.key];
+  return next as T;
+}
+
 /** 事前アンケートで使う構成 */
 export const PRE_NENDAI = NENDAI;
 export const PRE_SCALE_SECTIONS: ScaleSection[] = [SECTION_A, SECTION_B, SECTION_C];

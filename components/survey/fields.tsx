@@ -17,12 +17,12 @@ function QuestionFrame({
   children: React.ReactNode;
 }) {
   return (
-    <fieldset className="rounded-lg border border-[rgba(0,255,136,0.2)] bg-[#141a2a] p-4">
-      <legend className="px-1 text-sm font-semibold text-[#e0f0e8]">
+    <fieldset className="rounded-xl border border-[rgba(0,255,136,0.25)] bg-[#141a2a] p-5">
+      <legend className="px-1 text-[17px] font-semibold leading-relaxed text-[#e0f0e8]">
         {label}
       </legend>
-      {hint && <p className="mb-2 text-xs text-muted-foreground">{hint}</p>}
-      <div className="mt-2">{children}</div>
+      {hint && <p className="mb-2 text-sm text-[#a0c0b0]">{hint}</p>}
+      <div className="mt-3">{children}</div>
     </fieldset>
   );
 }
@@ -60,10 +60,10 @@ export function LikertScale({
             disabled={disabled}
             onClick={() => onChange(n)}
             className={cn(
-              "h-11 min-w-11 flex-1 rounded-md border text-sm font-semibold transition-colors",
+              "h-14 min-w-14 flex-1 rounded-lg border-2 text-xl font-bold transition-colors",
               value === n
                 ? "border-primary bg-primary text-primary-foreground"
-                : "border-[rgba(0,255,136,0.25)] bg-[#0f1420] text-[#e0f0e8]",
+                : "border-[rgba(0,255,136,0.3)] bg-[#0f1420] text-[#e0f0e8]",
               disabled ? "cursor-default opacity-90" : "hover:border-primary"
             )}
           >
@@ -71,7 +71,7 @@ export function LikertScale({
           </button>
         ))}
       </div>
-      <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
+      <div className="mt-1.5 flex justify-between text-xs text-[#a0c0b0]">
         <span>{minLabel}</span>
         <span>{maxLabel}</span>
       </div>
@@ -105,9 +105,9 @@ export function SingleChoice({
             disabled={disabled}
             onClick={() => onChange(o.value)}
             className={cn(
-              "block w-full rounded-md border px-3 py-3 text-left text-sm transition-colors",
+              "block w-full rounded-lg border px-4 py-3.5 text-left text-base leading-relaxed transition-colors",
               value === o.value
-                ? "border-primary bg-primary/10 text-[#e0f0e8]"
+                ? "border-primary bg-primary/15 text-[#e0f0e8]"
                 : "border-[rgba(0,255,136,0.25)] bg-[#0f1420] text-[#e0f0e8]",
               disabled ? "cursor-default opacity-90" : "hover:border-primary"
             )}
@@ -152,16 +152,16 @@ export function MultiChoice({
               disabled={disabled}
               onClick={() => toggle(o.value)}
               className={cn(
-                "flex w-full items-center gap-3 rounded-md border px-3 py-3 text-left text-sm transition-colors",
+                "flex w-full items-center gap-3 rounded-lg border px-4 py-3.5 text-left text-base leading-relaxed transition-colors",
                 checked
-                  ? "border-primary bg-primary/10 text-[#e0f0e8]"
+                  ? "border-primary bg-primary/15 text-[#e0f0e8]"
                   : "border-[rgba(0,255,136,0.25)] bg-[#0f1420] text-[#e0f0e8]",
                 disabled ? "cursor-default opacity-90" : "hover:border-primary"
               )}
             >
               <span
                 className={cn(
-                  "flex h-5 w-5 shrink-0 items-center justify-center rounded border text-[10px]",
+                  "flex h-6 w-6 shrink-0 items-center justify-center rounded border-2 text-xs",
                   checked
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-[rgba(0,255,136,0.4)]"
@@ -201,7 +201,7 @@ export function SurveyTextArea({
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full resize-none rounded-md border border-[rgba(0,255,136,0.25)] bg-[#0f1420] px-3 py-2 text-sm text-[#e0f0e8] outline-none focus:border-primary"
+        className="w-full resize-none rounded-lg border border-[rgba(0,255,136,0.25)] bg-[#0f1420] px-4 py-3 text-base leading-relaxed text-[#e0f0e8] outline-none focus:border-primary"
       />
     </QuestionFrame>
   );

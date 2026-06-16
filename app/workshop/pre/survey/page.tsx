@@ -18,6 +18,7 @@ import {
   CHALLENGE_CHUSHO,
   SUPPORT,
   preReasonFlags,
+  pruneReasonAnswers,
   type ChoiceQuestion,
 } from "@/lib/surveyContent";
 
@@ -51,12 +52,12 @@ export default function PreSurveyPage() {
   };
   const setChoice = (key: string, v: string) => {
     if (isSample) return;
-    setAnswers((a) => ({ ...a, [key]: v }));
+    setAnswers((a) => pruneReasonAnswers({ ...a, [key]: v }));
     setSaved(false);
   };
   const setMulti = (key: string, v: string[]) => {
     if (isSample) return;
-    setAnswers((a) => ({ ...a, [key]: v }));
+    setAnswers((a) => pruneReasonAnswers({ ...a, [key]: v }));
     setSaved(false);
   };
 
@@ -110,10 +111,10 @@ export default function PreSurveyPage() {
             type="button"
             onClick={() => setMode(m)}
             className={cn(
-              "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+              "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
               mode === m
                 ? "border-primary bg-primary/15 text-primary"
-                : "border-[rgba(0,255,136,0.2)] text-muted-foreground hover:text-[#e0f0e8]"
+                : "border-[rgba(0,255,136,0.2)] text-[#a0c0b0] hover:text-[#e0f0e8]"
             )}
           >
             {m === "edit" ? "記入する" : "記入例を見る"}
@@ -122,14 +123,14 @@ export default function PreSurveyPage() {
       </div>
 
       {isSample && (
-        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2.5 text-sm text-amber-300">
           記入例（太田義史さん）を表示中です。回答はできません。
         </div>
       )}
 
       {/* 年代（属性） */}
       <section className="space-y-3">
-        <h2 className="text-sm font-bold text-primary">属性</h2>
+        <h2 className="text-lg font-bold text-primary">属性</h2>
         <SingleChoice
           label={PRE_NENDAI.text}
           options={PRE_NENDAI.options}
@@ -142,7 +143,7 @@ export default function PreSurveyPage() {
       {/* §A〜C 5段階 */}
       {PRE_SCALE_SECTIONS.map((section) => (
         <section key={section.id} className="space-y-3">
-          <h2 className="text-sm font-bold text-primary">
+          <h2 className="text-lg font-bold text-primary">
             §{section.id}　{section.title}
           </h2>
           {section.questions.map((q, i) => (
@@ -161,7 +162,7 @@ export default function PreSurveyPage() {
 
       {/* §D 単一選択 */}
       <section className="space-y-3">
-        <h2 className="text-sm font-bold text-primary">
+        <h2 className="text-lg font-bold text-primary">
           §D　{PRE_CHOICE.title}
         </h2>
         <SingleChoice
@@ -183,7 +184,7 @@ export default function PreSurveyPage() {
             {f.showChusho && renderChoice(CHALLENGE_CHUSHO)}
             {f.showSupport && (
               <section className="space-y-3">
-                <h2 className="text-sm font-bold text-primary">{SUPPORT.title}</h2>
+                <h2 className="text-lg font-bold text-primary">{SUPPORT.title}</h2>
                 <MultiChoice
                   label={SUPPORT.text}
                   options={SUPPORT.options}
