@@ -14,19 +14,20 @@ export async function GET() {
     );
   }
 
+  // 事前登録の氏名・所属会社（ワークシートの初期表示に使う）も取得する。
+  const user = await prisma.user.findUnique({
+    where: { id: session.sub },
+    select: { id: true, name: true, organization: { select: { name: true } } },
+  });
+  if (!user) {
+    return NextResponse.json({ error: "ログインしてください。" }, { status: 401 });
+  }
+
   let workshopData = await prisma.workshopData.findUnique({
     where: { userId: session.sub },
   });
 
   if (!workshopData) {
-    // ユーザーが実際に存在するか確認（JWT が古い場合に FK エラーを防ぐ）
-    const userExists = await prisma.user.findUnique({
-      where: { id: session.sub },
-      select: { id: true },
-    });
-    if (!userExists) {
-      return NextResponse.json({ error: "ログインしてください。" }, { status: 401 });
-    }
     workshopData = await prisma.workshopData.create({
       data: {
         userId: session.sub,
@@ -36,6 +37,10 @@ export async function GET() {
   }
 
   return NextResponse.json({
+    account: {
+      name: user.name,
+      organizationName: user.organization?.name ?? null,
+    },
     workshopData: {
       id: workshopData.id,
       sessionId: workshopData.sessionId,

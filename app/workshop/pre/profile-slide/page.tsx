@@ -32,7 +32,7 @@ type Slide = {
 const WORK_FIELDS: { key: "company" | "dept" | "title"; label: string }[] = [
   { key: "company", label: "会社名" },
   { key: "dept", label: "部署名" },
-  { key: "title", label: "役職名" },
+  { key: "title", label: "役職名・肩書き・役割" },
 ];
 const WORK_QUESTIONS: { key: "q1" | "q2" | "q3"; title: string; q: string }[] = [
   {
@@ -69,9 +69,9 @@ const SAMPLE: Required<Slide> = {
     { year: "2026", event: "公益資本主義実装センター 設立（現在に至る）" },
   ],
   work: {
-    company: "サンボーオフィス",
-    dept: "（個人事業）",
-    title: "代表・中小企業診断士",
+    company: "合同会社 公益資本主義実装センター",
+    dept: "なし",
+    title: "代表社員・中小企業診断士",
     q1: "中小企業の経営者に対して、アイディアと戦略で経営に伴走し、事業の成長と挑戦を後押ししている。",
     q2: "経営者の「参謀」として、外からの視点で戦略を描き、意思決定を支える役割。アイディアそのものが提供価値。",
     q3: "経営相談・事業計画づくり・マーケティング支援・補助金申請のサポートまで、構想から実行まで伴走する。",
@@ -139,6 +139,8 @@ export default function ProfileSlidePage() {
   const [saved, setSaved] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
+  // 事前登録の会社名（DB由来）。会社名欄のプレースホルダに使う。
+  const [orgName, setOrgName] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -146,6 +148,7 @@ export default function ProfileSlidePage() {
       const d = await fetch("/api/workshop/me", { credentials: "include" })
         .then((r) => r.json())
         .catch(() => ({}));
+      setOrgName((d?.account?.organizationName as string) ?? "");
       const ps = d?.workshopData?.pre?.profileSlide as Slide | undefined;
       if (ps) {
         const points = pad(ps.points);
@@ -577,44 +580,44 @@ export default function ProfileSlidePage() {
 
         {/* シート高いっぱいに使う */}
         <div className="mt-7 flex min-h-[640px] flex-col">
-          {/* 会社名 / 部署名 / 役職名 */}
+          {/* 会社名 / 部署名 / 役職名・肩書き・役割（2行分の高さを確保） */}
           <div className="grid grid-cols-3 gap-7">
-            {WORK_FIELDS.map(({ key, label }) => (
-              <div key={key}>
-                <span className="mb-1.5 block text-xs font-semibold text-ws-muted">
-                  {label}
-                </span>
-                {isSample ? (
-                  <p className="border-b-2 border-ws-line pb-2 text-2xl font-bold text-ws-ink">
-                    {view.work?.[key] || "　"}
-                  </p>
-                ) : (
-                  <input
-                    value={data.work?.[key] ?? ""}
-                    onChange={(e) => setWork(key, e.target.value)}
-                    placeholder={label}
-                    className="w-full rounded-md border border-ws-line px-3 py-2 text-2xl font-bold text-ws-ink outline-none focus:border-ws-teal"
-                  />
-                )}
-              </div>
-            ))}
+            {WORK_FIELDS.map(({ key, label }) => {
+              // 会社名は事前登録（DB）の値をサンプルテキストとして表示。
+              const ph = key === "company" && orgName ? orgName : label;
+              return (
+                <div key={key}>
+                  <span className="mb-3 block text-sm font-semibold text-ws-teal">
+                    {label}
+                  </span>
+                  {isSample ? (
+                    <p className="min-h-[5rem] whitespace-pre-wrap text-2xl font-bold leading-snug text-ws-ink">
+                      {view.work?.[key] || "　"}
+                    </p>
+                  ) : (
+                    <textarea
+                      value={data.work?.[key] ?? ""}
+                      onChange={(e) => setWork(key, e.target.value)}
+                      placeholder={ph}
+                      rows={2}
+                      className="w-full resize-none rounded-md border border-ws-line px-3 py-2 text-2xl font-bold leading-snug text-ws-ink outline-none placeholder:font-normal placeholder:text-ws-muted/70 focus:border-ws-teal"
+                    />
+                  )}
+                </div>
+              );
+            })}
           </div>
 
-          {/* 3つの問い＝3カラム。枠線なし、カラム間に薄い縦線 */}
+          {/* 3つの問い＝3カラム。タイトル＝ティール文字（下線なし）、カラム間に薄い縦線 */}
           <div className="mt-8 grid flex-1 grid-cols-3 divide-x divide-ws-line">
-            {WORK_QUESTIONS.map(({ key, title, q }, idx) => (
+            {WORK_QUESTIONS.map(({ key, title, q }) => (
               <div
                 key={key}
                 className="flex flex-col px-6 first:pl-0 last:pr-0"
               >
-                <p className="flex items-center gap-2.5 text-base font-semibold text-ws-teal">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ws-teal text-sm font-bold text-white">
-                    {idx + 1}
-                  </span>
-                  {title}
-                </p>
+                <p className="text-lg font-bold text-ws-teal">{title}</p>
                 {isSample ? (
-                  <p className="mt-4 flex-1 text-2xl leading-relaxed text-ws-ink">
+                  <p className="mt-7 flex-1 text-2xl leading-relaxed text-ws-ink">
                     {view.work?.[key]}
                   </p>
                 ) : (
@@ -622,7 +625,7 @@ export default function ProfileSlidePage() {
                     value={data.work?.[key] ?? ""}
                     onChange={(e) => setWork(key, e.target.value)}
                     placeholder={q}
-                    className="mt-4 w-full flex-1 resize-none rounded-md border border-transparent bg-transparent text-2xl leading-relaxed text-ws-ink outline-none placeholder:text-ws-muted/70 focus:border-ws-teal"
+                    className="mt-7 w-full flex-1 resize-none rounded-md border border-transparent bg-transparent text-2xl leading-relaxed text-ws-ink outline-none placeholder:text-ws-muted/70 focus:border-ws-teal"
                   />
                 )}
               </div>
