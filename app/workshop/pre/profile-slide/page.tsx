@@ -10,11 +10,13 @@ import { CropModal } from "@/components/worksheet/CropModal";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+type HistRow = { year: string; event: string };
 type Slide = {
   name?: string;
   nickname?: string;
   points?: string[];
   photo?: string;
+  history?: HistRow[];
 };
 
 const SAMPLE: Required<Slide> = {
@@ -22,12 +24,42 @@ const SAMPLE: Required<Slide> = {
   nickname: "ぼうず",
   points: ["沖縄県 長寿家系 生", "東大 少林寺拳法学部 卒", "電通流 プロデュース術", "", ""],
   photo: "/images/worksheets/ota.png",
+  history: [
+    { year: "1972", event: "沖縄県で生まれる（長男・AB型・魚座・復帰年）" },
+    { year: "1987", event: "鹿児島 ラ・サール高校入学（男子校の寮生活）" },
+    { year: "1990", event: "東京大学 入学（少林寺拳法学部 経営学科 マーケティングゼミ）" },
+    { year: "1995", event: "電通に入社（営業・プロデューサー 一筋26年）" },
+    { year: "2004", event: "北京電通に出向（2回駐在 延べ9年）" },
+    { year: "2021", event: "50歳からは全く違う道を目指し電通を退職" },
+    { year: "2022", event: "アライアンス・フォーラム財団で公益資本主義に携わる" },
+    { year: "2024", event: "サンボーオフィス（アイディアで経営に参謀する・中小企業診断士）" },
+    { year: "2026", event: "公益資本主義実装センター 設立（現在に至る）" },
+  ],
 };
+
+const MIN_HIST_ROWS = 6;
+
+// 入力欄のサンプル（プレースホルダ）。1行目=生年は任意、それ以降は記入例で誘導。
+const HIST_PH: HistRow[] = [
+  { year: "生年", event: "〇〇県で生まれる" },
+  { year: "19xx", event: "〇〇高校に入学" },
+  { year: "19xx", event: "〇〇大学を卒業" },
+  { year: "20xx", event: "〇〇株式会社に入社" },
+  { year: "20xx", event: "〇〇部署へ異動" },
+  { year: "20xx", event: "現在に至る" },
+];
+const HIST_PH_FALLBACK: HistRow = { year: "20xx", event: "出来事を記入" };
 
 function pad(points?: string[]): string[] {
   const p = [...(points ?? [])];
   while (p.length < 5) p.push("");
   return p.slice(0, 5);
+}
+
+function padHist(history: HistRow[] | undefined, n: number): HistRow[] {
+  const h = [...(history ?? [])];
+  while (h.length < n) h.push({ year: "", event: "" });
+  return h;
 }
 
 /** 円形の写真枠（読み込み失敗時はプレースホルダ＋ヒント表示） */
@@ -60,6 +92,7 @@ export default function ProfileSlidePage() {
   const [data, setData] = useState<Slide>({ points: pad([]) });
   const [mode, setMode] = useState<"edit" | "sample">("edit");
   const [visibleCount, setVisibleCount] = useState(3);
+  const [histCount, setHistCount] = useState(MIN_HIST_ROWS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -78,6 +111,7 @@ export default function ProfileSlidePage() {
         setData({ ...ps, points });
         const filled = points.filter((p) => p.trim()).length;
         setVisibleCount(Math.min(5, Math.max(3, filled)));
+        setHistCount(Math.max(MIN_HIST_ROWS, ps.history?.length ?? 0));
       }
       setLoading(false);
     })();
@@ -85,6 +119,14 @@ export default function ProfileSlidePage() {
 
   const isSample = mode === "sample";
   const view: Slide = isSample ? SAMPLE : { ...data, points: pad(data.points) };
+
+  // タイトル行の右側に出す「ニックネーム（お名前）」。ニックネーム未記入ならお名前のみ。
+  const headerName = (() => {
+    const nm = (view.name ?? "").trim();
+    const nk = (view.nickname ?? "").trim();
+    if (nk && nm) return `${nk}（${nm}）`;
+    return nm || nk;
+  })();
 
   const setField = (patch: Partial<Slide>) => {
     if (isSample) return;
@@ -97,6 +139,15 @@ export default function ProfileSlidePage() {
       const points = pad(d.points);
       points[i] = v;
       return { ...d, points };
+    });
+    setSaved(false);
+  };
+  const setHist = (i: number, key: keyof HistRow, v: string) => {
+    if (isSample) return;
+    setData((d) => {
+      const history = padHist(d.history, histCount);
+      history[i] = { ...history[i], [key]: v };
+      return { ...d, history };
     });
     setSaved(false);
   };
@@ -156,6 +207,9 @@ export default function ProfileSlidePage() {
   }
 
   const allPoints = pad(view.points);
+  const histRows = isSample
+    ? SAMPLE.history.filter((h) => h.year.trim() || h.event.trim())
+    : padHist(data.history, histCount);
 
   return (
     <WorksheetStage>
@@ -198,7 +252,9 @@ export default function ProfileSlidePage() {
               <span className="text-ws-accent">じぶん</span> 紹介
             </h1>
           </div>
-          <span className="text-sm font-semibold text-ws-teal">事前課題</span>
+          {headerName && (
+            <span className="text-base font-bold text-ws-ink">{headerName}</span>
+          )}
         </div>
         <div className="mt-10 rounded-2xl bg-ws-mint p-10">
           <span className="inline-block rounded-full border border-ws-teal bg-white px-4 py-1 text-sm font-semibold text-ws-teal">
@@ -242,7 +298,9 @@ export default function ProfileSlidePage() {
               <span className="text-ws-accent">じぶん</span> 紹介
             </h1>
           </div>
-          <span className="text-sm font-semibold text-ws-teal">事前課題</span>
+          {headerName && (
+            <span className="text-base font-bold text-ws-ink">{headerName}</span>
+          )}
         </div>
 
         {/* 左右2カラム。シート高いっぱいに上下分散 */}
@@ -397,6 +455,90 @@ export default function ProfileSlidePage() {
             </ul>
           </div>
         </div>
+      </PrintSheet>
+
+      {/* ── ページ③ 生い立ち（縦タイムライン） ── */}
+      <PrintSheet>
+        <div className="flex items-center justify-between border-b border-ws-line pb-4">
+          <div className="flex items-center gap-4">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-ws-teal text-lg font-bold text-white">
+              1
+            </span>
+            <h1 className="text-3xl font-bold text-ws-ink">
+              <span className="text-ws-accent">じぶん</span> 紹介{" "}
+              <span className="text-ws-muted">〜 生い立ち</span>
+            </h1>
+          </div>
+          {headerName && (
+            <span className="text-base font-bold text-ws-ink">{headerName}</span>
+          )}
+        </div>
+
+        <p className="mt-3 text-sm text-ws-muted">
+          どんな環境で、どんな経歴を歩んできたか。年表でも文章でもOK。
+          <span className="text-ws-teal">生年は記入なしでもOKです。</span>
+        </p>
+
+        <ul className="mt-7">
+          {histRows.map((r, i) => {
+            const isLast = i === histRows.length - 1;
+            const ph = HIST_PH[i] ?? HIST_PH_FALLBACK;
+            return (
+              <li key={i} className="flex items-stretch gap-5">
+                {/* 年 */}
+                <div className="w-24 shrink-0 pt-1.5 text-right">
+                  {isSample ? (
+                    <span className="text-xl font-bold text-ws-teal">{r.year}</span>
+                  ) : (
+                    <input
+                      value={r.year}
+                      onChange={(e) => setHist(i, "year", e.target.value)}
+                      placeholder={ph.year}
+                      maxLength={9}
+                      className="w-full rounded-md border border-ws-line px-2 py-1.5 text-right text-lg font-bold text-ws-teal outline-none focus:border-ws-teal"
+                    />
+                  )}
+                </div>
+                {/* タイムライン（線＋ドット） */}
+                <div className="flex w-4 shrink-0 flex-col items-center pt-2.5">
+                  <span className="h-3.5 w-3.5 shrink-0 rounded-full bg-ws-teal" />
+                  {!isLast && <span className="w-0.5 flex-1 bg-ws-line" />}
+                </div>
+                {/* 出来事 */}
+                <div className="flex-1 pb-7">
+                  {isSample ? (
+                    <p className="pt-1 text-xl text-ws-ink">{r.event}</p>
+                  ) : (
+                    <input
+                      value={r.event}
+                      onChange={(e) => setHist(i, "event", e.target.value)}
+                      placeholder={ph.event}
+                      className="w-full rounded-md border border-ws-line px-3 py-2 text-lg text-ws-ink outline-none focus:border-ws-teal"
+                    />
+                  )}
+                </div>
+              </li>
+            );
+          })}
+
+          {/* 行を追加 */}
+          {!isSample && (
+            <li className="no-print flex gap-5">
+              <div className="w-24 shrink-0" />
+              <div className="flex w-4 shrink-0 justify-center">
+                <button
+                  type="button"
+                  onClick={() => setHistCount((c) => c + 1)}
+                  aria-label="行を追加"
+                  className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-dashed border-ws-line text-ws-muted hover:border-ws-teal hover:text-ws-teal"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+              </div>
+              <span className="pt-1 text-sm text-ws-muted">行を追加</span>
+            </li>
+          )}
+        </ul>
       </PrintSheet>
 
       {/* 保存（印刷されない） */}
