@@ -9,7 +9,9 @@ import { cn } from "@/lib/utils";
  */
 
 const baseField =
-  "w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-stone-900 outline-none transition-colors focus:border-emerald-500";
+  "w-full rounded-md border border-ws-line bg-white px-3 py-2 text-ws-ink outline-none transition-colors placeholder:text-ws-muted focus:border-ws-teal";
+
+const labelClass = "mb-1 block text-sm font-semibold text-ws-muted";
 
 export function WorksheetTextField({
   label,
@@ -27,9 +29,7 @@ export function WorksheetTextField({
   return (
     <label className={cn("block", className)}>
       {label && (
-        <span className="mb-1 block text-sm font-semibold text-stone-700">
-          {label}
-        </span>
+        <span className={labelClass}>{label}</span>
       )}
       <input
         className={baseField}
@@ -59,9 +59,7 @@ export function WorksheetTextArea({
   return (
     <label className={cn("block", className)}>
       {label && (
-        <span className="mb-1 block text-sm font-semibold text-stone-700">
-          {label}
-        </span>
+        <span className={labelClass}>{label}</span>
       )}
       <textarea
         rows={rows}

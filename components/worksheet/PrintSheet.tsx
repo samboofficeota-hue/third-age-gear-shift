@@ -33,32 +33,32 @@ export function PrintSheet({
   return (
     <section className={cn("print-sheet avoid-break", className)}>
       {(title || phaseLabel) && (
-        <header className="mb-6 flex items-start justify-between gap-4 border-b border-stone-200 pb-3">
+        <header className="mb-6 flex items-start justify-between gap-4 border-b border-ws-line pb-3">
           <div className="flex items-start gap-3">
             {badge && <div className="mt-1 shrink-0">{badge}</div>}
             <div>
               {title && (
-                <h1 className="text-2xl font-bold tracking-tight text-stone-900">
+                <h1 className="text-2xl font-bold tracking-tight text-ws-ink">
                   {title}
                 </h1>
               )}
               {subtitle && (
-                <p className="mt-1 text-sm text-stone-500">{subtitle}</p>
+                <p className="mt-1 text-sm text-ws-muted">{subtitle}</p>
               )}
             </div>
           </div>
           {phaseLabel && (
-            <span className="shrink-0 whitespace-nowrap text-sm font-semibold text-emerald-700">
+            <span className="shrink-0 whitespace-nowrap text-sm font-semibold text-ws-teal">
               {phaseLabel}
             </span>
           )}
         </header>
       )}
 
-      <div className="text-stone-800">{children}</div>
+      <div className="text-ws-ink">{children}</div>
 
       {footer && (
-        <footer className="mt-6 border-t border-stone-200 pt-3 text-xs text-stone-400">
+        <footer className="mt-6 border-t border-ws-line pt-3 text-xs text-ws-muted">
           {footer}
         </footer>
       )}

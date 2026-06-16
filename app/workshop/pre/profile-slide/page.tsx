@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ImagePlus, Plus } from "lucide-react";
 import { PrintSheet } from "@/components/worksheet/PrintSheet";
+import { SheetHeader } from "@/components/worksheet/SheetHeader";
 import { WorksheetStage } from "@/components/worksheet/WorksheetStage";
 import { PrintButton } from "@/components/worksheet/PrintButton";
 import { CropModal } from "@/components/worksheet/CropModal";
@@ -33,10 +34,22 @@ const WORK_FIELDS: { key: "company" | "dept" | "title"; label: string }[] = [
   { key: "dept", label: "部署名" },
   { key: "title", label: "役職名" },
 ];
-const WORK_QUESTIONS: { key: "q1" | "q2" | "q3"; q: string }[] = [
-  { key: "q1", q: "この会社は、何のために・誰に・何をしている会社ですか？" },
-  { key: "q2", q: "その中で、あなたはどんな役割・価値を担っていますか？" },
-  { key: "q3", q: "具体的に、どんな仕事・役割・責任がありますか？" },
+const WORK_QUESTIONS: { key: "q1" | "q2" | "q3"; title: string; q: string }[] = [
+  {
+    key: "q1",
+    title: "会社について",
+    q: "この会社は、何のために・誰に・何をしている会社ですか？",
+  },
+  {
+    key: "q2",
+    title: "わたしの役割・価値",
+    q: "その中で、あなたはどんな役割・価値を担っていますか？",
+  },
+  {
+    key: "q3",
+    title: "仕事・役割・責任",
+    q: "具体的に、どんな仕事・役割・責任がありますか？",
+  },
 ];
 
 const SAMPLE: Required<Slide> = {
@@ -155,6 +168,15 @@ export default function ProfileSlidePage() {
     if (nk && nm) return `${nk}（${nm}）`;
     return nm || nk;
   })();
+
+  // 右上スロット。①じぶん紹介（ルール＋名前ページ）までは「事前課題」、
+  // 自己紹介が済む②生い立ち以降は氏名を表示。
+  const preTag = (
+    <span className="text-sm font-semibold text-ws-teal">事前課題</span>
+  );
+  const nameTag = headerName ? (
+    <span className="text-base font-bold text-ws-ink">{headerName}</span>
+  ) : null;
 
   const setField = (patch: Partial<Slide>) => {
     if (isSample) return;
@@ -276,19 +298,7 @@ export default function ProfileSlidePage() {
 
       {/* ── ルールシート ── */}
       <PrintSheet>
-        <div className="flex items-center justify-between border-b border-ws-line pb-4">
-          <div className="flex items-center gap-4">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-ws-teal text-lg font-bold text-white">
-              1
-            </span>
-            <h1 className="text-3xl font-bold text-ws-ink">
-              <span className="text-ws-accent">じぶん</span> 紹介
-            </h1>
-          </div>
-          {headerName && (
-            <span className="text-base font-bold text-ws-ink">{headerName}</span>
-          )}
-        </div>
+        <SheetHeader no={1} accent="じぶん" title="紹介" right={preTag} />
         <div className="mt-10 rounded-2xl bg-ws-mint p-10">
           <span className="inline-block rounded-full border border-ws-teal bg-white px-4 py-1 text-sm font-semibold text-ws-teal">
             ルール
@@ -322,19 +332,7 @@ export default function ProfileSlidePage() {
 
       {/* ── ページ① 名前＋写真＋3ポイント ── */}
       <PrintSheet>
-        <div className="flex items-center justify-between border-b border-ws-line pb-4">
-          <div className="flex items-center gap-4">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-ws-teal text-lg font-bold text-white">
-              1
-            </span>
-            <h1 className="text-3xl font-bold text-ws-ink">
-              <span className="text-ws-accent">じぶん</span> 紹介
-            </h1>
-          </div>
-          {headerName && (
-            <span className="text-base font-bold text-ws-ink">{headerName}</span>
-          )}
-        </div>
+        <SheetHeader no={1} accent="じぶん" title="紹介" right={preTag} />
 
         {/* 左右2カラム。シート高いっぱいに上下分散 */}
         <div className="mt-6 flex min-h-[600px] gap-12">
@@ -490,22 +488,15 @@ export default function ProfileSlidePage() {
         </div>
       </PrintSheet>
 
-      {/* ── ページ③ 生い立ち（縦タイムライン） ── */}
+      {/* ── ページ② 生い立ち（縦タイムライン） ── */}
       <PrintSheet>
-        <div className="flex items-center justify-between border-b border-ws-line pb-4">
-          <div className="flex items-center gap-4">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-ws-teal text-lg font-bold text-white">
-              1
-            </span>
-            <h1 className="text-3xl font-bold text-ws-ink">
-              <span className="text-ws-accent">じぶん</span> 紹介{" "}
-              <span className="text-ws-muted">〜 生い立ち</span>
-            </h1>
-          </div>
-          {headerName && (
-            <span className="text-base font-bold text-ws-ink">{headerName}</span>
-          )}
-        </div>
+        <SheetHeader
+          no={1}
+          accent="じぶん"
+          title="紹介"
+          sub="〜 生い立ち"
+          right={nameTag}
+        />
 
         <p className="mt-3 text-sm text-ws-muted">
           どんな環境で、どんな経歴を歩んできたか。年表でも文章でもOK。
@@ -574,24 +565,17 @@ export default function ProfileSlidePage() {
         </ul>
       </PrintSheet>
 
-      {/* ── ページ④ 今の会社・今の仕事 ── */}
+      {/* ── ページ③ 今の会社・今の仕事 ── */}
       <PrintSheet>
-        <div className="flex items-center justify-between border-b border-ws-line pb-4">
-          <div className="flex items-center gap-4">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-ws-teal text-lg font-bold text-white">
-              1
-            </span>
-            <h1 className="text-3xl font-bold text-ws-ink">
-              <span className="text-ws-accent">じぶん</span> 紹介{" "}
-              <span className="text-ws-muted">〜 今の会社・今の仕事</span>
-            </h1>
-          </div>
-          {headerName && (
-            <span className="text-base font-bold text-ws-ink">{headerName}</span>
-          )}
-        </div>
+        <SheetHeader
+          no={1}
+          accent="じぶん"
+          title="紹介"
+          sub="〜 今の会社・今の仕事"
+          right={nameTag}
+        />
 
-        {/* シート高いっぱいに上下分散 */}
+        {/* シート高いっぱいに使う */}
         <div className="mt-7 flex min-h-[640px] flex-col">
           {/* 会社名 / 部署名 / 役職名 */}
           <div className="grid grid-cols-3 gap-7">
@@ -616,27 +600,29 @@ export default function ProfileSlidePage() {
             ))}
           </div>
 
-          {/* 3つの問い（残り高さに分散） */}
-          <div className="mt-9 flex flex-1 flex-col justify-between gap-6">
-            {WORK_QUESTIONS.map(({ key, q }, idx) => (
-              <div key={key}>
-                <p className="flex items-center gap-3 text-base font-semibold text-ws-teal">
+          {/* 3つの問い＝3カラム。枠線なし、カラム間に薄い縦線 */}
+          <div className="mt-8 grid flex-1 grid-cols-3 divide-x divide-ws-line">
+            {WORK_QUESTIONS.map(({ key, title, q }, idx) => (
+              <div
+                key={key}
+                className="flex flex-col px-6 first:pl-0 last:pr-0"
+              >
+                <p className="flex items-center gap-2.5 text-base font-semibold text-ws-teal">
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ws-teal text-sm font-bold text-white">
                     {idx + 1}
                   </span>
-                  {q}
+                  {title}
                 </p>
                 {isSample ? (
-                  <p className="mt-3 pl-10 text-lg leading-relaxed text-ws-ink">
+                  <p className="mt-4 flex-1 text-2xl leading-relaxed text-ws-ink">
                     {view.work?.[key]}
                   </p>
                 ) : (
                   <textarea
                     value={data.work?.[key] ?? ""}
                     onChange={(e) => setWork(key, e.target.value)}
-                    rows={3}
-                    placeholder="（自由記入）"
-                    className="mt-3 ml-10 w-[calc(100%-2.5rem)] resize-none rounded-md border border-ws-line px-3 py-2 text-lg leading-relaxed text-ws-ink outline-none focus:border-ws-teal"
+                    placeholder={q}
+                    className="mt-4 w-full flex-1 resize-none rounded-md border border-transparent bg-transparent text-2xl leading-relaxed text-ws-ink outline-none placeholder:text-ws-muted/70 focus:border-ws-teal"
                   />
                 )}
               </div>
