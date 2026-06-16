@@ -35,7 +35,7 @@ function PhotoFrame({ src }: { src?: string }) {
   const [err, setErr] = useState(false);
   useEffect(() => setErr(false), [src]);
   return (
-    <div className="relative mx-auto flex aspect-square w-[260px] items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-ws-line bg-ws-fill">
+    <div className="relative mx-auto flex aspect-square w-[300px] items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-ws-line bg-ws-fill">
       {src && !err ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -156,10 +156,6 @@ export default function ProfileSlidePage() {
   }
 
   const allPoints = pad(view.points);
-  // 編集時は visibleCount 件、記入例は中身のある分だけ表示
-  const pointRows = isSample
-    ? allPoints.map((p, i) => ({ p, i })).filter((x) => x.p.trim())
-    : allPoints.slice(0, visibleCount).map((p, i) => ({ p, i }));
 
   return (
     <WorksheetStage>
@@ -249,10 +245,13 @@ export default function ProfileSlidePage() {
           <span className="text-sm font-semibold text-ws-teal">事前課題</span>
         </div>
 
-        <div className="mt-8 flex gap-12">
-          {/* 左：円形写真 ＋ ニックネーム（下揃え） */}
-          <div className="flex w-[300px] shrink-0 flex-col">
-            <PhotoFrame src={view.photo} />
+        {/* 左右2カラム。シート高いっぱいに上下分散 */}
+        <div className="mt-6 flex min-h-[600px] gap-12">
+          {/* 左：写真=上寄せ ／ ニックネーム=下揃え */}
+          <div className="flex w-[340px] shrink-0 flex-col">
+            <div className="mt-[115px]">
+              <PhotoFrame src={view.photo} />
+            </div>
 
             {!isSample && (
               <div className="no-print mt-4 text-center">
@@ -275,14 +274,14 @@ export default function ProfileSlidePage() {
               </div>
             )}
 
-            {/* ニックネーム（左列の下端に揃える） */}
-            <div className="mt-auto pt-6">
+            {/* ニックネーム（下端から115px上げる） */}
+            <div className="mt-auto mb-[115px] pt-6">
               {isSample ? (
                 <div className="text-center">
                   <p className="text-xs font-semibold text-ws-muted">
                     ニックネーム
                   </p>
-                  <p className="mt-1 text-2xl font-bold text-ws-accent">
+                  <p className="mt-1 text-3xl font-bold text-ws-accent">
                     {view.nickname}
                   </p>
                 </div>
@@ -295,15 +294,15 @@ export default function ProfileSlidePage() {
                     value={data.nickname ?? ""}
                     onChange={(e) => setField({ nickname: e.target.value })}
                     placeholder="ニックネーム"
-                    className="w-full rounded-md border border-ws-line px-3 py-2 text-center text-xl font-bold text-ws-accent outline-none focus:border-ws-teal"
+                    className="w-full rounded-md border border-ws-line px-3 py-2 text-center text-2xl font-bold text-ws-accent outline-none focus:border-ws-teal"
                   />
                 </label>
               )}
             </div>
           </div>
 
-          {/* 右：お名前（1行）＋ 3ポイント */}
-          <div className="flex-1">
+          {/* 右：お名前=上寄せ ／ ポイント=分散（最後を下揃え） */}
+          <div className="flex flex-1 flex-col">
             <div className="border-b border-ws-line pb-4">
               {isSample ? (
                 <>
@@ -319,7 +318,7 @@ export default function ProfileSlidePage() {
                     value={data.name ?? ""}
                     onChange={(e) => setField({ name: e.target.value })}
                     placeholder="お名前"
-                    className="w-full rounded-md border border-ws-line px-3 py-2 text-2xl font-bold text-ws-ink outline-none focus:border-ws-teal"
+                    className="w-full rounded-md border border-ws-line px-3 py-2 text-3xl font-bold text-ws-ink outline-none focus:border-ws-teal"
                   />
                 </label>
               )}
@@ -327,43 +326,74 @@ export default function ProfileSlidePage() {
 
             <p className="mt-6 text-sm font-semibold text-ws-teal">
               知ってほしい 3つのポイント
-              <span className="ml-2 font-normal text-ws-muted">（一言で）</span>
             </p>
-            <ul className="mt-4 space-y-3.5">
-              {pointRows.map(({ p, i }) => (
-                <li key={i} className="flex items-center gap-4">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ws-accent text-sm font-bold text-white">
-                    {i + 1}
-                  </span>
-                  {isSample ? (
-                    <span className="text-xl font-medium text-ws-ink">{p}</span>
-                  ) : (
-                    <input
-                      value={p}
-                      onChange={(e) => setPoint(i, e.target.value)}
-                      placeholder="（一言で）"
-                      className="w-full rounded-md border border-ws-line px-3 py-2 text-lg text-ws-ink outline-none focus:border-ws-teal"
-                    />
-                  )}
-                </li>
-              ))}
+            {/* 常に5枠ぶんの位置を確保（3つでも上から並び、増えても行間は一定） */}
+            <ul className="mt-5 flex flex-1 flex-col justify-between py-2">
+              {[0, 1, 2, 3, 4].map((i) => {
+                const val = allPoints[i] ?? "";
+                const showInput = !isSample && i < visibleCount;
+                const isAddSlot =
+                  !isSample && i === visibleCount && visibleCount < 5;
 
-              {/* ＋ で4つ目・5つ目を追加 */}
-              {!isSample && visibleCount < 5 && (
-                <li className="no-print flex items-center gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setVisibleCount((c) => Math.min(5, c + 1))}
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-ws-line text-ws-muted hover:border-ws-teal hover:text-ws-teal"
-                    aria-label="ポイントを追加"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </button>
-                  <span className="text-sm text-ws-muted">
-                    ポイントを追加（最大5つ）
-                  </span>
-                </li>
-              )}
+                if (isSample) {
+                  const has = !!val.trim();
+                  return (
+                    <li key={i} className="flex items-center gap-4">
+                      <span
+                        className={cn(
+                          "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ws-accent text-base font-bold text-white",
+                          !has && "opacity-0"
+                        )}
+                      >
+                        {i + 1}
+                      </span>
+                      <span className="text-3xl font-medium text-ws-ink">
+                        {val || "　"}
+                      </span>
+                    </li>
+                  );
+                }
+                if (showInput) {
+                  return (
+                    <li key={i} className="flex items-center gap-4">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ws-accent text-base font-bold text-white">
+                        {i + 1}
+                      </span>
+                      <input
+                        value={val}
+                        onChange={(e) => setPoint(i, e.target.value)}
+                        placeholder="（一言で）"
+                        maxLength={25}
+                        className="w-full rounded-md border border-ws-line px-3 py-2 text-3xl text-ws-ink outline-none focus:border-ws-teal"
+                      />
+                    </li>
+                  );
+                }
+                if (isAddSlot) {
+                  return (
+                    <li key={i} className="no-print flex items-center gap-4">
+                      <button
+                        type="button"
+                        onClick={() => setVisibleCount((c) => Math.min(5, c + 1))}
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-ws-line text-ws-muted hover:border-ws-teal hover:text-ws-teal"
+                        aria-label="ポイントを追加"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </button>
+                      <span className="text-sm text-ws-muted">
+                        ポイントを追加（最大5つ）
+                      </span>
+                    </li>
+                  );
+                }
+                // 空きスロット（位置を保持）
+                return (
+                  <li key={i} className="flex items-center gap-4" aria-hidden>
+                    <span className="h-9 w-9 shrink-0 opacity-0" />
+                    <span className="text-3xl opacity-0">　</span>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         </div>
