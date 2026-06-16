@@ -32,10 +32,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // ゲストユーザーはログイン不可
-    if (user.passwordHash === "GUEST_NO_LOGIN") {
+    // パスワード未設定（招待中で未アクティベーション）またはゲストはログイン不可
+    if (!user.passwordHash || user.passwordHash === "GUEST_NO_LOGIN") {
       return NextResponse.json(
-        { error: "メールアドレスまたはパスワードが正しくありません。" },
+        {
+          error:
+            "まだ登録が完了していません。招待メールのリンクからパスワードを設定してください。",
+        },
         { status: 401 }
       );
     }

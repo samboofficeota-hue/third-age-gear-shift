@@ -20,6 +20,21 @@ const config: Config = {
   			'bg-panel': '#0f1420',    /* ナビ・テーブルヘッダー */
   			'bg-card':  '#141a2a',    /* カード背景 */
 
+  			/* ── ワークシート（白地A4横）パレット：WORKSHEET_DESIGN.md ── */
+  			ws: {
+  				ink:    '#1F2937',   /* 本文 */
+  				muted:  '#6B7280',   /* 補足 */
+  				line:   '#D1D5DB',   /* 罫線 */
+  				fill:   '#F4F6F5',   /* 薄面 */
+  				teal:   '#129B86',   /* 構造アクセント */
+  				accent: '#E5277E',   /* 強調（"じぶん"等） */
+  				mint:   '#EAF3EC',   /* ルール枠の薄面 */
+  				family: '#3B82F6',   /* 家庭 */
+  				work:   '#E5277E',   /* 仕事 */
+  				gift:   '#9A6A3C',   /* ギフト */
+  				learn:  '#22A06B',   /* 学習 */
+  			},
+
   			/* ── テキスト ── */
   			'text-base':      '#e0f0e8',
   			'text-secondary': '#a0c0b0',

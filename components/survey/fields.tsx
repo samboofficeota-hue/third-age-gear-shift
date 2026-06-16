@@ -37,6 +37,7 @@ export function LikertScale({
   max = 5,
   minLabel = "そう思わない",
   maxLabel = "そう思う",
+  disabled = false,
 }: {
   label: string;
   hint?: string;
@@ -46,6 +47,7 @@ export function LikertScale({
   max?: number;
   minLabel?: string;
   maxLabel?: string;
+  disabled?: boolean;
 }) {
   const options = Array.from({ length: max - min + 1 }, (_, i) => min + i);
   return (
@@ -55,12 +57,14 @@ export function LikertScale({
           <button
             key={n}
             type="button"
+            disabled={disabled}
             onClick={() => onChange(n)}
             className={cn(
               "h-11 min-w-11 flex-1 rounded-md border text-sm font-semibold transition-colors",
               value === n
                 ? "border-primary bg-primary text-primary-foreground"
-                : "border-[rgba(0,255,136,0.25)] bg-[#0f1420] text-[#e0f0e8] hover:border-primary"
+                : "border-[rgba(0,255,136,0.25)] bg-[#0f1420] text-[#e0f0e8]",
+              disabled ? "cursor-default opacity-90" : "hover:border-primary"
             )}
           >
             {n}
@@ -82,12 +86,14 @@ export function SingleChoice({
   options,
   value,
   onChange,
+  disabled = false,
 }: {
   label: string;
   hint?: string;
   options: { value: string; label: string }[];
   value: string | null;
   onChange: (v: string) => void;
+  disabled?: boolean;
 }) {
   return (
     <QuestionFrame label={label} hint={hint}>
@@ -96,17 +102,77 @@ export function SingleChoice({
           <button
             key={o.value}
             type="button"
+            disabled={disabled}
             onClick={() => onChange(o.value)}
             className={cn(
               "block w-full rounded-md border px-3 py-3 text-left text-sm transition-colors",
               value === o.value
                 ? "border-primary bg-primary/10 text-[#e0f0e8]"
-                : "border-[rgba(0,255,136,0.25)] bg-[#0f1420] text-[#e0f0e8] hover:border-primary"
+                : "border-[rgba(0,255,136,0.25)] bg-[#0f1420] text-[#e0f0e8]",
+              disabled ? "cursor-default opacity-90" : "hover:border-primary"
             )}
           >
             {o.label}
           </button>
         ))}
+      </div>
+    </QuestionFrame>
+  );
+}
+
+/** 複数選択（§D図5 求める支援 など） */
+export function MultiChoice({
+  label,
+  hint,
+  options,
+  value,
+  onChange,
+  disabled = false,
+}: {
+  label: string;
+  hint?: string;
+  options: { value: string; label: string }[];
+  value: string[];
+  onChange: (v: string[]) => void;
+  disabled?: boolean;
+}) {
+  const toggle = (v: string) => {
+    if (disabled) return;
+    onChange(value.includes(v) ? value.filter((x) => x !== v) : [...value, v]);
+  };
+  return (
+    <QuestionFrame label={label} hint={hint}>
+      <div className="space-y-2">
+        {options.map((o) => {
+          const checked = value.includes(o.value);
+          return (
+            <button
+              key={o.value}
+              type="button"
+              disabled={disabled}
+              onClick={() => toggle(o.value)}
+              className={cn(
+                "flex w-full items-center gap-3 rounded-md border px-3 py-3 text-left text-sm transition-colors",
+                checked
+                  ? "border-primary bg-primary/10 text-[#e0f0e8]"
+                  : "border-[rgba(0,255,136,0.25)] bg-[#0f1420] text-[#e0f0e8]",
+                disabled ? "cursor-default opacity-90" : "hover:border-primary"
+              )}
+            >
+              <span
+                className={cn(
+                  "flex h-5 w-5 shrink-0 items-center justify-center rounded border text-[10px]",
+                  checked
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-[rgba(0,255,136,0.4)]"
+                )}
+              >
+                {checked ? "✓" : ""}
+              </span>
+              {o.label}
+            </button>
+          );
+        })}
       </div>
     </QuestionFrame>
   );
