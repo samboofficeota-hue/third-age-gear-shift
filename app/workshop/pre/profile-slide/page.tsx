@@ -72,9 +72,9 @@ const SAMPLE: Required<Slide> = {
     company: "合同会社 公益資本主義実装センター",
     dept: "",
     title: "代表社員　実装プロデューサー",
-    q1: "公益資本主義の理念を社会に実装し、企業と社会がともに栄える仕組みづくりを支援する。",
-    q2: "少人数の組織として、理念の研究・発信から実装プロジェクトまでを一気通貫で担う。",
-    q3: "代表として全体の方針を描き、アイディアで構想から実装までをリードする。",
+    q1: "公益資本主義を理解し、自身が社会にどう貢献するか実践できる人材づくりと、その活躍を広げる場づくり",
+    q2: "ボトムアップ型での啓発・啓蒙\n個人をエンパワーメントしていく",
+    q3: "公益資本主義を理解できるコンテンツの開発と体験プログラムの企画・実装\n理解した人たちが会社の枠を超えて活動できるコミュニティづくり",
   },
 };
 
@@ -628,7 +628,7 @@ export default function ProfileSlidePage() {
               >
                 <p className="text-lg font-bold text-ws-teal">{title}</p>
                 {isSample ? (
-                  <p className="mt-7 flex-1 text-2xl leading-relaxed text-ws-ink">
+                  <p className="mt-7 flex-1 whitespace-pre-line text-2xl leading-relaxed text-ws-ink">
                     {view.work?.[key]}
                   </p>
                 ) : (
