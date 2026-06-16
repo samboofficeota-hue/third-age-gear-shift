@@ -9,8 +9,39 @@ const EXT: Record<string, string> = {
   "image/webp": "webp",
 };
 
+type UploadResult = { url: string } | { error: string; status: number };
+
+async function uploadImage(
+  userId: string,
+  baseName: string,
+  file: File
+): Promise<UploadResult> {
+  if (file.size > MAX_BYTES) {
+    return { error: "画像は5MB以内にしてください。", status: 413 };
+  }
+  const ext = EXT[file.type];
+  if (!ext) {
+    return { error: "PNG / JPEG / WebP の画像をご利用ください。", status: 415 };
+  }
+  const admin = getStorageAdmin();
+  const path = `${userId}/${baseName}.${ext}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const { error } = await admin.storage
+    .from(PHOTO_BUCKET)
+    .upload(path, buffer, { contentType: file.type, upsert: true });
+  if (error) {
+    console.error("photo upload:", error.message);
+    return { error: "アップロードに失敗しました。", status: 500 };
+  }
+  const { data } = admin.storage.from(PHOTO_BUCKET).getPublicUrl(path);
+  // upsert で同一パスのため、CDNキャッシュをバストする
+  return { url: `${data.publicUrl}?v=${Date.now()}` };
+}
+
 /**
  * プロフィール写真のアップロード（認証必須）。
+ * - file: 表示用のトリミング済み画像（必須）→ profile.<ext>
+ * - original: トリミング前の元画像（任意）→ profile-original.<ext>（後から再調整するため保持）
  * Supabase Storage の worksheet-photos に保存し、公開URLを返す。
  */
 export async function POST(request: Request) {
@@ -24,40 +55,23 @@ export async function POST(request: Request) {
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "ファイルがありません。" }, { status: 400 });
   }
-  if (file.size > MAX_BYTES) {
-    return NextResponse.json(
-      { error: "画像は5MB以内にしてください。" },
-      { status: 413 }
-    );
-  }
-  const ext = EXT[file.type];
-  if (!ext) {
-    return NextResponse.json(
-      { error: "PNG / JPEG / WebP の画像をご利用ください。" },
-      { status: 415 }
-    );
-  }
 
   try {
-    const admin = getStorageAdmin();
-    const path = `${session.sub}/profile.${ext}`;
-    const buffer = Buffer.from(await file.arrayBuffer());
-
-    const { error } = await admin.storage
-      .from(PHOTO_BUCKET)
-      .upload(path, buffer, { contentType: file.type, upsert: true });
-    if (error) {
-      console.error("photo upload:", error.message);
-      return NextResponse.json(
-        { error: "アップロードに失敗しました。" },
-        { status: 500 }
-      );
+    const cropped = await uploadImage(session.sub, "profile", file);
+    if ("error" in cropped) {
+      return NextResponse.json({ error: cropped.error }, { status: cropped.status });
     }
 
-    const { data } = admin.storage.from(PHOTO_BUCKET).getPublicUrl(path);
-    // upsert で同一パスのため、CDNキャッシュをバストする
-    const url = `${data.publicUrl}?v=${Date.now()}`;
-    return NextResponse.json({ url });
+    // 元画像（任意）。新規アップロード時のみ送られる。
+    const original = form?.get("original");
+    let originalUrl: string | undefined;
+    if (original instanceof File) {
+      const orig = await uploadImage(session.sub, "profile-original", original);
+      if ("url" in orig) originalUrl = orig.url;
+      // 元画像の失敗は致命ではないので無視（表示用は成功している）
+    }
+
+    return NextResponse.json({ url: cropped.url, originalUrl });
   } catch (e) {
     console.error("photo upload:", e);
     return NextResponse.json(

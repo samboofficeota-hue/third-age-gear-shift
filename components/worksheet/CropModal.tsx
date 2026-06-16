@@ -1,36 +1,43 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import Cropper from "react-easy-crop";
+import Cropper, { type Area } from "react-easy-crop";
 import { Button } from "@/components/ui/button";
 import { getCroppedBlob, type PixelArea } from "@/lib/cropImage";
 
 /**
  * 画像の位置調整・拡大縮小（円形プレビュー）モーダル。
- * onConfirm に正方形クロップ済みの Blob を返す。
+ * onConfirm に正方形クロップ済みの Blob と、再調整用のクロップ範囲(％)を返す。
+ * initialArea を渡すと前回の枠取りを復元する。
  */
 export function CropModal({
   src,
+  initialArea,
   onCancel,
   onConfirm,
 }: {
   src: string;
+  initialArea?: Area | null;
   onCancel: () => void;
-  onConfirm: (blob: Blob) => void;
+  onConfirm: (blob: Blob, area: Area) => void;
 }) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [area, setArea] = useState<PixelArea | null>(null);
+  const [percent, setPercent] = useState<Area | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const onComplete = useCallback((_: unknown, px: PixelArea) => setArea(px), []);
+  const onComplete = useCallback((pct: Area, px: PixelArea) => {
+    setArea(px);
+    setPercent(pct);
+  }, []);
 
   const confirm = async () => {
-    if (!area) return;
+    if (!area || !percent) return;
     setBusy(true);
     try {
       const blob = await getCroppedBlob(src, area);
-      onConfirm(blob);
+      onConfirm(blob, percent);
     } finally {
       setBusy(false);
     }
@@ -50,6 +57,7 @@ export function CropModal({
             aspect={1}
             cropShape="round"
             showGrid={false}
+            initialCroppedAreaPercentages={initialArea ?? undefined}
             onCropChange={setCrop}
             onZoomChange={setZoom}
             onCropComplete={onComplete}

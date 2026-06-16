@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { Area } from "react-easy-crop";
 import Link from "next/link";
-import { ImagePlus, Plus } from "lucide-react";
+import { ImagePlus, Crop, Plus } from "lucide-react";
 import { PrintSheet } from "@/components/worksheet/PrintSheet";
 import { SheetHeader } from "@/components/worksheet/SheetHeader";
 import { WorksheetStage } from "@/components/worksheet/WorksheetStage";
@@ -24,7 +25,9 @@ type Slide = {
   name?: string;
   nickname?: string;
   points?: string[];
-  photo?: string;
+  photo?: string; // 表示用のトリミング済み画像URL
+  photoOriginal?: string; // トリミング前の元画像URL（後から再調整するため保持）
+  photoArea?: Area; // 直近のクロップ範囲(％)。再調整時に枠取りを復元する
   history?: HistRow[];
   work?: Work;
 };
@@ -52,7 +55,7 @@ const WORK_QUESTIONS: { key: "q1" | "q2" | "q3"; title: string; q: string }[] = 
   },
 ];
 
-const SAMPLE: Required<Slide> = {
+const SAMPLE: Slide & { history: HistRow[] } = {
   name: "太田 義史",
   nickname: "ぼうず",
   points: ["沖縄県 長寿家系 生", "東大 少林寺拳法学部 卒", "電通流 プロデュース術", "", ""],
@@ -139,7 +142,12 @@ export default function ProfileSlidePage() {
   const [saved, setSaved] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [cropInitial, setCropInitial] = useState<Area | undefined>(undefined);
   const fileRef = useRef<HTMLInputElement>(null);
+  // 新規アップロード時に保持する元画像（再調整時は null）
+  const pendingOriginalRef = useRef<File | null>(null);
+  // fetchで作った blob: URL（クローズ時に解放する）
+  const objectUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -220,32 +228,70 @@ export default function ProfileSlidePage() {
     setSaved(false);
   };
 
-  // ファイル選択 → クロップモーダルを開く
+  // blob: URL を解放してクロップモーダルを閉じる
+  const closeCrop = () => {
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
+    setCropSrc(null);
+    setCropInitial(undefined);
+  };
+
+  // 新規ファイル選択 → 元画像を保持してクロップモーダルを開く
   const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || isSample) return;
+    pendingOriginalRef.current = file; // 新規アップロード：元画像も保存する
+    setCropInitial(undefined); // 新規は枠取りをリセット
     const reader = new FileReader();
     reader.onload = () => setCropSrc(String(reader.result));
     reader.readAsDataURL(file);
     if (fileRef.current) fileRef.current.value = "";
   };
 
+  // 「写真を調整」→ 保存済みの元画像を取得してクロップモーダルを再度開く
+  const onAdjust = async () => {
+    if (isSample || !data.photoOriginal) return;
+    try {
+      const res = await fetch(data.photoOriginal, { credentials: "omit" });
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      objectUrlRef.current = url;
+      pendingOriginalRef.current = null; // 元画像は変更しない
+      setCropInitial(data.photoArea); // 前回の枠取りを復元
+      setCropSrc(url);
+    } catch {
+      alert("写真の読み込みに失敗しました。お手数ですが写真を選び直してください。");
+    }
+  };
+
   // クロップ確定 → Storage にアップロード → URL を保存
-  const onCropped = async (blob: Blob) => {
-    setCropSrc(null);
+  const onCropped = async (blob: Blob, area: Area) => {
+    const original = pendingOriginalRef.current;
+    closeCrop();
     setPhotoUploading(true);
     try {
       const fd = new FormData();
       fd.append("file", new File([blob], "photo.jpg", { type: "image/jpeg" }));
+      if (original) fd.append("original", original); // 新規アップロード時のみ
       const res = await fetch("/api/workshop/me/photo", {
         method: "POST",
         credentials: "include",
         body: fd,
       });
       const d = await res.json().catch(() => ({}));
-      if (res.ok && d.url) setField({ photo: d.url });
-      else alert(d.error ?? "アップロードに失敗しました。");
+      if (res.ok && d.url) {
+        setField({
+          photo: d.url,
+          photoArea: area,
+          ...(d.originalUrl ? { photoOriginal: d.originalUrl } : {}),
+        });
+      } else {
+        alert(d.error ?? "アップロードに失敗しました。");
+      }
     } finally {
+      pendingOriginalRef.current = null;
       setPhotoUploading(false);
     }
   };
@@ -356,7 +402,7 @@ export default function ProfileSlidePage() {
             </div>
 
             {!isSample && (
-              <div className="no-print mt-4 text-center">
+              <div className="no-print mt-4 flex flex-wrap items-center justify-center gap-2">
                 <input
                   ref={fileRef}
                   type="file"
@@ -364,6 +410,17 @@ export default function ProfileSlidePage() {
                   onChange={onFile}
                   className="hidden"
                 />
+                {data.photoOriginal && (
+                  <button
+                    type="button"
+                    disabled={photoUploading}
+                    onClick={onAdjust}
+                    className="inline-flex items-center gap-2 rounded-lg border border-ws-line px-4 py-2 text-sm text-ws-ink hover:border-ws-teal disabled:opacity-60"
+                  >
+                    <Crop className="h-4 w-4" />
+                    写真を調整
+                  </button>
+                )}
                 <button
                   type="button"
                   disabled={photoUploading}
@@ -371,7 +428,11 @@ export default function ProfileSlidePage() {
                   className="inline-flex items-center gap-2 rounded-lg border border-ws-line px-4 py-2 text-sm text-ws-ink hover:border-ws-teal disabled:opacity-60"
                 >
                   <ImagePlus className="h-4 w-4" />
-                  {photoUploading ? "アップロード中…" : "写真をアップロード"}
+                  {photoUploading
+                    ? "アップロード中…"
+                    : data.photo
+                      ? "写真を変更"
+                      : "写真をアップロード"}
                 </button>
               </div>
             )}
@@ -659,7 +720,8 @@ export default function ProfileSlidePage() {
       {cropSrc && (
         <CropModal
           src={cropSrc}
-          onCancel={() => setCropSrc(null)}
+          initialArea={cropInitial}
+          onCancel={closeCrop}
           onConfirm={onCropped}
         />
       )}
