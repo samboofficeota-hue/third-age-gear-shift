@@ -120,10 +120,8 @@ body {
   /* 画面の狭い環境でも崩さない：縮小はbrowser zoom/ユーザー操作に委ねる */
 }
 
-/* シート内テキストは黒系で統一（ダークテーマの継承を断つ） */
-.print-sheet :where(h1, h2, h3, h4, p, span, div, label, td, th, li) {
-  color: inherit;
-}
+/* シート内テキストの既定色はインク色（.print-sheet から継承）。
+   text-white / text-ws-accent などのユーティリティは個別指定が優先される。 */
 
 @media print {
   /* グリッド背景・ダークテーマを白に */

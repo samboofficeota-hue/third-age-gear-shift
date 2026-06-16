@@ -11,13 +11,33 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type HistRow = { year: string; event: string };
+type Work = {
+  company?: string;
+  dept?: string;
+  title?: string;
+  q1?: string; // 会社は何のため・誰に・何を
+  q2?: string; // あなたの役割・価値
+  q3?: string; // どんな仕事・役割・責任
+};
 type Slide = {
   name?: string;
   nickname?: string;
   points?: string[];
   photo?: string;
   history?: HistRow[];
+  work?: Work;
 };
+
+const WORK_FIELDS: { key: "company" | "dept" | "title"; label: string }[] = [
+  { key: "company", label: "会社名" },
+  { key: "dept", label: "部署名" },
+  { key: "title", label: "役職名" },
+];
+const WORK_QUESTIONS: { key: "q1" | "q2" | "q3"; q: string }[] = [
+  { key: "q1", q: "この会社は、何のために・誰に・何をしている会社ですか？" },
+  { key: "q2", q: "その中で、あなたはどんな役割・価値を担っていますか？" },
+  { key: "q3", q: "具体的に、どんな仕事・役割・責任がありますか？" },
+];
 
 const SAMPLE: Required<Slide> = {
   name: "太田 義史",
@@ -35,6 +55,14 @@ const SAMPLE: Required<Slide> = {
     { year: "2024", event: "サンボーオフィス（アイディアで経営に参謀する・中小企業診断士）" },
     { year: "2026", event: "公益資本主義実装センター 設立（現在に至る）" },
   ],
+  work: {
+    company: "サンボーオフィス",
+    dept: "（個人事業）",
+    title: "代表・中小企業診断士",
+    q1: "中小企業の経営者に対して、アイディアと戦略で経営に伴走し、事業の成長と挑戦を後押ししている。",
+    q2: "経営者の「参謀」として、外からの視点で戦略を描き、意思決定を支える役割。アイディアそのものが提供価値。",
+    q3: "経営相談・事業計画づくり・マーケティング支援・補助金申請のサポートまで、構想から実行まで伴走する。",
+  },
 };
 
 const MIN_HIST_ROWS = 6;
@@ -140,6 +168,11 @@ export default function ProfileSlidePage() {
       points[i] = v;
       return { ...d, points };
     });
+    setSaved(false);
+  };
+  const setWork = (key: keyof Work, v: string) => {
+    if (isSample) return;
+    setData((d) => ({ ...d, work: { ...d.work, [key]: v } }));
     setSaved(false);
   };
   const setHist = (i: number, key: keyof HistRow, v: string) => {
@@ -539,6 +572,77 @@ export default function ProfileSlidePage() {
             </li>
           )}
         </ul>
+      </PrintSheet>
+
+      {/* ── ページ④ 今の会社・今の仕事 ── */}
+      <PrintSheet>
+        <div className="flex items-center justify-between border-b border-ws-line pb-4">
+          <div className="flex items-center gap-4">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-ws-teal text-lg font-bold text-white">
+              1
+            </span>
+            <h1 className="text-3xl font-bold text-ws-ink">
+              <span className="text-ws-accent">じぶん</span> 紹介{" "}
+              <span className="text-ws-muted">〜 今の会社・今の仕事</span>
+            </h1>
+          </div>
+          {headerName && (
+            <span className="text-base font-bold text-ws-ink">{headerName}</span>
+          )}
+        </div>
+
+        {/* シート高いっぱいに上下分散 */}
+        <div className="mt-7 flex min-h-[640px] flex-col">
+          {/* 会社名 / 部署名 / 役職名 */}
+          <div className="grid grid-cols-3 gap-7">
+            {WORK_FIELDS.map(({ key, label }) => (
+              <div key={key}>
+                <span className="mb-1.5 block text-xs font-semibold text-ws-muted">
+                  {label}
+                </span>
+                {isSample ? (
+                  <p className="border-b-2 border-ws-line pb-2 text-2xl font-bold text-ws-ink">
+                    {view.work?.[key] || "　"}
+                  </p>
+                ) : (
+                  <input
+                    value={data.work?.[key] ?? ""}
+                    onChange={(e) => setWork(key, e.target.value)}
+                    placeholder={label}
+                    className="w-full rounded-md border border-ws-line px-3 py-2 text-2xl font-bold text-ws-ink outline-none focus:border-ws-teal"
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* 3つの問い（残り高さに分散） */}
+          <div className="mt-9 flex flex-1 flex-col justify-between gap-6">
+            {WORK_QUESTIONS.map(({ key, q }, idx) => (
+              <div key={key}>
+                <p className="flex items-center gap-3 text-base font-semibold text-ws-teal">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ws-teal text-sm font-bold text-white">
+                    {idx + 1}
+                  </span>
+                  {q}
+                </p>
+                {isSample ? (
+                  <p className="mt-3 pl-10 text-lg leading-relaxed text-ws-ink">
+                    {view.work?.[key]}
+                  </p>
+                ) : (
+                  <textarea
+                    value={data.work?.[key] ?? ""}
+                    onChange={(e) => setWork(key, e.target.value)}
+                    rows={3}
+                    placeholder="（自由記入）"
+                    className="mt-3 ml-10 w-[calc(100%-2.5rem)] resize-none rounded-md border border-ws-line px-3 py-2 text-lg leading-relaxed text-ws-ink outline-none focus:border-ws-teal"
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
       </PrintSheet>
 
       {/* 保存（印刷されない） */}
