@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CheckCircle2, CalendarDays, ArrowLeft } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { MicchiMessage } from "./MicchiMessage";
 
 type ProfileSlide = {
   name?: string;
@@ -19,6 +20,7 @@ export default async function PreDonePage() {
   const session = await getSession();
   let name = "";
   let slide: ProfileSlide | undefined;
+  let aiWelcome: string | null = null;
   let day1Str: string | null = null;
 
   if (session) {
@@ -34,8 +36,11 @@ export default async function PreDonePage() {
         },
       },
     });
-    slide = (user?.workshopData?.pre as { profileSlide?: ProfileSlide } | null)
-      ?.profileSlide;
+    const pre = user?.workshopData?.pre as
+      | { profileSlide?: ProfileSlide; aiWelcome?: string }
+      | null;
+    slide = pre?.profileSlide;
+    aiWelcome = pre?.aiWelcome?.trim() ? pre.aiWelcome : null;
     name = (user?.name ?? slide?.name ?? "").trim();
 
     const day1 = user?.workshopData?.session?.day1Date;
@@ -70,8 +75,6 @@ export default async function PreDonePage() {
 
         <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-[#c8dccf]">
           すてきな自己紹介を受け取りました。
-          <br />
-          Day1で、メンバーのみなさんにご紹介しますね。
         </p>
 
         {/* 提出された自己紹介プレビュー */}
@@ -121,15 +124,12 @@ export default async function PreDonePage() {
           </div>
         )}
 
-        <div className="mt-6 space-y-3 text-sm leading-relaxed text-[#c8dccf]">
-          <p>
-            自己紹介シートは <span className="font-bold text-primary">Day1</span> で
-            発表していただきます。当日まで、追記・修正もできます。
-          </p>
-          <p className="font-bold text-[#e0f0e8]">
-            研修当日を、どうぞ楽しみにしていてください。
-          </p>
-        </div>
+        {/* ミッチーからの歓迎メッセージ（AI生成・2行） */}
+        <MicchiMessage initial={aiWelcome} />
+
+        <p className="mt-6 text-xs leading-relaxed text-muted-foreground">
+          自己紹介シートは Day1 で発表していただきます。当日まで追記・修正できます。
+        </p>
 
         {day1Str && (
           <div className="mx-auto mt-6 inline-flex items-center gap-2 rounded-lg border border-[rgba(0,255,136,0.2)] bg-[#0f1420] px-4 py-2.5">
