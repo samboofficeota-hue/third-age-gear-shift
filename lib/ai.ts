@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 
 /**
- * AIナビゲーター「ミッチー」のメッセージ生成を集約する。
+ * AIナビゲーターのメッセージ生成を集約する。
  * 5つのAIタッチポイント（Day1/Day2コメント・宿題伴走・終了後メール・3ヶ月後）と
  * 共通の口調・安全制約をここで一元管理する。
  */
@@ -17,10 +17,10 @@ type SlideForAI = {
 };
 
 /** AI生成に失敗したときの固定メッセージ（ページが崩れないよう温かい文に） */
-export const MICCHI_WELCOME_FALLBACK =
+export const WELCOME_FALLBACK =
   "ご提出ありがとうございます！Day1でお会いできるのを、いまから楽しみにしています。";
 
-const WELCOME_SYSTEM = `あなたは社会人向け研修「サードエイジ じぶん戦略講座」のAIナビゲーター「ミッチー」です。
+const WELCOME_SYSTEM = `あなたは社会人向け研修「サードエイジ じぶん戦略講座」のAIナビゲーターです。
 受講生が事前課題（自己紹介）を提出した直後に表示する、短い歓迎メッセージを書きます。
 
 口調・内容のルール:
@@ -55,7 +55,7 @@ function buildProfileText(slide: SlideForAI): string {
  * 事前課題の提出を受けた歓迎メッセージを生成する。
  * 失敗時は例外を投げる（呼び出し側でフォールバックを使う）。
  */
-export async function generateMicchiWelcome(slide: SlideForAI): Promise<string> {
+export async function generateWelcomeMessage(slide: SlideForAI): Promise<string> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not set");
 

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CheckCircle2, CalendarDays, ArrowLeft } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { MicchiMessage } from "./MicchiMessage";
+import { NavigatorMessage } from "./NavigatorMessage";
 
 type ProfileSlide = {
   name?: string;
@@ -143,8 +143,8 @@ export default async function PreDonePage() {
           </div>
         )}
 
-        {/* ミッチーからの歓迎メッセージ（AI生成・2行） */}
-        <MicchiMessage initial={aiWelcome} />
+        {/* AIナビゲーターからの歓迎メッセージ（AI生成・2行） */}
+        <NavigatorMessage initial={aiWelcome} />
 
         <p className="mt-6 text-xs leading-relaxed text-muted-foreground">
           自己紹介シートは Day1 で発表していただきます。当日まで追記・修正できます。

@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 
 /**
- * ミッチーの歓迎メッセージ枠。
+ * AIナビゲーターの歓迎メッセージ枠。
  * 生成済み(initial)があれば即表示。無ければマウント時に生成APIを1回叩く。
  */
-export function MicchiMessage({ initial }: { initial: string | null }) {
+export function NavigatorMessage({ initial }: { initial: string | null }) {
   const [msg, setMsg] = useState(initial ?? "");
   const [loading, setLoading] = useState(!initial);
 
@@ -37,15 +37,11 @@ export function MicchiMessage({ initial }: { initial: string | null }) {
         <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20">
           <Sparkles className="h-3.5 w-3.5 text-primary" />
         </span>
-        <span className="text-xs font-bold text-primary">
-          AIナビゲーター ミッチー
-        </span>
+        <span className="text-xs font-bold text-primary">AIナビゲーターより</span>
       </div>
       <p className="mt-2.5 whitespace-pre-line text-sm leading-relaxed text-[#e0f0e8]">
         {loading ? (
-          <span className="text-muted-foreground">
-            ミッチーがメッセージを準備中…
-          </span>
+          <span className="text-muted-foreground">メッセージを準備中…</span>
         ) : (
           msg
         )}

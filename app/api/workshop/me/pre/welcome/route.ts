@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
-import { generateMicchiWelcome, MICCHI_WELCOME_FALLBACK } from "@/lib/ai";
+import { generateWelcomeMessage, WELCOME_FALLBACK } from "@/lib/ai";
 
 /**
- * 事前課題の提出を受けて、ミッチーの歓迎メッセージを生成（1回だけ）。
+ * 事前課題の提出を受けて、AIナビゲーターの歓迎メッセージを生成（1回だけ）。
  * 既に pre.aiWelcome があればそれを返す。生成失敗時はフォールバックを返し保存しない。
  */
 export async function POST() {
@@ -29,9 +29,9 @@ export async function POST() {
   let message: string;
   let persist = true;
   try {
-    message = await generateMicchiWelcome(slide);
+    message = await generateWelcomeMessage(slide);
   } catch {
-    message = MICCHI_WELCOME_FALLBACK;
+    message = WELCOME_FALLBACK;
     persist = false; // 失敗は保存せず、次回リトライできるようにする
   }
 
