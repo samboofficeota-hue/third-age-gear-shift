@@ -9,6 +9,7 @@ type ProfileSlide = {
   nickname?: string;
   points?: string[];
   photo?: string;
+  work?: { company?: string; dept?: string; title?: string };
 };
 
 /**
@@ -59,6 +60,11 @@ export default async function PreDonePage() {
   const slideName = slide?.name?.trim() ?? name;
   const points = (slide?.points ?? []).filter((p) => p?.trim());
   const photo = slide?.photo?.trim() ?? "";
+  const workRows = [
+    { label: "会社", value: slide?.work?.company?.trim() },
+    { label: "組織", value: slide?.work?.dept?.trim() },
+    { label: "役割", value: slide?.work?.title?.trim() },
+  ].filter((r) => r.value);
 
   return (
     <div className="mx-auto max-w-xl px-4 py-14 md:px-6">
@@ -78,9 +84,10 @@ export default async function PreDonePage() {
         </p>
 
         {/* 提出された自己紹介プレビュー */}
-        {(photo || nickname || slideName || points.length > 0) && (
+        {(photo || nickname || slideName || points.length > 0 || workRows.length > 0) && (
           <div className="mt-6 rounded-xl border border-[rgba(0,255,136,0.15)] bg-[#0f1420] p-5 text-left">
             <div className="flex items-center gap-4">
+              {/* 写真＋名前 */}
               <div className="h-20 w-20 shrink-0 overflow-hidden rounded-full border border-[rgba(0,255,136,0.25)] bg-[#1a2030]">
                 {photo ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -95,7 +102,7 @@ export default async function PreDonePage() {
                   </div>
                 )}
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 shrink-0">
                 {nickname && (
                   <p className="truncate text-lg font-bold text-primary">
                     {nickname}
@@ -105,6 +112,18 @@ export default async function PreDonePage() {
                   <p className="truncate text-sm text-[#e0f0e8]">{slideName}</p>
                 )}
               </div>
+
+              {/* 右側：会社名／組織名／役割名（今の会社シートより） */}
+              {workRows.length > 0 && (
+                <div className="ml-auto min-w-0 space-y-1 border-l border-[rgba(255,255,255,0.08)] pl-4">
+                  {workRows.map((r) => (
+                    <p key={r.label} className="text-xs leading-snug">
+                      <span className="text-muted-foreground">{r.label}　</span>
+                      <span className="text-[#e0f0e8]">{r.value}</span>
+                    </p>
+                  ))}
+                </div>
+              )}
             </div>
 
             {points.length > 0 && (
