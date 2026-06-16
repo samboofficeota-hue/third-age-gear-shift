@@ -37,6 +37,7 @@ model User {
   // 招待中（事前登録済みで未アクティベーション）は null。本人がパスワードを設定すると埋まる。
   passwordHash String?  @map("password_hash")
   name         String?  // 表示名（事前登録）例: "太田 義史"
+  department   String?  // 部署名（事前登録）。ワークシートに引き継ぐ。役職なしは null/なし
   role         UserRole @default(participant)
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")

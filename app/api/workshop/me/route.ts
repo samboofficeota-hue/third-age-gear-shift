@@ -17,7 +17,12 @@ export async function GET() {
   // 事前登録の氏名・所属会社（ワークシートの初期表示に使う）も取得する。
   const user = await prisma.user.findUnique({
     where: { id: session.sub },
-    select: { id: true, name: true, organization: { select: { name: true } } },
+    select: {
+      id: true,
+      name: true,
+      department: true,
+      organization: { select: { name: true } },
+    },
   });
   if (!user) {
     return NextResponse.json({ error: "ログインしてください。" }, { status: 401 });
@@ -39,6 +44,7 @@ export async function GET() {
   return NextResponse.json({
     account: {
       name: user.name,
+      department: user.department,
       organizationName: user.organization?.name ?? null,
     },
     workshopData: {

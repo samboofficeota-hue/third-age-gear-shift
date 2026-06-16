@@ -37,18 +37,18 @@ const WORK_FIELDS: { key: "company" | "dept" | "title"; label: string }[] = [
 const WORK_QUESTIONS: { key: "q1" | "q2" | "q3"; title: string; q: string }[] = [
   {
     key: "q1",
-    title: "会社について",
+    title: "会社の役割",
     q: "この会社は、何のために・誰に・何をしている会社ですか？",
   },
   {
     key: "q2",
-    title: "わたしの役割・価値",
-    q: "その中で、あなたはどんな役割・価値を担っていますか？",
+    title: "組織の役割",
+    q: "あなたの部署・チームは、その中でどんな役割を担っていますか？",
   },
   {
     key: "q3",
-    title: "仕事・役割・責任",
-    q: "具体的に、どんな仕事・役割・責任がありますか？",
+    title: "自分の役割",
+    q: "あなた自身は、どんな役割・価値を担っていますか？",
   },
 ];
 
@@ -72,9 +72,9 @@ const SAMPLE: Required<Slide> = {
     company: "合同会社 公益資本主義実装センター",
     dept: "なし",
     title: "代表社員・中小企業診断士",
-    q1: "中小企業の経営者に対して、アイディアと戦略で経営に伴走し、事業の成長と挑戦を後押ししている。",
-    q2: "経営者の「参謀」として、外からの視点で戦略を描き、意思決定を支える役割。アイディアそのものが提供価値。",
-    q3: "経営相談・事業計画づくり・マーケティング支援・補助金申請のサポートまで、構想から実行まで伴走する。",
+    q1: "公益資本主義の理念を社会に実装し、企業と社会がともに栄える仕組みづくりを支援する。",
+    q2: "少人数の組織として、理念の研究・発信から実装プロジェクトまでを一気通貫で担う。",
+    q3: "代表として全体の方針を描き、アイディアで構想から実装までをリードする。",
   },
 };
 
@@ -139,8 +139,6 @@ export default function ProfileSlidePage() {
   const [saved, setSaved] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
-  // 事前登録の会社名（DB由来）。会社名欄のプレースホルダに使う。
-  const [orgName, setOrgName] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -148,11 +146,23 @@ export default function ProfileSlidePage() {
       const d = await fetch("/api/workshop/me", { credentials: "include" })
         .then((r) => r.json())
         .catch(() => ({}));
-      setOrgName((d?.account?.organizationName as string) ?? "");
+      const acct = (d?.account ?? {}) as {
+        organizationName?: string | null;
+        department?: string | null;
+      };
       const ps = d?.workshopData?.pre?.profileSlide as Slide | undefined;
+      const points = pad(ps?.points);
+      // 会社名・部署名は事前登録（DB）の値で初期化（未保存時のみ）。
+      setData({
+        ...ps,
+        points,
+        work: {
+          ...ps?.work,
+          company: ps?.work?.company ?? acct.organizationName ?? "",
+          dept: ps?.work?.dept ?? acct.department ?? "",
+        },
+      });
       if (ps) {
-        const points = pad(ps.points);
-        setData({ ...ps, points });
         const filled = points.filter((p) => p.trim()).length;
         setVisibleCount(Math.min(5, Math.max(3, filled)));
         setHistCount(Math.max(MIN_HIST_ROWS, ps.history?.length ?? 0));
@@ -583,8 +593,9 @@ export default function ProfileSlidePage() {
           {/* 会社名 / 部署名 / 役職名・肩書き・役割（2行分の高さを確保） */}
           <div className="grid grid-cols-3 gap-7">
             {WORK_FIELDS.map(({ key, label }) => {
-              // 会社名は事前登録（DB）の値をサンプルテキストとして表示。
-              const ph = key === "company" && orgName ? orgName : label;
+              // 会社名・部署名はDB値で初期化済み。役職名は空欄＋記入例を表示。
+              const ph =
+                key === "title" ? "例）部長・〇〇リーダー・プロデューサー" : label;
               return (
                 <div key={key}>
                   <span className="mb-3 block text-sm font-semibold text-ws-teal">
