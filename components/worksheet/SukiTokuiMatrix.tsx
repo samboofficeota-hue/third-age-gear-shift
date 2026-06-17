@@ -202,7 +202,7 @@ export function SukiTokuiMatrix({
           style={{
             width: FRAME_W,
             height: FRAME_H,
-            gridTemplateColumns: "30px 1fr 1fr",
+            gridTemplateColumns: "34px 1fr 1fr",
             gridTemplateRows: "28px 1fr 1fr",
           }}
         >
@@ -224,13 +224,13 @@ export function SukiTokuiMatrix({
           {/* 縦軸：上=個人 / 下=会社 */}
           <div
             style={{ gridColumn: "1", gridRow: "2" }}
-            className="flex items-center justify-center text-sm font-bold text-ws-teal [writing-mode:vertical-rl]"
+            className="flex items-center justify-center text-base font-bold text-ws-teal [writing-mode:vertical-rl]"
           >
             個人
           </div>
           <div
             style={{ gridColumn: "1", gridRow: "3" }}
-            className="flex items-center justify-center text-sm font-bold text-ws-teal [writing-mode:vertical-rl]"
+            className="flex items-center justify-center text-base font-bold text-ws-teal [writing-mode:vertical-rl]"
           >
             会社
           </div>
