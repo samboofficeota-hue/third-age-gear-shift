@@ -1,28 +1,14 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { canAccessPhase } from "@/lib/workshopAccess";
+import { Day1Client } from "./Day1Client";
 
+/**
+ * Day1（研修本番・Program B）。講師が開放したときのみアクセス可。
+ * 参加者のDay1 = じぶん紹介(read-only) ＋ じぶん分解 ＋ じぶん分析（講義は講師画面側）。
+ */
 export default async function Day1Page() {
   const { ok } = await canAccessPhase("day1");
   if (!ok) redirect("/training");
 
-  return (
-    <div className="mx-auto max-w-3xl px-4 py-16 text-center">
-      <p className="text-xs font-semibold uppercase tracking-widest text-ws-teal">
-        DAY 1
-      </p>
-      <h1 className="mt-2 text-2xl font-bold text-ws-ink">
-        じぶん分解・じぶん分析
-      </h1>
-      <p className="mt-3 text-sm text-ws-muted">このワークは準備中です。</p>
-      <Link
-        href="/training"
-        className="mt-8 inline-flex items-center gap-1.5 text-sm text-ws-teal hover:underline"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        研修本番トップへ
-      </Link>
-    </div>
-  );
+  return <Day1Client />;
 }
