@@ -202,73 +202,73 @@ export function SukiTokuiMatrix({
           style={{
             width: FRAME_W,
             height: FRAME_H,
-            gridTemplateColumns: "26px 1fr 1fr",
-            gridTemplateRows: "24px 1fr 1fr",
+            gridTemplateColumns: "30px 1fr 1fr",
+            gridTemplateRows: "28px 1fr 1fr",
           }}
         >
           {/* 左上の角（空） */}
-          <div />
-          {/* 横軸ラベル */}
-          {COLS.map((c) => (
-            <div
-              key={c.key}
-              className="flex items-center justify-center text-sm font-bold text-ws-accent"
-            >
-              {c.label}
-            </div>
-          ))}
+          <div style={{ gridColumn: "1", gridRow: "1" }} />
+          {/* 横軸名（得意 〜 好き） */}
+          <div
+            style={{ gridColumn: "2 / 4", gridRow: "1" }}
+            className="flex items-center justify-center text-sm font-bold tracking-wide text-ws-accent"
+          >
+            得意　〜　好き
+          </div>
+          {/* 縦軸名（個人 〜 会社） */}
+          <div
+            style={{ gridColumn: "1", gridRow: "2 / 4" }}
+            className="flex items-center justify-center text-sm font-bold tracking-wide text-ws-teal [writing-mode:vertical-rl]"
+          >
+            個人　〜　会社
+          </div>
 
-          {/* 行 */}
-          {ROWS.map((r) => (
-            <FrameRow key={r.key}>
-              {/* 縦軸ラベル */}
-              <div className="flex items-center justify-center text-sm font-bold text-ws-teal [writing-mode:vertical-rl]">
-                {r.label}
-              </div>
-              {COLS.map((c) => {
-                const entries = entriesOf(r.key, c.key);
-                const isPick =
-                  !editing && draft.row === r.key && draft.col === c.key;
-                return (
-                  <button
-                    key={c.key}
-                    type="button"
-                    onClick={() => pickCell(r.key, c.key)}
-                    className={cn(
-                      "relative flex flex-col items-stretch justify-center gap-1.5 border border-ws-line p-3 text-left transition-colors",
-                      isPick ? "bg-ws-mint/50" : "bg-white hover:bg-ws-fill/60"
-                    )}
-                  >
-                    {entries.length === 0 ? (
-                      <span className="text-center text-xs text-ws-muted/70">
-                        クリックして追加
+          {/* 4セル（行=個人/会社・列=得意/好き） */}
+          {ROWS.map((r, ri) =>
+            COLS.map((c, ci) => {
+              const entries = entriesOf(r.key, c.key);
+              const isPick =
+                !editing && draft.row === r.key && draft.col === c.key;
+              return (
+                <button
+                  key={`${r.key}-${c.key}`}
+                  type="button"
+                  style={{ gridColumn: String(ci + 2), gridRow: String(ri + 2) }}
+                  onClick={() => pickCell(r.key, c.key)}
+                  className={cn(
+                    "relative flex flex-col items-stretch justify-center gap-1.5 border border-ws-line p-3 text-left transition-colors",
+                    isPick ? "bg-ws-mint/50" : "bg-white hover:bg-ws-fill/60"
+                  )}
+                >
+                  {entries.length === 0 ? (
+                    <span className="text-center text-xs text-ws-muted/70">
+                      クリックして追加
+                    </span>
+                  ) : (
+                    entries.map((x) => (
+                      <span
+                        key={x.i}
+                        role="button"
+                        tabIndex={0}
+                        onClick={(ev) => {
+                          ev.stopPropagation();
+                          startEdit(x.i);
+                        }}
+                        className={cn(
+                          "block whitespace-pre-wrap rounded-md border px-2.5 py-1.5 text-sm leading-snug text-ws-ink",
+                          editingIndex === x.i
+                            ? "border-ws-teal bg-ws-mint"
+                            : "border-ws-line bg-ws-fill hover:border-ws-teal"
+                        )}
+                      >
+                        {x.e.text}
                       </span>
-                    ) : (
-                      entries.map((x) => (
-                        <span
-                          key={x.i}
-                          role="button"
-                          tabIndex={0}
-                          onClick={(ev) => {
-                            ev.stopPropagation();
-                            startEdit(x.i);
-                          }}
-                          className={cn(
-                            "block whitespace-pre-wrap rounded-md border px-2.5 py-1.5 text-sm leading-snug text-ws-ink",
-                            editingIndex === x.i
-                              ? "border-ws-teal bg-ws-mint"
-                              : "border-ws-line bg-ws-fill hover:border-ws-teal"
-                          )}
-                        >
-                          {x.e.text}
-                        </span>
-                      ))
-                    )}
-                  </button>
-                );
-              })}
-            </FrameRow>
-          ))}
+                    ))
+                  )}
+                </button>
+              );
+            })
+          )}
         </div>
         <p className="no-print mt-2 text-xs text-ws-muted">
           マスをクリックして追加、項目をクリックして編集できます（縦＝個人／会社・横＝得意／好き）。
@@ -276,9 +276,4 @@ export function SukiTokuiMatrix({
       </div>
     </div>
   );
-}
-
-/** grid の行をそのまま流す（縦軸ラベル＋2セル） */
-function FrameRow({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
 }
