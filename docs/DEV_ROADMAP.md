@@ -105,6 +105,36 @@
 
 ---
 
+## 6. リハーサル運用（役割別ライブ点検）
+
+**目的**: プレビューが単一セッションな制約を「役者を分ける」ことで回避し、参加者／講師／事務局の3視点で
+画面内容・遷移・連動（通知/開放）の不具合を洗い出す。＝ 自動テストではなく**ライブの通し点検**。
+
+**成立の鍵**: ローカルプレビューも Vercel本番も**同じ Supabase** を見ている（DATABASE_URL 同一）。
+よって別ブラウザ・別PC・エージェントがどこから入っても同じ状態を共有でき、ハンドオフ（招待→提出→閲覧→開放）が一周する。
+
+**役者の割り当て**
+| 役 | 誰が | 手段 |
+|---|---|---|
+| 参加者（5名想定） | エージェント | アプリのAPIを直接叩いて入力（堅牢）。UIクリックが要れば2つ目のプレビュー(別ポート)も可 |
+| 講師 | 太田さん | Vercel本番URLを別ブラウザ/別PCで（※講師画面が出来てから） |
+| 事務局 | Claude | プレビューで進行確認・ナレーション（スクショはチャットに出るので太田も同時に見られる） |
+
+**ダミーデータ運用（重要・実データは絶対に触らない）**
+- namespace で識別: メール `@rehearsal.thirdage.test` / 研修コード `REHEARSAL` / 会社名プレフィックス `[リハ] ` / 共通PW `rehearsal`
+- 開始時: **`npm run rehearsal:setup`** … 参加者5・講師1・会社2・研修セッション1（Day1=2週後/Day2=3週後）を投入。全員**即ログイン可**
+- 終了後: **`npm run rehearsal:teardown`** … namespace一致分を**完全削除**（User削除でWorkshopDataはCascade、Session削除でBlockStatusはCascade）
+- **常駐させない。** 次回リハはまた setup から立ち上げる
+- 実装: [scripts/rehearsal-setup.ts](../scripts/rehearsal-setup.ts) / [scripts/rehearsal-teardown.ts](../scripts/rehearsal-teardown.ts) / [scripts/rehearsalData.ts](../scripts/rehearsalData.ts)
+
+**実施タイミング**: 3〜4回の節目（① ユーザー画面 一通り完成 ② 講師画面 完成 ③ 事務局＋連動 実装後 ④ リリース前）。
+現状は講師画面が無いので、フル3者は講師画面完成後。それまでは「参加者エージェント＋Claude事務局」の2者ミニ・ドライランで形式確認は可能。
+
+**リハで確認したい既知ギャップ（現時点）**
+- 講師↔研修セッションの**担当割り当てフィールドが未**（schema）→ 講師が「自分の担当コードだけ」を見られない（A-4 / T-4 / F-1）
+
+---
+
 ## 付記：レガシー資料
 
 `docs/webapp_spec_third_age.md` / `docs/mitchie_system_prompts.md` / `docs/ARCHITECTURE_PROPOSAL.md` 等は
