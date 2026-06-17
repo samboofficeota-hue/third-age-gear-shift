@@ -7,11 +7,15 @@ import { PrintSheet } from "@/components/worksheet/PrintSheet";
 import { SheetHeader, formatHeaderName } from "@/components/worksheet/SheetHeader";
 import { PrintButton } from "@/components/worksheet/PrintButton";
 import { WorksheetStage } from "@/components/worksheet/WorksheetStage";
+import {
+  CommunityPortfolio,
+  type PortfolioCircle,
+} from "@/components/worksheet/CommunityPortfolio";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type ShareRow = { bunjin: string; share: string; meaning: string };
-type Bunkai = { shareTable?: ShareRow[] };
+type Bunkai = { shareTable?: ShareRow[]; portfolio?: PortfolioCircle[] };
 
 const MAX_ROWS = 10;
 const DEFAULT_ROWS = 5;
@@ -35,6 +39,7 @@ function padRows(rows: ShareRow[] | undefined, n: number): ShareRow[] {
 export function Day1Client() {
   const [rows, setRows] = useState<ShareRow[]>(padRows([], DEFAULT_ROWS));
   const [count, setCount] = useState(DEFAULT_ROWS);
+  const [portfolio, setPortfolio] = useState<PortfolioCircle[]>([]);
   const [headerName, setHeaderName] = useState("");
   const [mode, setMode] = useState<"edit" | "sample">("edit");
   const [loading, setLoading] = useState(true);
@@ -60,6 +65,7 @@ export function Day1Client() {
       const n = Math.min(MAX_ROWS, Math.max(DEFAULT_ROWS, saved.length));
       setCount(n);
       setRows(padRows(saved, n));
+      setPortfolio(bunkai?.portfolio ?? []);
       setLoading(false);
     })();
   }, []);
@@ -88,6 +94,11 @@ export function Day1Client() {
     setSaved(false);
   };
 
+  const setPortfolioDirty = (next: PortfolioCircle[]) => {
+    setPortfolio(next);
+    setSaved(false);
+  };
+
   const save = async () => {
     setSaving(true);
     setSaved(false);
@@ -99,7 +110,7 @@ export function Day1Client() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ bunkai: { shareTable } }),
+        body: JSON.stringify({ bunkai: { shareTable, portfolio } }),
       });
       if (res.ok) setSaved(true);
     } finally {
@@ -258,6 +269,21 @@ export function Day1Client() {
             </li>
           )}
         </ul>
+      </PrintSheet>
+
+      {/* ── コミュニティ・ポートフォリオ ── */}
+      <PrintSheet>
+        <SheetHeader
+          no={2}
+          accent="じぶん"
+          title="分解"
+          sub="〜 コミュニティ・ポートフォリオ"
+          right={nameTag}
+        />
+        <p className="mt-3 text-sm text-ws-muted">
+          あなたが関わっているコミュニティ・活動を、種類ごとに円で配置してみましょう。円の大きさ＝関わりの大きさ。
+        </p>
+        <CommunityPortfolio value={portfolio} onChange={setPortfolioDirty} />
       </PrintSheet>
 
       {/* 保存 */}
