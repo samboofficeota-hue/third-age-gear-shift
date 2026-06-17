@@ -1,5 +1,5 @@
 import { PrintSheet } from "@/components/worksheet/PrintSheet";
-import { SheetHeader } from "@/components/worksheet/SheetHeader";
+import { SheetHeader, formatHeaderName } from "@/components/worksheet/SheetHeader";
 import { cn } from "@/lib/utils";
 
 /**
@@ -46,7 +46,7 @@ export function ProfileSlideView({ data }: { data: ProfileSlideData }) {
 
   const nm = (data.name ?? "").trim();
   const nk = (data.nickname ?? "").trim();
-  const headerName = nk && nm ? `${nk}（${nm}）` : nm || nk;
+  const headerName = formatHeaderName(data.name, data.nickname);
   const nameTag = headerName ? (
     <span className="text-base font-bold text-ws-ink">{headerName}</span>
   ) : null;

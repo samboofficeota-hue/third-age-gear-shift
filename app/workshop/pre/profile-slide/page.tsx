@@ -5,7 +5,7 @@ import type { Area } from "react-easy-crop";
 import Link from "next/link";
 import { ImagePlus, Crop, Plus } from "lucide-react";
 import { PrintSheet } from "@/components/worksheet/PrintSheet";
-import { SheetHeader } from "@/components/worksheet/SheetHeader";
+import { SheetHeader, formatHeaderName } from "@/components/worksheet/SheetHeader";
 import { WorksheetStage } from "@/components/worksheet/WorksheetStage";
 import { PrintButton } from "@/components/worksheet/PrintButton";
 import { CropModal } from "@/components/worksheet/CropModal";
@@ -182,13 +182,8 @@ export default function ProfileSlidePage() {
   const isSample = mode === "sample";
   const view: Slide = isSample ? SAMPLE : { ...data, points: pad(data.points) };
 
-  // タイトル行の右側に出す「ニックネーム（お名前）」。ニックネーム未記入ならお名前のみ。
-  const headerName = (() => {
-    const nm = (view.name ?? "").trim();
-    const nk = (view.nickname ?? "").trim();
-    if (nk && nm) return `${nk}（${nm}）`;
-    return nm || nk;
-  })();
+  // タイトル行の右側に出す「ニックネーム（お名前）」（全シート共通の表記）。
+  const headerName = formatHeaderName(view.name, view.nickname);
 
   // 右上スロット。①じぶん紹介（ルール＋名前ページ）までは「事前課題」、
   // 自己紹介が済む②生い立ち以降は氏名を表示。

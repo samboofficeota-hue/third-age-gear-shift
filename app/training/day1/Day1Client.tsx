@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Plus, ChevronUp, ChevronDown } from "lucide-react";
 import { PrintSheet } from "@/components/worksheet/PrintSheet";
-import { SheetHeader } from "@/components/worksheet/SheetHeader";
+import { SheetHeader, formatHeaderName } from "@/components/worksheet/SheetHeader";
 import { PrintButton } from "@/components/worksheet/PrintButton";
 import { WorksheetStage } from "@/components/worksheet/WorksheetStage";
 import { Button } from "@/components/ui/button";
@@ -53,7 +53,7 @@ export function Day1Client() {
         | undefined;
       const nm = (ps?.name ?? d?.account?.name ?? "").trim();
       const nk = (ps?.nickname ?? "").trim();
-      setHeaderName(nk && nm ? `${nk}（${nm}）` : nm || nk);
+      setHeaderName(formatHeaderName(nm, nk));
 
       const bunkai = d?.workshopData?.day1?.bunkai as Bunkai | undefined;
       const saved = bunkai?.shareTable ?? [];
@@ -181,7 +181,7 @@ export function Day1Client() {
               key={i}
               className="flex items-center gap-3 border-b border-ws-line py-2"
             >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ws-teal text-sm font-bold text-white">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ws-accent text-sm font-bold text-white">
                 {i + 1}
               </span>
 

@@ -1,6 +1,32 @@
 import type { ReactNode } from "react";
 
 /**
+ * 見出し右に出す共通の氏名表記「ニックネーム（お名前）」。
+ * ニックネーム未記入ならお名前のみ。どちらも無ければ空文字。
+ * 全ワークシート共通（じぶん紹介／Day1／Day2…）でこれを使う。
+ */
+export function formatHeaderName(name?: string, nickname?: string): string {
+  const nm = (name ?? "").trim();
+  const nk = (nickname ?? "").trim();
+  if (nk && nm) return `${nk}（${nm}）`;
+  return nm || nk;
+}
+
+/** 見出し右スロット用の氏名ノード（共通スタイル）。氏名が無ければ null。 */
+export function HeaderName({
+  name,
+  nickname,
+}: {
+  name?: string;
+  nickname?: string;
+}) {
+  const label = formatHeaderName(name, nickname);
+  return label ? (
+    <span className="text-base font-bold text-ws-ink">{label}</span>
+  ) : null;
+}
+
+/**
  * ワークシート各シート共通のヘッダー。
  * 左: ティールの番号バッジ ＋ 見出し（アクセント語＋本文＋補足）
  * 右: フェーズ表示や氏名などの任意スロット
