@@ -159,13 +159,13 @@ export function SukiTokuiMatrix({
           {/* テキスト */}
           <label className="block">
             <span className="mb-1 block text-xs font-semibold text-ws-muted">
-              内容（2〜3行でコンパクトに）
+              内容（1〜2行で簡潔に）
             </span>
             <textarea
               value={current.text}
               onChange={(e) => setField({ text: e.target.value })}
-              rows={3}
-              placeholder="例）アイデアを形にすること"
+              rows={2}
+              placeholder="アイデアをとりあえず資料に落とすこと"
               className="w-full resize-none rounded-md border border-ws-line px-3 py-2 text-sm text-ws-ink outline-none focus:border-ws-teal"
             />
           </label>
@@ -255,7 +255,7 @@ export function SukiTokuiMatrix({
                           startEdit(x.i);
                         }}
                         className={cn(
-                          "block whitespace-pre-wrap rounded-md border px-2.5 py-1.5 text-sm leading-snug text-ws-ink",
+                          "flex min-h-[3.5rem] items-center whitespace-pre-wrap rounded-md border px-3 py-2 text-base font-bold leading-snug text-ws-ink",
                           editingIndex === x.i
                             ? "border-ws-teal bg-ws-mint"
                             : "border-ws-line bg-ws-fill hover:border-ws-teal"
