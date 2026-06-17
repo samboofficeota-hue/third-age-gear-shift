@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Plus, Pencil, Trash2, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
  * コミュニティ・ポートフォリオ。
- * 左＝サイドメニュー（入力・印刷されない）／右＝横長フレーム（表示・印刷対象）。
- * 種類ごとに象限を固定（家庭=左上/仕事=右上/ギフト=左下/学び=右下/その他=中央）。
+ * 左＝サイドメニュー（入力・印刷されない）／右＝固定サイズの横長フレーム（表示・印刷対象）。
+ * 種類ごとに象限へ引き寄せつつ、円どうしは重ならないよう自動配置（バブル図）。
  */
 
 export type CircleType = "family" | "work" | "gift" | "learning" | "other";
@@ -15,7 +15,7 @@ export type PortfolioCircle = {
   type: CircleType;
   title: string;
   description?: string;
-  size: number; // 1〜10
+  size: number; // 1〜7
 };
 
 const TYPES: { key: CircleType; label: string; color: string }[] = [
@@ -30,41 +30,79 @@ const TYPE_BY_KEY = Object.fromEntries(TYPES.map((t) => [t.key, t])) as Record<
   (typeof TYPES)[number]
 >;
 
-const QUADRANTS: CircleType[] = ["family", "work", "gift", "learning"];
 const MAX = 10;
-const DEFAULT_SIZE = 5;
+const MAX_SIZE = 7;
+const DEFAULT_SIZE = 4;
 
+// フレームは固定サイズ（画面・印刷で同じ＝円の位置がずれない）
+const FRAME_W = 660;
+const FRAME_H = 430;
+
+// 種類ごとの象限中心（フレームに対する割合）
+const CENTERS: Record<CircleType, [number, number]> = {
+  family: [0.26, 0.3],
+  work: [0.74, 0.3],
+  gift: [0.26, 0.74],
+  learning: [0.74, 0.74],
+  other: [0.5, 0.52],
+};
+
+/** size(1〜7) → 直径(px)。最大は従来(112)の約130%。 */
 function diameter(size: number): number {
-  return 40 + (Math.max(1, Math.min(10, size)) - 1) * 8; // 40〜112px
+  const s = Math.max(1, Math.min(MAX_SIZE, size));
+  return 48 + (s - 1) * 16; // 48〜144px
 }
 
-function Circle({
-  c,
-  selected,
-  onClick,
-}: {
-  c: PortfolioCircle;
-  selected?: boolean;
-  onClick?: () => void;
-}) {
-  const t = TYPE_BY_KEY[c.type];
-  const d = diameter(c.size);
-  return (
-    <button
-      type="button"
-      title={c.description || c.title}
-      onClick={onClick}
-      className={cn(
-        "flex shrink-0 items-center justify-center rounded-full text-center text-white shadow-sm transition-shadow hover:shadow-md",
-        selected && "ring-2 ring-ws-ink ring-offset-2"
-      )}
-      style={{ width: d, height: d, backgroundColor: t.color }}
-    >
-      <span className="px-1.5 text-[11px] font-medium leading-tight line-clamp-3">
-        {c.title}
-      </span>
-    </button>
-  );
+/** 象限へ引き寄せ＋衝突回避でバブル配置を計算（決定的） */
+function computeLayout(circles: PortfolioCircle[]) {
+  const nodes = circles.map((c, i) => {
+    const [fx, fy] = CENTERS[c.type];
+    const tx = fx * FRAME_W;
+    const ty = fy * FRAME_H;
+    const a = i * 2.399; // 黄金角で初期分散
+    return {
+      r: diameter(c.size) / 2,
+      tx,
+      ty,
+      x: tx + Math.cos(a) * 28,
+      y: ty + Math.sin(a) * 28,
+    };
+  });
+
+  for (let it = 0; it < 280; it++) {
+    // 象限中心への引き寄せ（大きい円ほど強い＝象限どおりに居座る）
+    for (const n of nodes) {
+      const k = Math.min(0.15, 0.04 * (n.r / 24));
+      n.x += (n.tx - n.x) * k;
+      n.y += (n.ty - n.y) * k;
+    }
+    // 衝突回避（重なったら押し合う）
+    for (let a = 0; a < nodes.length; a++) {
+      for (let b = a + 1; b < nodes.length; b++) {
+        const A = nodes[a];
+        const B = nodes[b];
+        const dx = B.x - A.x;
+        const dy = B.y - A.y;
+        const dist = Math.hypot(dx, dy) || 0.01;
+        const min = A.r + B.r + 5;
+        if (dist < min) {
+          const push = (min - dist) / 2;
+          const ux = dx / dist;
+          const uy = dy / dist;
+          A.x -= ux * push;
+          A.y -= uy * push;
+          B.x += ux * push;
+          B.y += uy * push;
+        }
+      }
+    }
+    // 枠内に収める
+    for (const n of nodes) {
+      n.x = Math.max(n.r + 3, Math.min(FRAME_W - n.r - 3, n.x));
+      n.y = Math.max(n.r + 3, Math.min(FRAME_H - n.r - 3, n.y));
+    }
+  }
+  return nodes.map((n) => ({ x: n.x, y: n.y, r: n.r }));
 }
 
 const NEW_DRAFT: PortfolioCircle = {
@@ -81,12 +119,13 @@ export function CommunityPortfolio({
   value: PortfolioCircle[];
   onChange: (next: PortfolioCircle[]) => void;
 }) {
-  // editingIndex=null → 新規追加 ／ 数値 → その円をライブ編集
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [draft, setDraft] = useState<PortfolioCircle>(NEW_DRAFT);
 
   const editing = editingIndex !== null && editingIndex < value.length;
   const current = editing ? value[editingIndex as number] : draft;
+
+  const positions = useMemo(() => computeLayout(value), [value]);
 
   const setField = (patch: Partial<PortfolioCircle>) => {
     if (editing) {
@@ -109,7 +148,6 @@ export function CommunityPortfolio({
     setEditingIndex(null);
     setDraft(NEW_DRAFT);
   };
-
   const remove = (i: number) => {
     if (!window.confirm(`「${value[i].title || "無題"}」を削除しますか？`)) return;
     onChange(value.filter((_, idx) => idx !== i));
@@ -118,11 +156,8 @@ export function CommunityPortfolio({
       setEditingIndex(editingIndex - 1);
   };
 
-  const entriesOfType = (k: CircleType) =>
-    value.map((c, i) => ({ c, i })).filter((e) => e.c.type === k);
-
   return (
-    <div className="mt-6 flex gap-8">
+    <div className="mt-6 flex gap-8 print:justify-center">
       {/* ── サイドメニュー（印刷されない） ── */}
       <div className="no-print w-[320px] shrink-0">
         <div className="flex items-center justify-between">
@@ -193,13 +228,15 @@ export function CommunityPortfolio({
           <label className="block">
             <span className="mb-1 flex items-center justify-between text-xs font-semibold text-ws-muted">
               <span>円のサイズ</span>
-              <span className="text-ws-teal">{current.size}</span>
+              <span className="text-ws-teal">
+                {current.size} / {MAX_SIZE}
+              </span>
             </span>
             <input
               type="range"
               min={1}
-              max={10}
-              value={current.size}
+              max={MAX_SIZE}
+              value={Math.min(MAX_SIZE, current.size)}
               onChange={(e) => setField({ size: Number(e.target.value) })}
               className="w-full accent-ws-teal"
             />
@@ -269,54 +306,60 @@ export function CommunityPortfolio({
         )}
       </div>
 
-      {/* ── 表示エリア（横長フレーム・印刷対象） ── */}
-      <div className="min-w-0 flex-1">
-        <div className="relative h-[440px] overflow-hidden rounded-xl border-2 border-ws-line bg-white">
-          <div className="grid h-full grid-cols-2 grid-rows-2">
-            {QUADRANTS.map((k) => {
-              const t = TYPE_BY_KEY[k];
-              return (
-                <div
-                  key={k}
-                  className="relative flex flex-wrap content-center items-center justify-center gap-2 p-5"
-                  style={{ backgroundColor: `${t.color}0f` }}
-                >
-                  <span
-                    className="absolute left-3 top-2 text-xs font-bold"
-                    style={{ color: t.color }}
-                  >
-                    {t.label}
-                  </span>
-                  {entriesOfType(k).map((e) => (
-                    <Circle
-                      key={e.i}
-                      c={e.c}
-                      selected={editingIndex === e.i}
-                      onClick={() => startEdit(e.i)}
-                    />
-                  ))}
-                </div>
-              );
-            })}
-          </div>
+      {/* ── 表示エリア（固定サイズの横長フレーム・印刷対象） ── */}
+      <div className="shrink-0">
+        <div
+          className="relative overflow-hidden rounded-xl border-2 border-ws-line bg-white"
+          style={{ width: FRAME_W, height: FRAME_H }}
+        >
+          {/* 象限ラベル（背景色なし） */}
+          <span className="absolute left-3 top-2 text-xs font-bold text-[#3B82F6]">
+            家庭
+          </span>
+          <span className="absolute right-3 top-2 text-xs font-bold text-[#E5277E]">
+            仕事
+          </span>
+          <span className="absolute bottom-2 left-3 text-xs font-bold text-[#9A6A3C]">
+            ギフト
+          </span>
+          <span className="absolute bottom-2 right-3 text-xs font-bold text-[#22A06B]">
+            学び
+          </span>
+          <span className="absolute left-1/2 top-1.5 -translate-x-1/2 text-[10px] font-bold text-ws-muted">
+            その他
+          </span>
 
-          {/* 中央：その他 */}
-          <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center">
-            <span className="mb-1 text-[10px] font-bold text-ws-muted">その他</span>
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              {entriesOfType("other").map((e) => (
-                <Circle
-                  key={e.i}
-                  c={e.c}
-                  selected={editingIndex === e.i}
-                  onClick={() => startEdit(e.i)}
-                />
-              ))}
-            </div>
-          </div>
+          {/* 円（バブル配置） */}
+          {value.map((c, i) => {
+            const p = positions[i];
+            const t = TYPE_BY_KEY[c.type];
+            return (
+              <button
+                key={i}
+                type="button"
+                title={c.description || c.title}
+                onClick={() => startEdit(i)}
+                className={cn(
+                  "absolute flex items-center justify-center rounded-full text-center text-white shadow-sm transition-shadow hover:shadow-md",
+                  editingIndex === i && "z-10 ring-2 ring-ws-ink ring-offset-1"
+                )}
+                style={{
+                  left: p.x - p.r,
+                  top: p.y - p.r,
+                  width: p.r * 2,
+                  height: p.r * 2,
+                  backgroundColor: t.color,
+                }}
+              >
+                <span className="px-1.5 text-[11px] font-medium leading-tight line-clamp-3">
+                  {c.title}
+                </span>
+              </button>
+            );
+          })}
         </div>
-        <p className="mt-2 text-xs text-ws-muted">
-          円をクリックすると編集できます。種類ごとに象限が決まります（家庭=左上／仕事=右上／ギフト=左下／学び=右下／その他=中央）。
+        <p className="no-print mt-2 text-xs text-ws-muted">
+          円をクリックすると編集できます。大きい円ほど、種類の象限（家庭=左上／仕事=右上／ギフト=左下／学び=右下／その他=中央）に寄ります。
         </p>
       </div>
     </div>
