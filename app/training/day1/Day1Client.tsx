@@ -170,7 +170,7 @@ export function Day1Client() {
           <span className="w-9 shrink-0 text-center">No</span>
           <span className="w-12 shrink-0" />
           <span className="flex-[2]">どんな分人</span>
-          <span className="w-40 shrink-0">割合・頻度</span>
+          <span className="w-52 shrink-0">割合・頻度</span>
           <span className="flex-[2]">自分の中の位置づけ</span>
         </div>
 
@@ -214,7 +214,7 @@ export function Day1Client() {
               {isSample ? (
                 <>
                   <span className="flex-[2] text-lg text-ws-ink">{r.bunjin}</span>
-                  <span className="w-40 shrink-0 text-lg text-ws-ink">{r.share}</span>
+                  <span className="w-52 shrink-0 text-lg text-ws-ink">{r.share}</span>
                   <span className="flex-[2] text-lg text-ws-ink">{r.meaning}</span>
                 </>
               ) : (
@@ -222,20 +222,20 @@ export function Day1Client() {
                   <input
                     value={r.bunjin}
                     onChange={(e) => setCell(i, "bunjin", e.target.value)}
-                    placeholder="例）代表社員として働く自分"
-                    className="flex-[2] rounded-md border border-ws-line px-3 py-2 text-lg text-ws-ink outline-none focus:border-ws-teal"
+                    placeholder="〇〇な自分"
+                    className="flex-[2] rounded-md border border-ws-line px-3 py-2 text-lg text-ws-ink outline-none placeholder:text-ws-muted/60 focus:border-ws-teal"
                   />
                   <input
                     value={r.share}
                     onChange={(e) => setCell(i, "share", e.target.value)}
-                    placeholder="50%ぐらい"
-                    className="w-40 shrink-0 rounded-md border border-ws-line px-3 py-2 text-lg text-ws-ink outline-none focus:border-ws-teal"
+                    placeholder="何%ぐらい？ 頻度は？"
+                    className="w-52 shrink-0 rounded-md border border-ws-line px-3 py-2 text-lg text-ws-ink outline-none placeholder:text-ws-muted/60 focus:border-ws-teal"
                   />
                   <input
                     value={r.meaning}
                     onChange={(e) => setCell(i, "meaning", e.target.value)}
-                    placeholder="お金と使命感で重要"
-                    className="flex-[2] rounded-md border border-ws-line px-3 py-2 text-lg text-ws-ink outline-none focus:border-ws-teal"
+                    placeholder="自分の中のどんな存在"
+                    className="flex-[2] rounded-md border border-ws-line px-3 py-2 text-lg text-ws-ink outline-none placeholder:text-ws-muted/60 focus:border-ws-teal"
                   />
                 </>
               )}
