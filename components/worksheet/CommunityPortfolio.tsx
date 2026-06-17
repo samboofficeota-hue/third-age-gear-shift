@@ -205,7 +205,7 @@ export function CommunityPortfolio({
             <input
               value={current.title}
               onChange={(e) => setField({ title: e.target.value })}
-              placeholder="例）PICセンターの仕事"
+              placeholder="どんな場所で何している？"
               className="w-full rounded-md border border-ws-line px-3 py-2 text-sm text-ws-ink outline-none focus:border-ws-teal"
             />
           </label>
