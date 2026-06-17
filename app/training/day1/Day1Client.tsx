@@ -11,11 +11,16 @@ import {
   CommunityPortfolio,
   type PortfolioCircle,
 } from "@/components/worksheet/CommunityPortfolio";
+import {
+  SukiTokuiMatrix,
+  type MatrixEntry,
+} from "@/components/worksheet/SukiTokuiMatrix";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type ShareRow = { bunjin: string; share: string; meaning: string };
 type Bunkai = { shareTable?: ShareRow[]; portfolio?: PortfolioCircle[] };
+type Bunseki = { sukiTokui?: MatrixEntry[] };
 
 const MAX_ROWS = 10;
 const DEFAULT_ROWS = 5;
@@ -40,6 +45,7 @@ export function Day1Client() {
   const [rows, setRows] = useState<ShareRow[]>(padRows([], DEFAULT_ROWS));
   const [count, setCount] = useState(DEFAULT_ROWS);
   const [portfolio, setPortfolio] = useState<PortfolioCircle[]>([]);
+  const [sukiTokui, setSukiTokui] = useState<MatrixEntry[]>([]);
   const [headerName, setHeaderName] = useState("");
   const [mode, setMode] = useState<"edit" | "sample">("edit");
   const [loading, setLoading] = useState(true);
@@ -66,6 +72,8 @@ export function Day1Client() {
       setCount(n);
       setRows(padRows(saved, n));
       setPortfolio(bunkai?.portfolio ?? []);
+      const bunseki = d?.workshopData?.day1?.bunseki as Bunseki | undefined;
+      setSukiTokui(bunseki?.sukiTokui ?? []);
       setLoading(false);
     })();
   }, []);
@@ -98,6 +106,10 @@ export function Day1Client() {
     setPortfolio(next);
     setSaved(false);
   };
+  const setSukiTokuiDirty = (next: MatrixEntry[]) => {
+    setSukiTokui(next);
+    setSaved(false);
+  };
 
   const save = async () => {
     setSaving(true);
@@ -110,7 +122,10 @@ export function Day1Client() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ bunkai: { shareTable, portfolio } }),
+        body: JSON.stringify({
+          bunkai: { shareTable, portfolio },
+          bunseki: { sukiTokui },
+        }),
       });
       if (res.ok) setSaved(true);
     } finally {
@@ -284,6 +299,21 @@ export function Day1Client() {
           あなたが関わっているコミュニティ・活動を、種類ごとに円で配置してみましょう。円の大きさ＝関わりの大きさ。
         </p>
         <CommunityPortfolio value={portfolio} onChange={setPortfolioDirty} />
+      </PrintSheet>
+
+      {/* ── 好き・得意マトリクス（じぶん分析） ── */}
+      <PrintSheet>
+        <SheetHeader
+          no={3}
+          accent="じぶん"
+          title="分析"
+          sub="〜 好き・得意マトリクス"
+          right={nameTag}
+        />
+        <p className="mt-3 text-sm text-ws-muted">
+          「個人／会社」×「得意／好き」の4象限に、思いつくことを書き出してみましょう。
+        </p>
+        <SukiTokuiMatrix value={sukiTokui} onChange={setSukiTokuiDirty} />
       </PrintSheet>
 
       {/* 保存 */}
