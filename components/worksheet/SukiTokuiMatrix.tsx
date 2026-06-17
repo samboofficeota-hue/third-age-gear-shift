@@ -208,19 +208,31 @@ export function SukiTokuiMatrix({
         >
           {/* 左上の角（空） */}
           <div style={{ gridColumn: "1", gridRow: "1" }} />
-          {/* 横軸名（得意 〜 好き） */}
+          {/* 横軸：左=得意 / 右=好き */}
           <div
-            style={{ gridColumn: "2 / 4", gridRow: "1" }}
-            className="flex items-center justify-center text-sm font-bold tracking-wide text-ws-accent"
+            style={{ gridColumn: "2", gridRow: "1" }}
+            className="flex items-center justify-center text-sm font-bold text-ws-accent"
           >
-            得意　〜　好き
+            得意
           </div>
-          {/* 縦軸名（個人 〜 会社） */}
           <div
-            style={{ gridColumn: "1", gridRow: "2 / 4" }}
-            className="flex items-center justify-center text-sm font-bold tracking-wide text-ws-teal [writing-mode:vertical-rl]"
+            style={{ gridColumn: "3", gridRow: "1" }}
+            className="flex items-center justify-center text-sm font-bold text-ws-accent"
           >
-            個人　〜　会社
+            好き
+          </div>
+          {/* 縦軸：上=個人 / 下=会社 */}
+          <div
+            style={{ gridColumn: "1", gridRow: "2" }}
+            className="flex items-center justify-center text-sm font-bold text-ws-teal [writing-mode:vertical-rl]"
+          >
+            個人
+          </div>
+          <div
+            style={{ gridColumn: "1", gridRow: "3" }}
+            className="flex items-center justify-center text-sm font-bold text-ws-teal [writing-mode:vertical-rl]"
+          >
+            会社
           </div>
 
           {/* 4セル（行=個人/会社・列=得意/好き） */}
@@ -255,7 +267,7 @@ export function SukiTokuiMatrix({
                           startEdit(x.i);
                         }}
                         className={cn(
-                          "flex min-h-[3.5rem] items-center whitespace-pre-wrap rounded-md border px-3 py-2 text-base font-bold leading-snug text-ws-ink",
+                          "flex min-h-[3.5rem] items-center justify-center whitespace-pre-wrap rounded-md border px-3 py-2 text-center text-base font-bold leading-snug text-ws-ink",
                           editingIndex === x.i
                             ? "border-ws-teal bg-ws-mint"
                             : "border-ws-line bg-ws-fill hover:border-ws-teal"
