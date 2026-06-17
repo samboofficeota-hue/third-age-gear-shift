@@ -18,10 +18,14 @@ export interface PhaseMeta {
   label: string; // フルラベル
   day: string; // 「事前」「DAY 1」「宿題」「DAY 2」「事後」
   track: PhaseTrack; // survey=スマホ対応 / worksheet=A4横 / mixed=両方
+  program: ProgramId; // A=ダーク(/workshop) / B=ライト本番(/training)
   gated: boolean; // false = 最初から開放（pre のみ）
   route: string;
   description: string;
 }
+
+/** A=調査+じぶん紹介(ダーク/workshop) ／ B=研修本番(ライト/training) */
+export type ProgramId = "A" | "B";
 
 export const PHASE_META: PhaseMeta[] = [
   {
@@ -30,6 +34,7 @@ export const PHASE_META: PhaseMeta[] = [
     label: "事前課題",
     day: "事前",
     track: "mixed",
+    program: "A",
     gated: false,
     route: "/workshop/pre",
     description: "事前アンケート ＋ じぶん紹介",
@@ -40,8 +45,9 @@ export const PHASE_META: PhaseMeta[] = [
     label: "Day 1：じぶん分解・じぶん分析",
     day: "DAY 1",
     track: "worksheet",
+    program: "B",
     gated: true,
-    route: "/workshop/day1",
+    route: "/training/day1",
     description: "じぶん分解／じぶん分析",
   },
   {
@@ -50,8 +56,9 @@ export const PHASE_META: PhaseMeta[] = [
     label: "宿題：みらいシナリオ",
     day: "宿題",
     track: "worksheet",
+    program: "B",
     gated: true,
-    route: "/workshop/homework",
+    route: "/training/homework",
     description: "2040年のじぶんがいる社会",
   },
   {
@@ -60,8 +67,9 @@ export const PHASE_META: PhaseMeta[] = [
     label: "Day 2：ビジョン・資本・シフト戦略",
     day: "DAY 2",
     track: "worksheet",
+    program: "B",
     gated: true,
-    route: "/workshop/day2",
+    route: "/training/day2",
     description: "ビジョン策定／資本戦略／シフト戦略",
   },
   {
@@ -70,6 +78,7 @@ export const PHASE_META: PhaseMeta[] = [
     label: "事後課題",
     day: "事後",
     track: "survey",
+    program: "A",
     gated: true,
     route: "/workshop/post",
     description: "事後アンケート",

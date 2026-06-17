@@ -94,6 +94,12 @@
 → ログイン後は両プログラムへ行ける入口を用意（同一アカウント）。
 → 既存の `WorksheetStage`（ダーク）は Program A の じぶん紹介用。Program B には**ライト版の枠**を用意する。
 
+**実装状況（2026-06）**: Program B の枠は構築済み。
+- ルート `/training`（+ `/training/day1|homework|day2` プレースホルダ）／ ライトレイアウト `app/training/layout.tsx`＋`TrainingHeader`
+- ダッシュボード `app/training/page.tsx`（白基調・講師開放に応じて表示）。`.worksheet-stage` は背景無しなのでライトレイアウト配下でそのまま白くなり再利用可
+- `/workshop`（Program A）から「研修本番へ」カードで誘導。`lib/phases.ts` に `program: A|B` を追加し Day1〜のルートを `/training/*` に変更
+- 次: Day1 の中身（講義／じぶん分解／じぶん分析）＋ じぶん紹介 read-only ビュー
+
 ---
 
 ## 1.7 エンドツーエンド・フロー（例：A社研修）※2026-06 ユーザー確認

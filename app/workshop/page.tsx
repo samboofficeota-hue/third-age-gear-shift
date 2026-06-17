@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Lock, Check, ArrowRight } from "lucide-react";
+import { Lock, Check, ArrowRight, GraduationCap } from "lucide-react";
 import { getDashboardState } from "@/lib/workshopAccess";
 import { PHASE_META, isPhaseAccessible } from "@/lib/phases";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,8 @@ export default async function WorkshopDashboard() {
   if (!state) redirect("/login?from=/workshop");
 
   const { sessionId, completedPhases, statuses } = state;
+  // このダッシュボードは Program A（事前・事後）。研修本番(B)は /training に分離。
+  const phasesA = PHASE_META.filter((p) => p.program === "A");
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 md:px-8">
@@ -21,7 +23,7 @@ export default async function WorkshopDashboard() {
           サードエイジ じぶん戦略講座
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          講師が各フェーズを順に開放します。開放された課題から取り組みましょう。
+          事前・事後のアンケートと、研修本番（Day1〜）への入口です。
         </p>
       </header>
 
@@ -40,7 +42,7 @@ export default async function WorkshopDashboard() {
       )}
 
       <ol className="space-y-3">
-        {PHASE_META.map((p, i) => {
+        {phasesA.map((p, i) => {
           const status = statuses[p.id];
           const accessible = isPhaseAccessible(p, status);
           const done = completedPhases.includes(p.id);
@@ -98,6 +100,31 @@ export default async function WorkshopDashboard() {
                 <div aria-disabled className="cursor-not-allowed">
                   {card}
                 </div>
+              )}
+              {/* 事前のあとに「研修本番（B）」への入口を挿入 */}
+              {p.id === "pre" && (
+                <Link
+                  href="/training"
+                  className="mt-3 flex items-center justify-between gap-4 rounded-xl border border-primary/40 bg-primary/10 p-4 transition-colors hover:border-primary"
+                >
+                  <div className="flex items-center gap-4">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary">
+                      <GraduationCap className="h-5 w-5" />
+                    </span>
+                    <div>
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        研修本番
+                      </span>
+                      <p className="text-sm font-semibold text-[#e0f0e8]">
+                        Day1・宿題・Day2 へ
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        研修当日はこちらから（白い画面に切り替わります）
+                      </p>
+                    </div>
+                  </div>
+                  <ArrowRight className="h-5 w-5 shrink-0 text-primary" />
+                </Link>
               )}
             </li>
           );
