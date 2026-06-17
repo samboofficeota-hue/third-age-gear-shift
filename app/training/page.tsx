@@ -42,9 +42,9 @@ export default async function TrainingDashboard() {
         </div>
       )}
 
-      {/* じぶん紹介（事前に作成・Day1で発表） */}
+      {/* じぶん紹介（事前に作成・Day1で発表）＝Program B内の読み取り専用ビュー */}
       <Link
-        href="/workshop/pre/profile-slide"
+        href="/training/intro"
         className="mb-3 flex items-center gap-3 rounded-xl border border-ws-line bg-white p-4 transition-colors hover:border-ws-teal"
       >
         <UserCircle className="h-5 w-5 shrink-0 text-ws-teal" />
