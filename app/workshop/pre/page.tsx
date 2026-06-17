@@ -65,6 +65,11 @@ export default async function PrePage() {
           <p>ご参加に先立って、次の2つへの記入をお願いいたします。</p>
         </div>
 
+        <p className="mt-4 rounded-lg border border-[rgba(0,255,136,0.15)] bg-[#0f1420] px-3 py-2.5 text-xs leading-relaxed text-[#a0c0b0]">
+          💻 記入は <span className="font-semibold text-primary">パソコン</span>{" "}
+          での操作をおすすめします（特に「自己紹介シート」はPC向けに作られています）。
+        </p>
+
         <ol className="mt-5 space-y-2">
           {tasks.map((t) => (
             <li key={t.href}>
