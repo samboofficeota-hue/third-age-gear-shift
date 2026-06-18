@@ -30,9 +30,11 @@ const FRAME_H = 440;
 export function SukiTokuiMatrix({
   value,
   onChange,
+  readOnly = false,
 }: {
   value: MatrixEntry[];
-  onChange: (next: MatrixEntry[]) => void;
+  onChange?: (next: MatrixEntry[]) => void;
+  readOnly?: boolean;
 }) {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [draft, setDraft] = useState<{ row: RowKey; col: ColKey; text: string }>(
@@ -46,7 +48,7 @@ export function SukiTokuiMatrix({
     patch: Partial<{ row: RowKey; col: ColKey; text: string }>
   ) => {
     if (editing) {
-      onChange(
+      onChange?.(
         value.map((e, i) => (i === editingIndex ? { ...e, ...patch } : e))
       );
     } else {
@@ -65,7 +67,7 @@ export function SukiTokuiMatrix({
 
   const add = () => {
     if (!draft.text.trim() || cellFull) return;
-    onChange([...value, { ...draft, text: draft.text.trim() }]);
+    onChange?.([...value, { ...draft, text: draft.text.trim() }]);
     setDraft((d) => ({ ...d, text: "" }));
   };
   const startEdit = (i: number) => setEditingIndex(i);
@@ -79,7 +81,7 @@ export function SukiTokuiMatrix({
   };
   const remove = (i: number) => {
     if (!window.confirm("この項目を削除しますか？")) return;
-    onChange(value.filter((_, idx) => idx !== i));
+    onChange?.(value.filter((_, idx) => idx !== i));
     if (editingIndex === i) finishEdit();
     else if (editingIndex !== null && i < editingIndex)
       setEditingIndex(editingIndex - 1);
@@ -90,7 +92,8 @@ export function SukiTokuiMatrix({
 
   return (
     <div className="mt-6 flex gap-8 print:justify-center">
-      {/* ── サイドメニュー（印刷されない） ── */}
+      {/* ── サイドメニュー（印刷されない・記入例では非表示） ── */}
+      {!readOnly && (
       <div className="no-print w-[320px] shrink-0">
         <div className="flex items-center justify-between">
           <p className="text-sm font-bold text-ws-ink">好き・得意を追加</p>
@@ -194,6 +197,7 @@ export function SukiTokuiMatrix({
           )}
         </div>
       </div>
+      )}
 
       {/* ── 表示エリア（2×2フレーム・印刷対象） ── */}
       <div className="shrink-0">
@@ -246,31 +250,42 @@ export function SukiTokuiMatrix({
                   key={`${r.key}-${c.key}`}
                   type="button"
                   style={{ gridColumn: String(ci + 2), gridRow: String(ri + 2) }}
-                  onClick={() => pickCell(r.key, c.key)}
+                  onClick={readOnly ? undefined : () => pickCell(r.key, c.key)}
                   className={cn(
                     "relative flex flex-col items-stretch justify-center gap-1.5 border border-ws-line p-3 text-left transition-colors",
-                    isPick ? "bg-ws-mint/50" : "bg-white hover:bg-ws-fill/60"
+                    readOnly
+                      ? "cursor-default bg-white"
+                      : isPick
+                      ? "bg-ws-mint/50"
+                      : "bg-white hover:bg-ws-fill/60"
                   )}
                 >
                   {entries.length === 0 ? (
-                    <span className="text-center text-xs text-ws-muted/70">
-                      クリックして追加
-                    </span>
+                    !readOnly && (
+                      <span className="text-center text-xs text-ws-muted/70">
+                        クリックして追加
+                      </span>
+                    )
                   ) : (
                     entries.map((x) => (
                       <span
                         key={x.i}
-                        role="button"
-                        tabIndex={0}
-                        onClick={(ev) => {
-                          ev.stopPropagation();
-                          startEdit(x.i);
-                        }}
+                        role={readOnly ? undefined : "button"}
+                        tabIndex={readOnly ? undefined : 0}
+                        onClick={
+                          readOnly
+                            ? undefined
+                            : (ev) => {
+                                ev.stopPropagation();
+                                startEdit(x.i);
+                              }
+                        }
                         className={cn(
-                          "flex min-h-[3.5rem] items-center justify-center whitespace-pre-wrap rounded-md border px-3 py-2 text-center text-base font-bold leading-snug text-ws-ink",
-                          editingIndex === x.i
-                            ? "border-ws-teal bg-ws-mint"
-                            : "border-ws-line bg-ws-fill hover:border-ws-teal"
+                          "flex min-h-[3.5rem] items-center justify-center whitespace-pre-wrap rounded-md border border-ws-teal bg-ws-mint px-3 py-2 text-center text-base font-bold leading-snug text-ws-ink",
+                          !readOnly &&
+                            (editingIndex === x.i
+                              ? "border-ws-line bg-ws-fill hover:border-ws-ink"
+                              : "hover:bg-ws-mint/70")
                         )}
                       >
                         {x.e.text}
@@ -282,9 +297,6 @@ export function SukiTokuiMatrix({
             })
           )}
         </div>
-        <p className="no-print mt-2 text-xs text-ws-muted">
-          マスをクリックして追加、項目をクリックして編集できます（縦＝個人／会社・横＝得意／好き）。
-        </p>
       </div>
     </div>
   );

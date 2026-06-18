@@ -55,32 +55,6 @@ const WORK_QUESTIONS: { key: "q1" | "q2" | "q3"; title: string; q: string }[] = 
   },
 ];
 
-const SAMPLE: Slide & { history: HistRow[] } = {
-  name: "太田 義史",
-  nickname: "ぼうず",
-  points: ["沖縄県 長寿家系 生", "東大 少林寺拳法学部 卒", "電通流 プロデュース術", "", ""],
-  photo: "/images/worksheets/ota.png",
-  history: [
-    { year: "1972", event: "沖縄県で生まれる（長男・AB型・魚座・復帰年）" },
-    { year: "1987", event: "鹿児島 ラ・サール高校入学（男子校の寮生活）" },
-    { year: "1990", event: "東京大学 入学（少林寺拳法学部 経営学科 マーケティングゼミ）" },
-    { year: "1995", event: "電通に入社（営業・プロデューサー 一筋26年）" },
-    { year: "2004", event: "北京電通に出向（2回駐在 延べ9年）" },
-    { year: "2021", event: "50歳からは全く違う道を目指し電通を退職" },
-    { year: "2022", event: "アライアンス・フォーラム財団で公益資本主義に携わる" },
-    { year: "2024", event: "サンボーオフィス（アイディアで経営に参謀する・中小企業診断士）" },
-    { year: "2026", event: "公益資本主義実装センター 設立（現在に至る）" },
-  ],
-  work: {
-    company: "合同会社 公益資本主義実装センター",
-    dept: "",
-    title: "代表社員　実装プロデューサー",
-    q1: "公益資本主義を理解し、自身が社会にどう貢献するか実践できる人材づくりと、その活躍を広げる場づくり",
-    q2: "ボトムアップ型での啓発・啓蒙\n個人をエンパワーメントしていく",
-    q3: "公益資本主義を理解できるコンテンツの開発と体験プログラムの企画・実装\n理解した人たちが会社の枠を超えて活動できるコミュニティづくり",
-  },
-};
-
 const MIN_HIST_ROWS = 6;
 
 // 入力欄のサンプル（プレースホルダ）。1行目=生年は任意、それ以降は記入例で誘導。
@@ -135,6 +109,8 @@ function PhotoFrame({ src }: { src?: string }) {
 export default function ProfileSlidePage() {
   const [data, setData] = useState<Slide>({ points: pad([]) });
   const [mode, setMode] = useState<"edit" | "sample">("edit");
+  // 記入例（DEMOアカウントの実データ）。初回の「記入例を見る」で取得
+  const [example, setExample] = useState<Slide | null>(null);
   const [visibleCount, setVisibleCount] = useState(3);
   const [histCount, setHistCount] = useState(MIN_HIST_ROWS);
   const [loading, setLoading] = useState(true);
@@ -179,8 +155,22 @@ export default function ProfileSlidePage() {
     })();
   }, []);
 
+  // 記入例（DEMOアカウントの実データ）を初回の「記入例を見る」で取得
+  useEffect(() => {
+    if (mode !== "sample" || example) return;
+    (async () => {
+      const d = await fetch("/api/workshop/example", { credentials: "include" })
+        .then((r) => r.json())
+        .catch(() => ({}));
+      const ps = (d?.example?.pre?.profileSlide ?? {}) as Slide;
+      setExample({ ...ps, points: pad(ps.points) });
+    })();
+  }, [mode, example]);
+
   const isSample = mode === "sample";
-  const view: Slide = isSample ? SAMPLE : { ...data, points: pad(data.points) };
+  const view: Slide = isSample
+    ? example ?? { points: pad([]) }
+    : { ...data, points: pad(data.points) };
 
   // タイトル行の右側に出す「ニックネーム（お名前）」（全シート共通の表記）。
   const headerName = formatHeaderName(view.name, view.nickname);
@@ -317,7 +307,7 @@ export default function ProfileSlidePage() {
 
   const allPoints = pad(view.points);
   const histRows = isSample
-    ? SAMPLE.history.filter((h) => h.year.trim() || h.event.trim())
+    ? (example?.history ?? []).filter((h) => h.year.trim() || h.event.trim())
     : padHist(data.history, histCount);
 
   return (

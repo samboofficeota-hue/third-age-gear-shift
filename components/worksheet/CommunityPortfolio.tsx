@@ -115,9 +115,11 @@ const NEW_DRAFT: PortfolioCircle = {
 export function CommunityPortfolio({
   value,
   onChange,
+  readOnly = false,
 }: {
   value: PortfolioCircle[];
-  onChange: (next: PortfolioCircle[]) => void;
+  onChange?: (next: PortfolioCircle[]) => void;
+  readOnly?: boolean;
 }) {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [draft, setDraft] = useState<PortfolioCircle>(NEW_DRAFT);
@@ -129,7 +131,7 @@ export function CommunityPortfolio({
 
   const setField = (patch: Partial<PortfolioCircle>) => {
     if (editing) {
-      onChange(
+      onChange?.(
         value.map((c, i) => (i === editingIndex ? { ...c, ...patch } : c))
       );
     } else {
@@ -139,7 +141,7 @@ export function CommunityPortfolio({
 
   const add = () => {
     if (!draft.title.trim() || value.length >= MAX) return;
-    onChange([...value, { ...draft, title: draft.title.trim() }]);
+    onChange?.([...value, { ...draft, title: draft.title.trim() }]);
     setDraft(NEW_DRAFT);
   };
 
@@ -150,7 +152,7 @@ export function CommunityPortfolio({
   };
   const remove = (i: number) => {
     if (!window.confirm(`「${value[i].title || "無題"}」を削除しますか？`)) return;
-    onChange(value.filter((_, idx) => idx !== i));
+    onChange?.(value.filter((_, idx) => idx !== i));
     if (editingIndex === i) finishEdit();
     else if (editingIndex !== null && i < editingIndex)
       setEditingIndex(editingIndex - 1);
@@ -158,7 +160,8 @@ export function CommunityPortfolio({
 
   return (
     <div className="mt-6 flex gap-8 print:justify-center">
-      {/* ── サイドメニュー（印刷されない） ── */}
+      {/* ── サイドメニュー（印刷されない・記入例では非表示） ── */}
+      {!readOnly && (
       <div className="no-print w-[320px] shrink-0">
         <div className="flex items-center justify-between">
           <p className="text-sm font-bold text-ws-ink">コミュニティ入力</p>
@@ -227,7 +230,7 @@ export function CommunityPortfolio({
           {/* サイズ（編集中はライブで拡大縮小） */}
           <label className="block">
             <span className="mb-1 flex items-center justify-between text-xs font-semibold text-ws-muted">
-              <span>円のサイズ</span>
+              <span>円のサイズ（関わりの大きさ）</span>
               <span className="text-ws-teal">
                 {current.size} / {MAX_SIZE}
               </span>
@@ -305,6 +308,7 @@ export function CommunityPortfolio({
           </ul>
         )}
       </div>
+      )}
 
       {/* ── 表示エリア（固定サイズの横長フレーム・印刷対象） ── */}
       <div className="shrink-0">
@@ -338,9 +342,10 @@ export function CommunityPortfolio({
                 key={i}
                 type="button"
                 title={c.description || c.title}
-                onClick={() => startEdit(i)}
+                onClick={readOnly ? undefined : () => startEdit(i)}
                 className={cn(
-                  "absolute flex items-center justify-center rounded-full text-center text-white shadow-sm transition-shadow hover:shadow-md",
+                  "absolute flex items-center justify-center rounded-full text-center text-white shadow-sm",
+                  readOnly ? "cursor-default" : "transition-shadow hover:shadow-md",
                   editingIndex === i && "z-10 ring-2 ring-ws-ink ring-offset-1"
                 )}
                 style={{
@@ -358,9 +363,6 @@ export function CommunityPortfolio({
             );
           })}
         </div>
-        <p className="no-print mt-2 text-xs text-ws-muted">
-          円をクリックすると編集できます。大きい円ほど、種類の象限（家庭=左上／仕事=右上／ギフト=左下／学び=右下／その他=中央）に寄ります。
-        </p>
       </div>
     </div>
   );

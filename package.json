@@ -13,7 +13,8 @@
     "db:studio": "prisma studio",
     "db:seed": "npx tsx prisma/seed.ts",
     "rehearsal:setup": "npx tsx scripts/rehearsal-setup.ts",
-    "rehearsal:teardown": "npx tsx scripts/rehearsal-teardown.ts"
+    "rehearsal:teardown": "npx tsx scripts/rehearsal-teardown.ts",
+    "demo:setup": "npx tsx scripts/demo-setup.ts"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"

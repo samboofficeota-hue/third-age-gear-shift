@@ -15,23 +15,45 @@ import {
   SukiTokuiMatrix,
   type MatrixEntry,
 } from "@/components/worksheet/SukiTokuiMatrix";
+import {
+  WorkOrigin,
+  type WorkOriginEntry,
+} from "@/components/worksheet/WorkOrigin";
+import {
+  WorkAlignment,
+  type AlignmentData,
+} from "@/components/worksheet/WorkAlignment";
+import {
+  SocialContact,
+  type SocialContactData,
+} from "@/components/worksheet/SocialContact";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type ShareRow = { bunjin: string; share: string; meaning: string };
 type Bunkai = { shareTable?: ShareRow[]; portfolio?: PortfolioCircle[] };
-type Bunseki = { sukiTokui?: MatrixEntry[] };
+type Bunseki = {
+  sukiTokui?: MatrixEntry[];
+  workOrigin?: WorkOriginEntry[];
+  alignment?: AlignmentData;
+  socialContact?: SocialContactData;
+};
+
+const EMPTY_ALIGNMENT: AlignmentData = { vision: "", whyWork: "", achieve: "" };
+const EMPTY_SOCIAL: SocialContactData = { have: [], missing: [] };
 
 const MAX_ROWS = 10;
 const DEFAULT_ROWS = 5;
 
-const SAMPLE: ShareRow[] = [
-  { bunjin: "代表社員として働く自分", share: "50%ぐらい", meaning: "お金と使命感で重要" },
-  { bunjin: "父・家族の中の自分", share: "20%ぐらい", meaning: "心の支え・原点" },
-  { bunjin: "少林寺拳法の指導者の自分", share: "10%ぐらい", meaning: "鍛錬・人とのつながり" },
-  { bunjin: "沖縄の長男としての自分", share: "10%ぐらい", meaning: "ルーツ・責任" },
-  { bunjin: "学び続ける自分", share: "10%ぐらい", meaning: "好奇心・成長" },
-];
+// 記入例（「記入例を見る」）はハードコードではなく、DEMOアカウントの実データを読む
+type Example = {
+  shareTable: ShareRow[];
+  portfolio: PortfolioCircle[];
+  sukiTokui: MatrixEntry[];
+  workOrigin: WorkOriginEntry[];
+  alignment: AlignmentData;
+  socialContact: SocialContactData;
+};
 
 const EMPTY: ShareRow = { bunjin: "", share: "", meaning: "" };
 
@@ -46,8 +68,13 @@ export function Day1Client() {
   const [count, setCount] = useState(DEFAULT_ROWS);
   const [portfolio, setPortfolio] = useState<PortfolioCircle[]>([]);
   const [sukiTokui, setSukiTokui] = useState<MatrixEntry[]>([]);
+  const [workOrigin, setWorkOrigin] = useState<WorkOriginEntry[]>([]);
+  const [alignment, setAlignment] = useState<AlignmentData>(EMPTY_ALIGNMENT);
+  const [socialContact, setSocialContact] =
+    useState<SocialContactData>(EMPTY_SOCIAL);
   const [headerName, setHeaderName] = useState("");
   const [mode, setMode] = useState<"edit" | "sample">("edit");
+  const [example, setExample] = useState<Example | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -74,11 +101,52 @@ export function Day1Client() {
       setPortfolio(bunkai?.portfolio ?? []);
       const bunseki = d?.workshopData?.day1?.bunseki as Bunseki | undefined;
       setSukiTokui(bunseki?.sukiTokui ?? []);
+      setWorkOrigin(
+        bunseki?.workOrigin?.length
+          ? bunseki.workOrigin
+          : [{ reason: "", experience: "" }]
+      );
+      setAlignment({ ...EMPTY_ALIGNMENT, ...(bunseki?.alignment ?? {}) });
+      setSocialContact({ ...EMPTY_SOCIAL, ...(bunseki?.socialContact ?? {}) });
       setLoading(false);
     })();
   }, []);
 
-  const view = isSample ? SAMPLE.filter((r) => r.bunjin.trim()) : rows;
+  // 記入例（DEMOアカウントの実データ）を初回の「記入例を見る」で取得
+  useEffect(() => {
+    if (mode !== "sample" || example) return;
+    (async () => {
+      const d = await fetch("/api/workshop/example", { credentials: "include" })
+        .then((r) => r.json())
+        .catch(() => ({}));
+      const day1 = (d?.example?.day1 ?? {}) as {
+        bunkai?: Bunkai;
+        bunseki?: Bunseki;
+      };
+      setExample({
+        shareTable: day1.bunkai?.shareTable ?? [],
+        portfolio: day1.bunkai?.portfolio ?? [],
+        sukiTokui: day1.bunseki?.sukiTokui ?? [],
+        workOrigin: day1.bunseki?.workOrigin ?? [],
+        alignment: { ...EMPTY_ALIGNMENT, ...(day1.bunseki?.alignment ?? {}) },
+        socialContact: {
+          ...EMPTY_SOCIAL,
+          ...(day1.bunseki?.socialContact ?? {}),
+        },
+      });
+    })();
+  }, [mode, example]);
+
+  // 「保存しました ✓」は3秒で自動的に消す
+  useEffect(() => {
+    if (!saved) return;
+    const t = setTimeout(() => setSaved(false), 3000);
+    return () => clearTimeout(t);
+  }, [saved]);
+
+  const view = isSample
+    ? (example?.shareTable ?? []).filter((r) => r.bunjin.trim())
+    : padRows(rows, count);
 
   const setCell = (i: number, key: keyof ShareRow, v: string) => {
     if (isSample) return;
@@ -110,6 +178,18 @@ export function Day1Client() {
     setSukiTokui(next);
     setSaved(false);
   };
+  const setWorkOriginDirty = (next: WorkOriginEntry[]) => {
+    setWorkOrigin(next);
+    setSaved(false);
+  };
+  const setAlignmentDirty = (next: AlignmentData) => {
+    setAlignment(next);
+    setSaved(false);
+  };
+  const setSocialContactDirty = (next: SocialContactData) => {
+    setSocialContact(next);
+    setSaved(false);
+  };
 
   const save = async () => {
     setSaving(true);
@@ -118,13 +198,25 @@ export function Day1Client() {
       const shareTable = padRows(rows, count).filter(
         (r) => r.bunjin.trim() || r.share.trim() || r.meaning.trim()
       );
+      const workOriginClean = workOrigin
+        .map((e) => ({ reason: e.reason.trim(), experience: e.experience.trim() }))
+        .filter((e) => e.reason || e.experience);
+      const socialContactClean: SocialContactData = {
+        have: socialContact.have.map((s) => s.trim()).filter(Boolean),
+        missing: socialContact.missing.map((s) => s.trim()).filter(Boolean),
+      };
       const res = await fetch("/api/workshop/me/day1", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           bunkai: { shareTable, portfolio },
-          bunseki: { sukiTokui },
+          bunseki: {
+            sukiTokui,
+            workOrigin: workOriginClean,
+            alignment,
+            socialContact: socialContactClean,
+          },
         }),
       });
       if (res.ok) setSaved(true);
@@ -296,9 +388,13 @@ export function Day1Client() {
           right={nameTag}
         />
         <p className="mt-3 text-sm text-ws-muted">
-          あなたが関わっているコミュニティ・活動を、種類ごとに円で配置してみましょう。円の大きさ＝関わりの大きさ。
+          あなたが関わっているコミュニティ・活動を、種類ごとに円で配置してみましょう。（円をクリックすると編集できます）
         </p>
-        <CommunityPortfolio value={portfolio} onChange={setPortfolioDirty} />
+        <CommunityPortfolio
+          value={isSample ? example?.portfolio ?? [] : portfolio}
+          onChange={setPortfolioDirty}
+          readOnly={isSample}
+        />
       </PrintSheet>
 
       {/* ── 好き・得意マトリクス（じぶん分析） ── */}
@@ -311,18 +407,87 @@ export function Day1Client() {
           right={nameTag}
         />
         <p className="mt-3 text-sm text-ws-muted">
-          「個人／会社」×「得意／好き」の4象限に、思いつくことを書き出してみましょう。
+          「個人／会社」×「得意／好き」の4象限に、思いつくことを書き出してみましょう。（カードをクリックして編集可能）
         </p>
-        <SukiTokuiMatrix value={sukiTokui} onChange={setSukiTokuiDirty} />
+        <SukiTokuiMatrix
+          value={isSample ? example?.sukiTokui ?? [] : sukiTokui}
+          onChange={setSukiTokuiDirty}
+          readOnly={isSample}
+        />
       </PrintSheet>
 
-      {/* 保存 */}
+      {/* ── "はたらく"の原点（じぶん分析） ── */}
+      <PrintSheet>
+        <SheetHeader
+          no={3}
+          accent="じぶん"
+          title="分析"
+          sub={'〜 "はたらく"の原点'}
+          right={nameTag}
+        />
+        <p className="mt-3 text-sm text-ws-muted">
+          やりがいを感じた経験、働きがいを感じた瞬間など。なぜ自分は働くのか、その「原体験」を思い出してみましょう。（最大3点）
+        </p>
+        <WorkOrigin
+          value={isSample ? example?.workOrigin ?? [] : workOrigin}
+          onChange={setWorkOriginDirty}
+          readOnly={isSample}
+        />
+      </PrintSheet>
+
+      {/* ── 会社とじぶんの一致点（じぶん分析） ── */}
+      <PrintSheet>
+        <SheetHeader
+          no={4}
+          accent="じぶん"
+          title="分析"
+          sub="〜 会社とじぶんの一致点"
+          right={nameTag}
+        />
+        <p className="mt-3 text-sm text-ws-muted">
+          なぜ今の会社に入ろうと思ったのか。じぶんがやりたいことと、どう一致しているのか掘り下げてみよう。
+        </p>
+        <WorkAlignment
+          value={isSample ? example?.alignment ?? EMPTY_ALIGNMENT : alignment}
+          onChange={setAlignmentDirty}
+          readOnly={isSample}
+        />
+      </PrintSheet>
+
+      {/* ── 社会とじぶんの接点（じぶん分析） ── */}
+      <PrintSheet>
+        <SheetHeader
+          no={5}
+          accent="じぶん"
+          title="分析"
+          sub="〜 社会とじぶんの接点"
+          right={nameTag}
+        />
+        <p className="mt-3 text-sm text-ws-muted">
+          「どんな社会」と、どんな「接点」が持てているのか、逆に持てていないのか、書き出してみよう。
+        </p>
+        <SocialContact
+          value={isSample ? example?.socialContact ?? EMPTY_SOCIAL : socialContact}
+          onChange={setSocialContactDirty}
+          readOnly={isSample}
+        />
+      </PrintSheet>
+
+      {/* 保存（右下フロート・全シート一括／印刷では非表示） */}
       {!isSample && (
-        <div className="no-print flex w-full max-w-[1123px] items-center gap-3">
-          <Button onClick={save} disabled={saving}>
+        <div className="no-print fixed bottom-6 right-6 z-50 flex items-center gap-3">
+          {saved && (
+            <span className="rounded-full bg-white/95 px-3 py-1.5 text-sm font-medium text-ws-teal shadow-md ring-1 ring-ws-line">
+              保存しました ✓
+            </span>
+          )}
+          <Button
+            onClick={save}
+            disabled={saving}
+            className="rounded-full px-6 shadow-lg"
+          >
             {saving ? "保存中..." : "保存する"}
           </Button>
-          {saved && <span className="text-sm text-ws-teal">保存しました ✓</span>}
         </div>
       )}
     </WorksheetStage>
