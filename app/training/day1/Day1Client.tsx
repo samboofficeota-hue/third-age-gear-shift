@@ -384,7 +384,7 @@ export function Day1Client() {
           no={2}
           accent="じぶん"
           title="分解"
-          sub="〜 コミュニティ・ポートフォリオ"
+          sub="〜 マイ・ポートフォリオ"
           right={nameTag}
         />
         <p className="mt-3 text-sm text-ws-muted">
