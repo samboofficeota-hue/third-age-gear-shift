@@ -20,15 +20,15 @@ const MIN_VISIBLE = 2;
 function SocietyDiagram() {
   return (
     <svg
-      viewBox="0 30 440 184"
+      viewBox="0 18 440 196"
       className="h-auto w-full"
       role="img"
       aria-label="じぶんと社会の接点（重なりに接点）"
     >
       {/* 社会（下・横に長い） */}
       <ellipse cx="220" cy="150" rx="185" ry="62" fill="#BFE0A0" />
-      {/* じぶん（上・社会より小さめ） */}
-      <ellipse cx="220" cy="84" rx="128" ry="46" fill="#F6C9D8" opacity="0.82" />
+      {/* じぶん（上・社会より小さめ・天地は広め） */}
+      <ellipse cx="220" cy="74" rx="112" ry="54" fill="#F6C9D8" opacity="0.82" />
       {/* ラベル */}
       <text
         x="220"
@@ -170,7 +170,7 @@ export function SocialContact({
       </div>
 
       {/* 下段：じぶん×社会の図（一致点ページのVennと同じ位置・大きさ） */}
-      <div className="mx-auto mt-2 w-[520px] max-w-full">
+      <div className="mx-auto mt-2 w-[500px] max-w-full">
         <SocietyDiagram />
       </div>
     </div>
