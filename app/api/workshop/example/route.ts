@@ -25,7 +25,7 @@ export async function GET() {
 
   const wd = await prisma.workshopData.findUnique({
     where: { userId: demo.id },
-    select: { pre: true, day1: true },
+    select: { pre: true, day1: true, homework: true },
   });
 
   return NextResponse.json({
@@ -33,6 +33,7 @@ export async function GET() {
       name: demo.name,
       pre: wd?.pre ?? null,
       day1: wd?.day1 ?? null,
+      homework: wd?.homework ?? null,
     },
   });
 }
