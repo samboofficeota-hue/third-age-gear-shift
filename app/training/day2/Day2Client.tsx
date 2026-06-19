@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { PrintSheet } from "@/components/worksheet/PrintSheet";
 import { SheetHeader, formatHeaderName } from "@/components/worksheet/SheetHeader";
 import { PrintButton } from "@/components/worksheet/PrintButton";
@@ -31,6 +31,21 @@ const EMPTY_ACTION: ActionPlan = {
   A: EMPTY_TARGET,
   B: EMPTY_TARGET,
 };
+type WCM = { will: string; can: string; must: string };
+const EMPTY_WCM: WCM = { will: "", can: "", must: "" };
+type WcmMeta = { curYear: string; curAge: string; futYear: string; futAge: string };
+const EMPTY_WCM_META: WcmMeta = { curYear: "2026", curAge: "", futYear: "", futAge: "" };
+const WCM_ROWS: {
+  key: keyof WCM;
+  label: string;
+  curSub: string;
+  futLabel: string;
+  futSub: string;
+}[] = [
+  { key: "will", label: "Will", curSub: "やりたいこと", futLabel: "Will", futSub: "ありたい姿" },
+  { key: "can", label: "Can", curSub: "できること", futLabel: "Can", futSub: "できるようになりたいこと" },
+  { key: "must", label: "Must", curSub: "するべきこと（義務）", futLabel: "Must（本分）", futSub: "なすべきこと" },
+];
 
 const SCORE_MAX = 12; // レーダーチャートの軸最大
 const CIRCLED = ["①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩"];
@@ -121,6 +136,37 @@ function ActionBox({
   );
 }
 
+/** Will/Can/Must の記入ボックス（高さ固定で左右の列を揃える） */
+function WcmBox({
+  value,
+  onChange,
+  emph = false,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  emph?: boolean;
+}) {
+  return (
+    <textarea
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      rows={4}
+      placeholder="○○○○"
+      className={cn(
+        "h-32 w-full resize-none rounded-xl px-3 py-2 text-base leading-relaxed text-ws-ink outline-none placeholder:text-ws-muted/40 focus:border-ws-teal",
+        emph ? "border-2 border-ws-teal" : "border border-ws-line"
+      )}
+    />
+  );
+}
+
+/** 下から上への三角矢印（PDFの Must→Can→Will） */
+function UpTriangle() {
+  return (
+    <div className="h-0 w-0 border-x-[10px] border-b-[15px] border-x-transparent border-b-ws-accent" />
+  );
+}
+
 export function Day2Client() {
   const [current, setCurrent] = useState<PortfolioCircle[]>([]); // Day1で作ったもの
   // Day1.bunkai 全体を保持（保存時に portfolio だけ差し替えて shareTable 等を失わない）
@@ -130,6 +176,9 @@ export function Day2Client() {
   const [shift, setShift] = useState("");
   const [diagnosis, setDiagnosis] = useState<Diagnosis>({});
   const [actionPlan, setActionPlan] = useState<ActionPlan>(EMPTY_ACTION);
+  const [wcmCurrent, setWcmCurrent] = useState<WCM>(EMPTY_WCM);
+  const [wcmFuture, setWcmFuture] = useState<WCM>(EMPTY_WCM);
+  const [wcmMeta, setWcmMeta] = useState<WcmMeta>(EMPTY_WCM_META);
   const [headerName, setHeaderName] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -142,6 +191,8 @@ export function Day2Client() {
   const [diagView, setDiagView] = useState<"table" | "chart">("table");
   // #10 アクションプラン：対象選定 ↔ 記入
   const [apStep, setApStep] = useState<"select" | "entry">("select");
+  // #11 WCM：いま（左）だけ → 次へ → 将来（右）も表示
+  const [wcmStep, setWcmStep] = useState<"current" | "both">("current");
 
   useEffect(() => {
     (async () => {
@@ -175,6 +226,15 @@ export function Day2Client() {
         A: { ...EMPTY_TARGET, ...(ap?.A ?? {}) },
         B: { ...EMPTY_TARGET, ...(ap?.B ?? {}) },
       });
+      const wcm = d?.workshopData?.day2?.wcm as
+        | { current?: WCM; future?: WCM }
+        | undefined;
+      setWcmCurrent({ ...EMPTY_WCM, ...(wcm?.current ?? {}) });
+      setWcmFuture({ ...EMPTY_WCM, ...(wcm?.future ?? {}) });
+      setWcmMeta({
+        ...EMPTY_WCM_META,
+        ...((wcm as { meta?: WcmMeta } | undefined)?.meta ?? {}),
+      });
       setLoading(false);
     })();
   }, []);
@@ -204,6 +264,7 @@ export function Day2Client() {
           portfolio: { future, year, shift },
           diagnosis,
           actionPlan,
+          wcm: { current: wcmCurrent, future: wcmFuture, meta: wcmMeta },
         }),
       });
       if (day1Res.ok && day2Res.ok) setSaved(true);
@@ -234,13 +295,13 @@ export function Day2Client() {
     };
     return (
       <PrintSheet>
-        <div className="flex items-start justify-between gap-4 pt-3">
+        <div className="pt-3">
           <SheetHeader
             no={10}
             accent="ポートフォリオ戦略"
             title="アクションプラン"
+            right={nameTag}
           />
-          {nameTag}
         </div>
         <div className="mt-10 flex items-center gap-3">
           <span className="rounded bg-[#FCEFA6] px-3 py-1 text-base font-bold text-ws-ink">
@@ -565,14 +626,12 @@ export function Day2Client() {
       {/* ── #10 ポートフォリオ戦略 アクションプラン ── */}
       {apStep === "select" ? (
       <PrintSheet>
-        <div className="flex items-start justify-between gap-4">
-          <SheetHeader
-            no={10}
-            accent="ポートフォリオ戦略"
-            title="アクションプラン"
-          />
-          {nameTag}
-        </div>
+        <SheetHeader
+          no={10}
+          accent="ポートフォリオ戦略"
+          title="アクションプラン"
+          right={nameTag}
+        />
         <div className="mt-3 flex items-start justify-between gap-6">
           <p className="text-sm text-ws-muted">
             未来のマイ・ポートフォリオから、コミュニティを2つ選定して、具体的な「一歩目」づくりを考えていきましょう。
@@ -634,6 +693,154 @@ export function Day2Client() {
           {targetSheet("B")}
         </>
       )}
+
+      {/* ── #11 会社での Will/Can/Must 2.0 → 3.0 ── */}
+      <PrintSheet>
+        <SheetHeader
+          no={11}
+          accent="会社での Will/Can/Must"
+          title="2.0 → 3.0"
+          right={nameTag}
+        />
+        <p className="mt-3 text-sm text-ws-muted">
+          与件であった「MUST 義務」から、自分のための「MUST 本分」に書き換えていきましょう。
+        </p>
+
+        <div
+          className="mt-5 grid items-start gap-x-4 gap-y-6"
+          style={{ gridTemplateColumns: "minmax(0,1fr) 88px minmax(0,1fr)" }}
+        >
+          {/* ── ヘッダー行 ── */}
+          <div className="text-center">
+            <span className="inline-flex items-center gap-1 rounded bg-[#FCEFA6] px-3 py-1.5 text-sm font-bold text-ws-ink">
+              <input
+                value={wcmMeta.curYear}
+                onChange={(e) => {
+                  setWcmMeta({ ...wcmMeta, curYear: e.target.value });
+                  setSaved(false);
+                }}
+                className="w-14 rounded border border-ws-ink/20 bg-white px-1 text-center outline-none focus:border-ws-teal"
+              />
+              年・
+              <input
+                value={wcmMeta.curAge}
+                onChange={(e) => {
+                  setWcmMeta({ ...wcmMeta, curAge: e.target.value });
+                  setSaved(false);
+                }}
+                className="w-10 rounded border border-ws-ink/20 bg-white px-1 text-center outline-none focus:border-ws-teal"
+              />
+              歳（いま）
+            </span>
+          </div>
+          <div />
+          {wcmStep === "both" ? (
+            <div className="text-center">
+              <span className="inline-flex items-center gap-1 rounded bg-[#FCEFA6] px-3 py-1.5 text-sm font-bold text-ws-ink">
+                <input
+                  value={wcmMeta.futYear}
+                  onChange={(e) => {
+                    setWcmMeta({ ...wcmMeta, futYear: e.target.value });
+                    setSaved(false);
+                  }}
+                  placeholder="20xx"
+                  className="w-14 rounded border border-ws-ink/20 bg-white px-1 text-center outline-none placeholder:text-ws-muted/50 focus:border-ws-teal"
+                />
+                年・
+                <input
+                  value={wcmMeta.futAge}
+                  onChange={(e) => {
+                    setWcmMeta({ ...wcmMeta, futAge: e.target.value });
+                    setSaved(false);
+                  }}
+                  placeholder="XX"
+                  className="w-10 rounded border border-ws-ink/20 bg-white px-1 text-center outline-none placeholder:text-ws-muted/50 focus:border-ws-teal"
+                />
+                歳（将来）
+              </span>
+            </div>
+          ) : (
+            <div />
+          )}
+
+          {/* ── 各行（Will / Can / Must） ── */}
+          {WCM_ROWS.map((row) => {
+            const emph = row.key === "must";
+            const showUp = wcmStep === "both" && row.key !== "will";
+            return (
+              <Fragment key={row.key}>
+                {/* 左（いま） */}
+                <div>
+                  <div className="mb-1.5">
+                    <span className="text-base font-bold text-ws-teal">
+                      {row.label}
+                    </span>{" "}
+                    <span className="text-xs text-ws-muted">{row.curSub}</span>
+                  </div>
+                  <WcmBox
+                    value={wcmCurrent[row.key]}
+                    onChange={(v) => {
+                      setWcmCurrent({ ...wcmCurrent, [row.key]: v });
+                      setSaved(false);
+                    }}
+                  />
+                </div>
+
+                {/* 中央（Must行に矢印 or 次へボタン） */}
+                <div className="pt-8">
+                  {row.key === "must" &&
+                    (wcmStep === "current" ? (
+                      <div className="flex h-32 items-center justify-center">
+                        <Button
+                          onClick={() => setWcmStep("both")}
+                          className="rounded-full px-3"
+                        >
+                          次へ →
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex h-32 items-center justify-center">
+                        <ArrowRight className="h-8 w-8 text-ws-accent" />
+                      </div>
+                    ))}
+                </div>
+
+                {/* 右（将来） */}
+                {wcmStep === "both" ? (
+                  <div className="relative">
+                    {showUp && (
+                      <div className="absolute -top-[20px] left-1/2 -translate-x-1/2">
+                        <UpTriangle />
+                      </div>
+                    )}
+                    <div className="mb-1.5">
+                      <span
+                        className={cn(
+                          "text-base font-bold",
+                          emph ? "text-ws-accent" : "text-ws-teal"
+                        )}
+                      >
+                        {row.futLabel}
+                      </span>{" "}
+                      <span className="text-xs text-ws-muted">{row.futSub}</span>
+                    </div>
+                    <WcmBox
+                      value={wcmFuture[row.key]}
+                      onChange={(v) => {
+                        setWcmFuture({ ...wcmFuture, [row.key]: v });
+                        setSaved(false);
+                      }}
+                      emph={emph}
+                    />
+                  </div>
+                ) : (
+                  <div />
+                )}
+              </Fragment>
+            );
+          })}
+        </div>
+      </PrintSheet>
 
       {/* 保存（右下フロート・Day2全体を保存） */}
       <div className="no-print fixed bottom-6 right-6 z-50 flex items-center gap-3">
