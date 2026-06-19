@@ -17,6 +17,20 @@ import { cn } from "@/lib/utils";
 
 type Portfolio = { future?: PortfolioCircle[]; year?: string; shift?: string };
 type Diagnosis = Record<number, number>; // No → 合計スコア（1〜10）
+type ActionTarget = { why: string; with: string; what: string; sowhat: string };
+type ActionPlan = {
+  targetA: string;
+  targetB: string;
+  A: ActionTarget;
+  B: ActionTarget;
+};
+const EMPTY_TARGET: ActionTarget = { why: "", with: "", what: "", sowhat: "" };
+const EMPTY_ACTION: ActionPlan = {
+  targetA: "",
+  targetB: "",
+  A: EMPTY_TARGET,
+  B: EMPTY_TARGET,
+};
 
 const SCORE_MAX = 12; // レーダーチャートの軸最大
 const CIRCLED = ["①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩"];
@@ -43,27 +57,30 @@ const DIAGNOSIS_ITEMS: {
 const MINI_SCALE = 0.62;
 const MINI_W = Math.round(660 * MINI_SCALE); // フレーム幅 660 を縮小
 
-/** 比較ステージ用：読み取り専用ポートフォリオを縮小表示（フレーム660×430のみ） */
+/** 読み取り専用ポートフォリオを縮小表示（フレーム660×430のみ） */
 function MiniPortfolio({
   label,
   year,
   value,
+  scale = MINI_SCALE,
 }: {
   label: string;
   year: string;
   value: PortfolioCircle[];
+  scale?: number;
 }) {
-  const h = Math.round(430 * MINI_SCALE) + 4;
+  const w = Math.round(660 * scale);
+  const h = Math.round(430 * scale) + 4;
   return (
-    <div style={{ width: MINI_W }}>
+    <div style={{ width: w }}>
       <p className="mb-1 text-center text-sm font-bold text-ws-teal">
         {label}
         {year ? `（${year}年）` : ""}
       </p>
-      <div style={{ width: MINI_W, height: h, overflow: "hidden" }}>
+      <div style={{ width: w, height: h, overflow: "hidden" }}>
         <div
           style={{
-            transform: `scale(${MINI_SCALE})`,
+            transform: `scale(${scale})`,
             transformOrigin: "top left",
             width: 660,
           }}
@@ -78,6 +95,32 @@ function MiniPortfolio({
   );
 }
 
+/** アクションプランの記入ボックス（Why/With/What/So What 共通） */
+function ActionBox({
+  label,
+  value,
+  onChange,
+  ph,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  ph: string;
+}) {
+  return (
+    <div>
+      <span className="mb-1.5 block text-sm font-bold text-ws-teal">{label}</span>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={6}
+        placeholder={ph}
+        className="w-full resize-none rounded-md border border-ws-line px-3 py-2 text-base leading-relaxed text-ws-ink outline-none placeholder:text-ws-muted/50 focus:border-ws-teal"
+      />
+    </div>
+  );
+}
+
 export function Day2Client() {
   const [current, setCurrent] = useState<PortfolioCircle[]>([]); // Day1で作ったもの
   // Day1.bunkai 全体を保持（保存時に portfolio だけ差し替えて shareTable 等を失わない）
@@ -86,6 +129,7 @@ export function Day2Client() {
   const [year, setYear] = useState("");
   const [shift, setShift] = useState("");
   const [diagnosis, setDiagnosis] = useState<Diagnosis>({});
+  const [actionPlan, setActionPlan] = useState<ActionPlan>(EMPTY_ACTION);
   const [headerName, setHeaderName] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -96,6 +140,8 @@ export function Day2Client() {
   const [which, setWhich] = useState<"current" | "future">("current");
   // #9 自己診断：表入力 ↔ レーダーチャート
   const [diagView, setDiagView] = useState<"table" | "chart">("table");
+  // #10 アクションプラン：対象選定 ↔ 記入
+  const [apStep, setApStep] = useState<"select" | "entry">("select");
 
   useEffect(() => {
     (async () => {
@@ -122,6 +168,13 @@ export function Day2Client() {
       setYear(pf?.year ?? "");
       setShift(pf?.shift ?? "");
       setDiagnosis((d?.workshopData?.day2?.diagnosis as Diagnosis) ?? {});
+      const ap = d?.workshopData?.day2?.actionPlan as ActionPlan | undefined;
+      setActionPlan({
+        targetA: ap?.targetA ?? "",
+        targetB: ap?.targetB ?? "",
+        A: { ...EMPTY_TARGET, ...(ap?.A ?? {}) },
+        B: { ...EMPTY_TARGET, ...(ap?.B ?? {}) },
+      });
       setLoading(false);
     })();
   }, []);
@@ -147,7 +200,11 @@ export function Day2Client() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ portfolio: { future, year, shift }, diagnosis }),
+        body: JSON.stringify({
+          portfolio: { future, year, shift },
+          diagnosis,
+          actionPlan,
+        }),
       });
       if (day1Res.ok && day2Res.ok) setSaved(true);
     } finally {
@@ -166,6 +223,62 @@ export function Day2Client() {
   const nameTag = headerName ? (
     <span className="text-base font-bold text-ws-ink">{headerName}</span>
   ) : null;
+
+  // #10 各対象（A／B）の記入シート（Why/With/What/So What）
+  const targetSheet = (tk: "A" | "B") => {
+    const t = actionPlan[tk];
+    const name = tk === "A" ? actionPlan.targetA : actionPlan.targetB;
+    const set = (field: keyof ActionTarget, v: string) => {
+      setActionPlan({ ...actionPlan, [tk]: { ...t, [field]: v } });
+      setSaved(false);
+    };
+    return (
+      <PrintSheet>
+        <div className="flex items-start justify-between gap-4 pt-3">
+          <SheetHeader
+            no={10}
+            accent="ポートフォリオ戦略"
+            title="アクションプラン"
+          />
+          {nameTag}
+        </div>
+        <div className="mt-10 flex items-center gap-3">
+          <span className="rounded bg-[#FCEFA6] px-3 py-1 text-base font-bold text-ws-ink">
+            対象（{tk}）
+          </span>
+          <span className="text-3xl font-bold text-ws-ink">
+            {name || "（未選定）"}
+          </span>
+        </div>
+        <div className="mt-10 grid grid-cols-2 gap-x-10 gap-y-8">
+          <ActionBox
+            label="#1 Why ― 何のために"
+            value={t.why}
+            onChange={(v) => set("why", v)}
+            ph="このコミュニティに関わる目的は？"
+          />
+          <ActionBox
+            label="#3 What ― 何をやってみる"
+            value={t.what}
+            onChange={(v) => set("what", v)}
+            ph="具体的にやってみることは？"
+          />
+          <ActionBox
+            label="#2 With ― 誰と一緒に"
+            value={t.with}
+            onChange={(v) => set("with", v)}
+            ph="誰と一緒にやる？"
+          />
+          <ActionBox
+            label="#4 So What ― 結果どうなりたい"
+            value={t.sowhat}
+            onChange={(v) => set("sowhat", v)}
+            ph="その先、どうなっていたい？"
+          />
+        </div>
+      </PrintSheet>
+    );
+  };
 
   return (
     <WorksheetStage>
@@ -448,6 +561,79 @@ export function Day2Client() {
         </table>
         )}
       </PrintSheet>
+
+      {/* ── #10 ポートフォリオ戦略 アクションプラン ── */}
+      {apStep === "select" ? (
+      <PrintSheet>
+        <div className="flex items-start justify-between gap-4">
+          <SheetHeader
+            no={10}
+            accent="ポートフォリオ戦略"
+            title="アクションプラン"
+          />
+          {nameTag}
+        </div>
+        <div className="mt-3 flex items-start justify-between gap-6">
+          <p className="text-sm text-ws-muted">
+            未来のマイ・ポートフォリオから、コミュニティを2つ選定して、具体的な「一歩目」づくりを考えていきましょう。
+          </p>
+          <Button
+            onClick={() => setApStep("entry")}
+            className="no-print shrink-0 rounded-full px-4"
+          >
+            次に進む →
+          </Button>
+        </div>
+        <div className="mt-5 flex items-center gap-10">
+          {/* 左：未来図（大きめ・文字が読めるサイズ） */}
+          <div className="shrink-0">
+            <MiniPortfolio label="未来" year={year} value={future} scale={0.92} />
+          </div>
+          {/* 右：対象A／対象B の選定 */}
+          <div className="flex-1 space-y-6">
+            {(["A", "B"] as const).map((tk) => (
+              <div key={tk}>
+                <span className="mb-2 flex items-center gap-2 text-base font-bold text-ws-ink">
+                  <span className="rounded bg-[#FCEFA6] px-2.5 py-0.5">
+                    対象（{tk}）
+                  </span>
+                  <span className="text-sm font-normal text-ws-muted">
+                    どのコミュニティ
+                  </span>
+                </span>
+                <input
+                  value={tk === "A" ? actionPlan.targetA : actionPlan.targetB}
+                  onChange={(e) => {
+                    setActionPlan({
+                      ...actionPlan,
+                      [tk === "A" ? "targetA" : "targetB"]: e.target.value,
+                    });
+                    setSaved(false);
+                  }}
+                  placeholder="未来のポートフォリオから1つ"
+                  className="w-full rounded-md border border-ws-line px-3 py-2 text-base text-ws-ink outline-none placeholder:text-ws-muted/50 focus:border-ws-teal"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </PrintSheet>
+      ) : (
+        <>
+          {/* 戻る操作（記入ステップ） */}
+          <div className="no-print flex w-full max-w-[1123px] justify-end">
+            <button
+              type="button"
+              onClick={() => setApStep("select")}
+              className="rounded-full border border-ws-line px-4 py-1.5 text-sm font-medium text-ws-muted hover:text-ws-ink"
+            >
+              ← 対象の選定に戻る
+            </button>
+          </div>
+          {targetSheet("A")}
+          {targetSheet("B")}
+        </>
+      )}
 
       {/* 保存（右下フロート・Day2全体を保存） */}
       <div className="no-print fixed bottom-6 right-6 z-50 flex items-center gap-3">
