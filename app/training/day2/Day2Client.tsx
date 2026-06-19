@@ -47,6 +47,28 @@ const WCM_ROWS: {
   { key: "must", label: "Must", curSub: "するべきこと（義務）", futLabel: "Must（本分）", futSub: "なすべきこと" },
 ];
 
+type Summary = {
+  must: string;
+  will: string;
+  issue: string;
+  flag: string;
+  start: string;
+};
+const EMPTY_SUMMARY: Summary = { must: "", will: "", issue: "", flag: "", start: "" };
+const SUMMARY_ROWS: {
+  key: keyof Summary;
+  label: string;
+  prompt: string;
+  suffix: string;
+  ph: string;
+}[] = [
+  { key: "must", label: "Must", prompt: "私の本分は", suffix: "だと思う。", ph: "なすべきこと" },
+  { key: "will", label: "Will", prompt: "だから\nありたい姿は", suffix: "である。", ph: "ありたい姿" },
+  { key: "issue", label: "Issue", prompt: "そのための\n今の課題は", suffix: "である。", ph: "今の課題" },
+  { key: "flag", label: "Flag", prompt: "だからまず", suffix: "を目指す。", ph: "目標（旗）" },
+  { key: "start", label: "Start", prompt: "そのために\n私は", suffix: "から始めていく。", ph: "一歩目" },
+];
+
 const SCORE_MAX = 12; // レーダーチャートの軸最大
 const CIRCLED = ["①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩"];
 
@@ -179,6 +201,7 @@ export function Day2Client() {
   const [wcmCurrent, setWcmCurrent] = useState<WCM>(EMPTY_WCM);
   const [wcmFuture, setWcmFuture] = useState<WCM>(EMPTY_WCM);
   const [wcmMeta, setWcmMeta] = useState<WcmMeta>(EMPTY_WCM_META);
+  const [summary, setSummary] = useState<Summary>(EMPTY_SUMMARY);
   const [headerName, setHeaderName] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -235,6 +258,10 @@ export function Day2Client() {
         ...EMPTY_WCM_META,
         ...((wcm as { meta?: WcmMeta } | undefined)?.meta ?? {}),
       });
+      setSummary({
+        ...EMPTY_SUMMARY,
+        ...((d?.workshopData?.day2?.summary as Summary) ?? {}),
+      });
       setLoading(false);
     })();
   }, []);
@@ -265,6 +292,7 @@ export function Day2Client() {
           diagnosis,
           actionPlan,
           wcm: { current: wcmCurrent, future: wcmFuture, meta: wcmMeta },
+          summary,
         }),
       });
       if (day1Res.ok && day2Res.ok) setSaved(true);
@@ -839,6 +867,55 @@ export function Day2Client() {
               </Fragment>
             );
           })}
+        </div>
+      </PrintSheet>
+
+      {/* ── #12 会社における 課題・目標・行動 設定 ── */}
+      <PrintSheet>
+        <SheetHeader
+          no={12}
+          accent="会社における"
+          title="課題・目標・行動 設定"
+          right={nameTag}
+        />
+        <p className="mt-3 text-sm text-ws-muted">
+          本分（Must）から、ありたい姿（Will）・課題・目標・一歩目までを、ひとつながりの文章にしてみましょう。
+        </p>
+        <div className="mt-6 space-y-8">
+          {SUMMARY_ROWS.map((row) => (
+            <div key={row.key} className="flex items-center gap-4">
+              <span className="w-16 shrink-0 text-lg font-bold text-ws-teal">
+                {row.label}
+              </span>
+              <span className="w-24 shrink-0 whitespace-pre-line text-right text-sm leading-snug text-ws-muted">
+                {row.prompt}
+              </span>
+              <input
+                value={summary[row.key]}
+                onChange={(e) => {
+                  setSummary({ ...summary, [row.key]: e.target.value });
+                  setSaved(false);
+                }}
+                placeholder={row.ph}
+                className="h-20 flex-1 rounded-lg border-2 border-ws-teal/60 px-3 text-center text-base font-bold text-ws-ink outline-none placeholder:font-normal placeholder:text-ws-muted/50 focus:border-ws-teal"
+              />
+              <span className="w-28 shrink-0 text-sm text-ws-ink">
+                {row.suffix}
+              </span>
+            </div>
+          ))}
+        </div>
+      </PrintSheet>
+
+      {/* ── 締めのシート ── */}
+      <PrintSheet>
+        <div className="flex min-h-[680px] flex-col items-center justify-center gap-5 text-center">
+          <p className="text-3xl font-bold text-ws-teal">
+            ワークシートは以上です。
+          </p>
+          <p className="text-3xl font-bold text-ws-teal">
+            おつかれさまでした。
+          </p>
         </div>
       </PrintSheet>
 
