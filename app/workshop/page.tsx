@@ -7,6 +7,7 @@ import {
   GraduationCap,
   FileText,
   Sparkles,
+  MessageCircleHeart,
 } from "lucide-react";
 import { getDashboardState } from "@/lib/workshopAccess";
 import { PHASE_META_BY_ID, isPhaseAccessible } from "@/lib/phases";
@@ -185,6 +186,31 @@ function PostModeMenu({
             <Lock className="h-5 w-5 shrink-0 text-muted-foreground" />
           </div>
         )}
+      </li>
+
+      <li>
+        <Link
+          href="/workshop/followup"
+          className="flex items-center justify-between gap-4 rounded-xl border border-[rgba(0,255,136,0.25)] bg-[#141a2a] p-4 transition-colors hover:border-primary"
+        >
+          <div className="flex items-center gap-4">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+              <MessageCircleHeart className="h-5 w-5" />
+            </span>
+            <div>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                3 ヶ月後
+              </span>
+              <p className="text-sm font-semibold text-[#e0f0e8]">
+                近況のお伺い
+              </p>
+              <p className="text-xs text-muted-foreground">
+                研修で書いた「社会」「会社」のテーマについて、今の動きを振り返る（所要約3分）
+              </p>
+            </div>
+          </div>
+          <ArrowRight className="h-5 w-5 shrink-0 text-primary" />
+        </Link>
       </li>
     </ol>
   );

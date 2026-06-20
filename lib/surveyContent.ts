@@ -263,41 +263,53 @@ export const POST_SCALE_SECTIONS: ScaleSection[] = PRE_SCALE_SECTIONS;
 export const POST_CHOICE = SECTION_D;
 
 /**
- * §F 3ヶ月後フォロー（別送・3問）
+ * §F 近況のお伺い（3ヶ月後フォロー・別送）。
+ * 研修で書いた内容（社会編／会社編）を踏まえた振り返り＋ 5 段階の主観評価。
  * Vercel Cron + メール送信が実装されてから出番。
- * f1=yes のときだけ f2 を表示。
  */
-export const SECTION_F_F1: ChoiceQuestion = {
-  key: "f1",
-  title: "行動の有無",
-  text: "研修後、キャリアに関する具体的な行動を起こしましたか？",
-  options: [
-    { value: "yes", label: "はい" },
-    { value: "no", label: "いいえ" },
-  ],
+
+/** 社会編フリーアンサー（Day1の社会との接点／みらいシナリオ社会編を踏まえて） */
+export const FOLLOWUP_SOCIETY: {
+  key: string;
+  label: string;
+  hint: string;
+  placeholder: string;
+} = {
+  key: "society_move",
+  label:
+    "【社会】2 つのコミュニティを挙げて、やってみたいことを書き出してもらいました。実際にはどんな動きを見せていますか？",
+  hint: "（自由記述・任意）",
+  placeholder:
+    "予定どおり進んでいる／まだ動けていない／思いがけない展開があった など、ありのままで構いません。",
 };
 
-export const SECTION_F_F2: ChoiceQuestion = {
-  key: "f2",
-  title: "起こした行動",
-  text: "どんな行動ですか？（複数選択可）",
-  options: [
-    { value: "internal", label: "社内公募・異動希望" },
-    { value: "boss_hr", label: "上司・人事との面談" },
-    { value: "learn", label: "学習・資格" },
-    { value: "side", label: "副業・兼業の検討着手" },
-    { value: "community", label: "社外コミュニティ・地域活動への参加" },
-    { value: "family", label: "家族との話し合い" },
-    { value: "other", label: "その他" },
-  ],
+/** 会社編フリーアンサー（Day2のシフト戦略・旗と一歩目を踏まえて） */
+export const FOLLOWUP_COMPANY: {
+  key: string;
+  label: string;
+  hint: string;
+  placeholder: string;
+} = {
+  key: "company_move",
+  label:
+    "【会社】旗と一歩目を書いてもらいました。実際にはどんな動きを見せていますか？",
+  hint: "（自由記述・任意）",
+  placeholder:
+    "誰と話した／何を試した／止まっている など、ありのままで構いません。",
 };
 
-export const SECTION_F_F3: ChoiceQuestion = {
-  key: "f3",
-  title: "つながり",
-  text: "研修で出会った人と、その後つながりはありますか？",
-  options: [
-    { value: "yes", label: "はい" },
-    { value: "no", label: "いいえ" },
+/** 5 段階の主観評価（研修後の手応えを定点で測る） */
+export const FOLLOWUP_SCALE: ScaleSection = {
+  id: "F",
+  title: "この 3 ヶ月の手応え",
+  questions: [
+    { key: "f_forward", text: "前に動き出している感じがしている" },
+    { key: "f_change", text: "変化が生まれている感じがしている" },
+    { key: "f_society", text: "社会との接点が増えていく感じがしている" },
+    { key: "f_step", text: "一歩目を踏み出した実感がある" },
+    {
+      key: "f_outlook",
+      text: "これからのキャリアに対する見方が前向きになっている",
+    },
   ],
 };
