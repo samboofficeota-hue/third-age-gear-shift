@@ -11,7 +11,6 @@ import {
 } from "@/components/survey/fields";
 import { Button } from "@/components/ui/button";
 import {
-  POST_NENDAI,
   POST_SCALE_SECTIONS,
   POST_CHOICE,
   POST_FREETEXT,
@@ -112,21 +111,6 @@ export function PostSurvey() {
         </>
       }
     >
-      {/* 年代（属性） */}
-      <section className="space-y-5">
-        <h2 className="text-lg font-bold text-primary">属性</h2>
-        <SingleChoice
-          label={POST_NENDAI.text}
-          options={POST_NENDAI.options}
-          value={
-            typeof answers[POST_NENDAI.key] === "string"
-              ? (answers[POST_NENDAI.key] as string)
-              : null
-          }
-          onChange={(v) => setChoice(POST_NENDAI.key, v)}
-        />
-      </section>
-
       {/* §A〜C 5段階 */}
       {POST_SCALE_SECTIONS.map((section) => (
         <section key={section.id} className="space-y-5">
@@ -213,7 +197,6 @@ export function PostSurvey() {
         <SurveyTextArea
           label={POST_FREETEXT.label}
           hint={POST_FREETEXT.hint}
-          placeholder={POST_FREETEXT.placeholder}
           value={typeof answers[POST_FREETEXT.key] === "string" ? (answers[POST_FREETEXT.key] as string) : ""}
           onChange={(v) => setText(POST_FREETEXT.key, v)}
         />

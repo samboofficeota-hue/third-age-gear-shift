@@ -253,13 +253,14 @@ export const POST_FREETEXT = {
   key: "e_free",
   label: "研修を通じて気づいたこと・これからやってみようと思ったこと",
   hint: "（任意）",
-  placeholder: "（自由にお書きください）",
 };
 
-/** 事後直後アンケートで使う構成（§A〜D は事前と同一。§E を追加） */
+/**
+ * 事後直後アンケートで使う構成（§A〜D は事前と同一。§E を追加）
+ * 年代（NENDAI）は本人特定済みのため事後では再取得しない。事前回答から参照する。
+ */
 export const POST_SCALE_SECTIONS: ScaleSection[] = PRE_SCALE_SECTIONS;
 export const POST_CHOICE = SECTION_D;
-export const POST_NENDAI = NENDAI;
 
 /**
  * §F 3ヶ月後フォロー（別送・3問）
