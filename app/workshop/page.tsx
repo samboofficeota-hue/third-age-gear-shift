@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Lock, Check, ArrowRight, GraduationCap } from "lucide-react";
+import { Lock, Check, ArrowRight, GraduationCap, FileText } from "lucide-react";
 import { getDashboardState } from "@/lib/workshopAccess";
 import { PHASE_META, isPhaseAccessible } from "@/lib/phases";
 import { cn } from "@/lib/utils";
@@ -100,6 +100,31 @@ export default async function WorkshopDashboard() {
                 <div aria-disabled className="cursor-not-allowed">
                   {card}
                 </div>
+              )}
+              {/* 事後のあとに「じぶんのワーク記録」への入口を挿入 */}
+              {p.id === "post" && (
+                <Link
+                  href="/workshop/records"
+                  className="mt-3 flex items-center justify-between gap-4 rounded-xl border border-[rgba(0,255,136,0.25)] bg-[#141a2a] p-4 transition-colors hover:border-primary"
+                >
+                  <div className="flex items-center gap-4">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+                      <FileText className="h-5 w-5" />
+                    </span>
+                    <div>
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        ふりかえり
+                      </span>
+                      <p className="text-sm font-semibold text-[#e0f0e8]">
+                        じぶんのワーク記録を見る
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Day1／宿題／Day2 で書いた内容を読み返す（編集はできません）
+                      </p>
+                    </div>
+                  </div>
+                  <ArrowRight className="h-5 w-5 shrink-0 text-primary" />
+                </Link>
               )}
               {/* 事前のあとに「研修本番（B）」への入口を挿入 */}
               {p.id === "pre" && (

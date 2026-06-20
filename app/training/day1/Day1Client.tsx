@@ -63,7 +63,7 @@ function padRows(rows: ShareRow[] | undefined, n: number): ShareRow[] {
   return r.slice(0, MAX_ROWS);
 }
 
-export function Day1Client() {
+export function Day1Client({ viewOnly = false }: { viewOnly?: boolean } = {}) {
   const [rows, setRows] = useState<ShareRow[]>(padRows([], DEFAULT_ROWS));
   const [count, setCount] = useState(DEFAULT_ROWS);
   const [portfolio, setPortfolio] = useState<PortfolioCircle[]>([]);
@@ -80,6 +80,8 @@ export function Day1Client() {
   const [saved, setSaved] = useState(false);
 
   const isSample = mode === "sample";
+  // viewOnly（事後の記録閲覧）と isSample（記入例）の両方で編集を止める
+  const isReadOnly = isSample || viewOnly;
 
   useEffect(() => {
     (async () => {
@@ -146,10 +148,12 @@ export function Day1Client() {
 
   const view = isSample
     ? (example?.shareTable ?? []).filter((r) => r.bunjin.trim())
-    : padRows(rows, count);
+    : viewOnly
+      ? rows.filter((r) => r.bunjin.trim() || r.share.trim() || r.meaning.trim())
+      : padRows(rows, count);
 
   const setCell = (i: number, key: keyof ShareRow, v: string) => {
-    if (isSample) return;
+    if (isReadOnly) return;
     setRows((rs) => {
       const next = padRows(rs, count);
       next[i] = { ...next[i], [key]: v };
@@ -159,7 +163,7 @@ export function Day1Client() {
   };
 
   const move = (i: number, dir: -1 | 1) => {
-    if (isSample) return;
+    if (isReadOnly) return;
     const j = i + dir;
     if (j < 0 || j >= count) return;
     setRows((rs) => {
@@ -242,28 +246,34 @@ export function Day1Client() {
       {/* 操作バー */}
       <div className="no-print flex w-full max-w-[1123px] flex-wrap items-center justify-between gap-3">
         <Link
-          href="/training"
+          href={viewOnly ? "/workshop/records" : "/training"}
           className="inline-flex items-center gap-1.5 text-sm text-ws-muted hover:text-ws-ink"
         >
           <ArrowLeft className="h-4 w-4" />
-          研修本番へ戻る
+          {viewOnly ? "ワークの記録 一覧へ" : "研修本番へ戻る"}
         </Link>
         <div className="flex items-center gap-2">
-          {(["edit", "sample"] as const).map((m) => (
-            <button
-              key={m}
-              type="button"
-              onClick={() => setMode(m)}
-              className={cn(
-                "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
-                mode === m
-                  ? "border-ws-teal bg-ws-mint text-ws-teal"
-                  : "border-ws-line text-ws-muted hover:text-ws-ink"
-              )}
-            >
-              {m === "edit" ? "記入する" : "記入例を見る"}
-            </button>
-          ))}
+          {viewOnly ? (
+            <span className="rounded-full border border-ws-teal/30 bg-ws-mint/40 px-4 py-2 text-sm font-medium text-ws-teal">
+              閲覧モード（書き込みはできません）
+            </span>
+          ) : (
+            (["edit", "sample"] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMode(m)}
+                className={cn(
+                  "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
+                  mode === m
+                    ? "border-ws-teal bg-ws-mint text-ws-teal"
+                    : "border-ws-line text-ws-muted hover:text-ws-ink"
+                )}
+              >
+                {m === "edit" ? "記入する" : "記入例を見る"}
+              </button>
+            ))
+          )}
           <PrintButton />
         </div>
       </div>
@@ -305,7 +315,7 @@ export function Day1Client() {
 
               {/* 並べ替え（印刷されない） */}
               <div className="no-print flex w-12 shrink-0 flex-col items-center">
-                {!isSample && (
+                {!isReadOnly && (
                   <>
                     <button
                       type="button"
@@ -329,7 +339,7 @@ export function Day1Client() {
                 )}
               </div>
 
-              {isSample ? (
+              {isReadOnly ? (
                 <>
                   <span className="flex-[2] text-lg text-ws-ink">{r.bunjin}</span>
                   <span className="w-52 shrink-0 text-lg text-ws-ink">{r.share}</span>
@@ -361,7 +371,7 @@ export function Day1Client() {
           ))}
 
           {/* 行を追加 */}
-          {!isSample && count < MAX_ROWS && (
+          {!isReadOnly && count < MAX_ROWS && (
             <li className="no-print pt-3">
               <button
                 type="button"
@@ -393,7 +403,7 @@ export function Day1Client() {
         <CommunityPortfolio
           value={isSample ? example?.portfolio ?? [] : portfolio}
           onChange={setPortfolioDirty}
-          readOnly={isSample}
+          readOnly={isReadOnly}
         />
       </PrintSheet>
 
@@ -412,7 +422,7 @@ export function Day1Client() {
         <SukiTokuiMatrix
           value={isSample ? example?.sukiTokui ?? [] : sukiTokui}
           onChange={setSukiTokuiDirty}
-          readOnly={isSample}
+          readOnly={isReadOnly}
         />
       </PrintSheet>
 
@@ -431,7 +441,7 @@ export function Day1Client() {
         <WorkOrigin
           value={isSample ? example?.workOrigin ?? [] : workOrigin}
           onChange={setWorkOriginDirty}
-          readOnly={isSample}
+          readOnly={isReadOnly}
         />
       </PrintSheet>
 
@@ -450,7 +460,7 @@ export function Day1Client() {
         <WorkAlignment
           value={isSample ? example?.alignment ?? EMPTY_ALIGNMENT : alignment}
           onChange={setAlignmentDirty}
-          readOnly={isSample}
+          readOnly={isReadOnly}
         />
       </PrintSheet>
 
@@ -469,12 +479,12 @@ export function Day1Client() {
         <SocialContact
           value={isSample ? example?.socialContact ?? EMPTY_SOCIAL : socialContact}
           onChange={setSocialContactDirty}
-          readOnly={isSample}
+          readOnly={isReadOnly}
         />
       </PrintSheet>
 
       {/* 保存（右下フロート・全シート一括／印刷では非表示） */}
-      {!isSample && (
+      {!isReadOnly && (
         <div className="no-print fixed bottom-6 right-6 z-50 flex items-center gap-3">
           {saved && (
             <span className="rounded-full bg-white/95 px-3 py-1.5 text-sm font-medium text-ws-teal shadow-md ring-1 ring-ws-line">

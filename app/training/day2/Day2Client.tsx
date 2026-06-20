@@ -138,11 +138,13 @@ function ActionBox({
   value,
   onChange,
   ph,
+  readOnly = false,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   ph: string;
+  readOnly?: boolean;
 }) {
   return (
     <div>
@@ -152,6 +154,7 @@ function ActionBox({
         onChange={(e) => onChange(e.target.value)}
         rows={6}
         placeholder={ph}
+        readOnly={readOnly}
         className="w-full resize-none rounded-md border border-ws-line px-3 py-2 text-base leading-relaxed text-ws-ink outline-none placeholder:text-ws-muted/50 focus:border-ws-teal"
       />
     </div>
@@ -163,10 +166,12 @@ function WcmBox({
   value,
   onChange,
   emph = false,
+  readOnly = false,
 }: {
   value: string;
   onChange: (v: string) => void;
   emph?: boolean;
+  readOnly?: boolean;
 }) {
   return (
     <textarea
@@ -174,6 +179,7 @@ function WcmBox({
       onChange={(e) => onChange(e.target.value)}
       rows={4}
       placeholder="○○○○"
+      readOnly={readOnly}
       className={cn(
         "h-32 w-full resize-none rounded-xl px-3 py-2 text-base leading-relaxed text-ws-ink outline-none placeholder:text-ws-muted/40 focus:border-ws-teal",
         emph ? "border-2 border-ws-teal" : "border border-ws-line"
@@ -189,7 +195,9 @@ function UpTriangle() {
   );
 }
 
-export function Day2Client() {
+export function Day2Client({
+  viewOnly = false,
+}: { viewOnly?: boolean } = {}) {
   const [current, setCurrent] = useState<PortfolioCircle[]>([]); // Day1で作ったもの
   // Day1.bunkai 全体を保持（保存時に portfolio だけ差し替えて shareTable 等を失わない）
   const [day1Bunkai, setDay1Bunkai] = useState<Record<string, unknown>>({});
@@ -341,24 +349,28 @@ export function Day2Client() {
         </div>
         <div className="mt-10 grid grid-cols-2 gap-x-10 gap-y-8">
           <ActionBox
+            readOnly={viewOnly}
             label="#1 Why ― 何のために"
             value={t.why}
             onChange={(v) => set("why", v)}
             ph="このコミュニティに関わる目的は？"
           />
           <ActionBox
+            readOnly={viewOnly}
             label="#3 What ― 何をやってみる"
             value={t.what}
             onChange={(v) => set("what", v)}
             ph="具体的にやってみることは？"
           />
           <ActionBox
+            readOnly={viewOnly}
             label="#2 With ― 誰と一緒に"
             value={t.with}
             onChange={(v) => set("with", v)}
             ph="誰と一緒にやる？"
           />
           <ActionBox
+            readOnly={viewOnly}
             label="#4 So What ― 結果どうなりたい"
             value={t.sowhat}
             onChange={(v) => set("sowhat", v)}
@@ -374,13 +386,20 @@ export function Day2Client() {
       {/* 操作バー */}
       <div className="no-print flex w-full max-w-[1123px] items-center justify-between gap-3">
         <Link
-          href="/training"
+          href={viewOnly ? "/workshop/records" : "/training"}
           className="inline-flex items-center gap-1.5 text-sm text-ws-muted hover:text-ws-ink"
         >
           <ArrowLeft className="h-4 w-4" />
-          研修本番へ戻る
+          {viewOnly ? "ワークの記録 一覧へ" : "研修本番へ戻る"}
         </Link>
-        <PrintButton />
+        <div className="flex items-center gap-2">
+          {viewOnly && (
+            <span className="rounded-full border border-ws-teal/30 bg-ws-mint/40 px-4 py-2 text-sm font-medium text-ws-teal">
+              閲覧モード（書き込みはできません）
+            </span>
+          )}
+          <PrintButton />
+        </div>
       </div>
 
       <PrintSheet>
@@ -429,18 +448,20 @@ export function Day2Client() {
                 >
                   ← 前に戻る
                 </button>
-                {saved && (
+                {!viewOnly && saved && (
                   <span className="text-sm font-medium text-ws-teal">
                     保存しました ✓
                   </span>
                 )}
-                <Button
-                  onClick={save}
-                  disabled={saving}
-                  className="rounded-full px-5"
-                >
-                  {saving ? "保存中..." : "保存する"}
-                </Button>
+                {!viewOnly && (
+                  <Button
+                    onClick={save}
+                    disabled={saving}
+                    className="rounded-full px-5"
+                  >
+                    {saving ? "保存中..." : "保存する"}
+                  </Button>
+                )}
               </>
             )}
           </div>
@@ -454,6 +475,7 @@ export function Day2Client() {
               </p>
               <CommunityPortfolio
                 value={current}
+                readOnly={viewOnly}
                 onChange={(next) => {
                   setCurrent(next);
                   setSaved(false);
@@ -468,6 +490,7 @@ export function Day2Client() {
                 </span>
                 <span className="no-print inline-flex items-center gap-1 text-sm text-ws-muted">
                   <input
+                    readOnly={viewOnly}
                     value={year}
                     onChange={(e) => {
                       setYear(e.target.value);
@@ -481,6 +504,7 @@ export function Day2Client() {
               </div>
               <CommunityPortfolio
                 value={future}
+                readOnly={viewOnly}
                 onChange={(next) => {
                   setFuture(next);
                   setSaved(false);
@@ -502,6 +526,7 @@ export function Day2Client() {
               </span>
             </p>
             <textarea
+              readOnly={viewOnly}
               value={shift}
               onChange={(e) => {
                 setShift(e.target.value);
@@ -628,6 +653,7 @@ export function Day2Client() {
                 </td>
                 <td className="border border-ws-line px-2 py-1.5 text-center">
                   <input
+                    readOnly={viewOnly}
                     type="number"
                     min={1}
                     max={SCORE_MAX}
@@ -689,6 +715,7 @@ export function Day2Client() {
                   </span>
                 </span>
                 <input
+                  readOnly={viewOnly}
                   value={tk === "A" ? actionPlan.targetA : actionPlan.targetB}
                   onChange={(e) => {
                     setActionPlan({
@@ -742,6 +769,7 @@ export function Day2Client() {
           <div className="text-center">
             <span className="inline-flex items-center gap-1 rounded bg-[#FCEFA6] px-3 py-1.5 text-sm font-bold text-ws-ink">
               <input
+                readOnly={viewOnly}
                 value={wcmMeta.curYear}
                 onChange={(e) => {
                   setWcmMeta({ ...wcmMeta, curYear: e.target.value });
@@ -751,6 +779,7 @@ export function Day2Client() {
               />
               年・
               <input
+                readOnly={viewOnly}
                 value={wcmMeta.curAge}
                 onChange={(e) => {
                   setWcmMeta({ ...wcmMeta, curAge: e.target.value });
@@ -766,6 +795,7 @@ export function Day2Client() {
             <div className="text-center">
               <span className="inline-flex items-center gap-1 rounded bg-[#FCEFA6] px-3 py-1.5 text-sm font-bold text-ws-ink">
                 <input
+                  readOnly={viewOnly}
                   value={wcmMeta.futYear}
                   onChange={(e) => {
                     setWcmMeta({ ...wcmMeta, futYear: e.target.value });
@@ -776,6 +806,7 @@ export function Day2Client() {
                 />
                 年・
                 <input
+                  readOnly={viewOnly}
                   value={wcmMeta.futAge}
                   onChange={(e) => {
                     setWcmMeta({ ...wcmMeta, futAge: e.target.value });
@@ -806,6 +837,7 @@ export function Day2Client() {
                     <span className="text-xs text-ws-muted">{row.curSub}</span>
                   </div>
                   <WcmBox
+                    readOnly={viewOnly}
                     value={wcmCurrent[row.key]}
                     onChange={(v) => {
                       setWcmCurrent({ ...wcmCurrent, [row.key]: v });
@@ -853,6 +885,7 @@ export function Day2Client() {
                       <span className="text-xs text-ws-muted">{row.futSub}</span>
                     </div>
                     <WcmBox
+                      readOnly={viewOnly}
                       value={wcmFuture[row.key]}
                       onChange={(v) => {
                         setWcmFuture({ ...wcmFuture, [row.key]: v });
@@ -891,6 +924,7 @@ export function Day2Client() {
                 {row.prompt}
               </span>
               <input
+                readOnly={viewOnly}
                 value={summary[row.key]}
                 onChange={(e) => {
                   setSummary({ ...summary, [row.key]: e.target.value });
@@ -920,20 +954,22 @@ export function Day2Client() {
       </PrintSheet>
 
       {/* 保存（右下フロート・Day2全体を保存） */}
-      <div className="no-print fixed bottom-6 right-6 z-50 flex items-center gap-3">
-        {saved && (
-          <span className="rounded-full bg-white/95 px-3 py-1.5 text-sm font-medium text-ws-teal shadow-md ring-1 ring-ws-line">
-            保存しました ✓
-          </span>
-        )}
-        <Button
-          onClick={save}
-          disabled={saving}
-          className="rounded-full px-6 shadow-lg"
-        >
-          {saving ? "保存中..." : "保存する"}
-        </Button>
-      </div>
+      {!viewOnly && (
+        <div className="no-print fixed bottom-6 right-6 z-50 flex items-center gap-3">
+          {saved && (
+            <span className="rounded-full bg-white/95 px-3 py-1.5 text-sm font-medium text-ws-teal shadow-md ring-1 ring-ws-line">
+              保存しました ✓
+            </span>
+          )}
+          <Button
+            onClick={save}
+            disabled={saving}
+            className="rounded-full px-6 shadow-lg"
+          >
+            {saving ? "保存中..." : "保存する"}
+          </Button>
+        </div>
+      )}
     </WorksheetStage>
   );
 }

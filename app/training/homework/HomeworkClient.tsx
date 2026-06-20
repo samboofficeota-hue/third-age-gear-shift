@@ -104,7 +104,9 @@ const MODES = [
 ] as const;
 type Mode = (typeof MODES)[number]["key"];
 
-export function HomeworkClient() {
+export function HomeworkClient({
+  viewOnly = false,
+}: { viewOnly?: boolean } = {}) {
   const [company, setCompany] = useState<Blanks>({});
   const [society, setSociety] = useState<Blanks>({});
   const [headerName, setHeaderName] = useState("");
@@ -153,11 +155,14 @@ export function HomeworkClient() {
     return () => clearTimeout(t);
   }, [saved]);
 
-  const companyDisplay = companyMode === "edit" ? "edit" : "display";
-  const societyDisplay = societyMode === "edit" ? "edit" : "display";
-  const companyVal = companyMode === "sample" ? example?.company ?? {} : company;
-  const societyVal = societyMode === "sample" ? example?.society ?? {} : society;
-  const anyEditing = companyMode === "edit" || societyMode === "edit";
+  const companyDisplay = viewOnly || companyMode !== "edit" ? "display" : "edit";
+  const societyDisplay = viewOnly || societyMode !== "edit" ? "display" : "edit";
+  const companyVal =
+    !viewOnly && companyMode === "sample" ? example?.company ?? {} : company;
+  const societyVal =
+    !viewOnly && societyMode === "sample" ? example?.society ?? {} : society;
+  const anyEditing =
+    !viewOnly && (companyMode === "edit" || societyMode === "edit");
 
   const save = async () => {
     setSaving(true);
@@ -228,13 +233,20 @@ export function HomeworkClient() {
       {/* 操作バー（戻る＋PDF。編集/表示の切替は各シートの説明行右に配置） */}
       <div className="no-print flex w-full max-w-[1123px] items-center justify-between gap-3">
         <Link
-          href="/training"
+          href={viewOnly ? "/workshop/records" : "/training"}
           className="inline-flex items-center gap-1.5 text-sm text-ws-muted hover:text-ws-ink"
         >
           <ArrowLeft className="h-4 w-4" />
-          研修本番へ戻る
+          {viewOnly ? "ワークの記録 一覧へ" : "研修本番へ戻る"}
         </Link>
-        <PrintButton />
+        <div className="flex items-center gap-2">
+          {viewOnly && (
+            <span className="rounded-full border border-ws-teal/30 bg-ws-mint/40 px-4 py-2 text-sm font-medium text-ws-teal">
+              閲覧モード（書き込みはできません）
+            </span>
+          )}
+          <PrintButton />
+        </div>
       </div>
 
       {/* #1 会社編 */}
@@ -248,7 +260,7 @@ export function HomeworkClient() {
         />
         <div className="mt-3 flex items-start justify-between gap-6">
           <p className="text-sm text-ws-muted">{intro}</p>
-          <ModeToggle mode={companyMode} setMode={setCompanyMode} />
+          {!viewOnly && <ModeToggle mode={companyMode} setMode={setCompanyMode} />}
         </div>
         <div className="mt-5">
           <SectionLabel>#1 COMPANY（会社編）</SectionLabel>
@@ -272,7 +284,7 @@ export function HomeworkClient() {
         />
         <div className="mt-3 flex items-start justify-between gap-6">
           <p className="text-sm text-ws-muted">{intro}</p>
-          <ModeToggle mode={societyMode} setMode={setSocietyMode} />
+          {!viewOnly && <ModeToggle mode={societyMode} setMode={setSocietyMode} />}
         </div>
         <div className="mt-5">
           <SectionLabel>#2 SOCIETY（社会編）</SectionLabel>
