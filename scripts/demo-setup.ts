@@ -25,9 +25,17 @@ const prisma = new PrismaClient();
 const DAY = 24 * 60 * 60 * 1000;
 
 const DEMO_CODE = "DEMO";
-const DEMO_PASSWORD = "demo2026";
+const DEMO_PASSWORD = process.env.DEMO_PASSWORD ?? "";
 const DEMO_ORG = "[デモ] サンボ・オフィス";
 const DEMO_USER = { email: "y-ota@sambo-office.com", name: "太田 義史" };
+
+if (!DEMO_PASSWORD || DEMO_PASSWORD.length < 12) {
+  console.error(
+    "DEMO_PASSWORD を環境変数（.env.local 等）に 12 文字以上で設定してください。\n" +
+      "例: DEMO_PASSWORD='xxxxxxxxxxxx' npm run demo:setup"
+  );
+  process.exit(1);
+}
 // 太田さんに記入例を入力してもらうため開放するフェーズ（pre は非ゲートで常時可）
 const OPEN_PHASES = ["day1", "homework", "day2", "post"] as const;
 
@@ -56,13 +64,13 @@ async function main() {
   });
 
   // 参加者（太田 義史）
+  // 再実行時は passwordHash を上書きしない（漏洩リスクの抑制／本人が変更したパスワードを尊重）
   const user = await prisma.user.upsert({
     where: { email: DEMO_USER.email },
     update: {
       name: DEMO_USER.name,
       role: "participant",
       organizationId: org.id,
-      passwordHash,
       activatedAt: new Date(),
     },
     create: {
@@ -93,7 +101,7 @@ async function main() {
   console.log("✅ デモ用データを投入しました。");
   console.log(`   研修コード: ${DEMO_CODE}`);
   console.log(`   参加者:     ${DEMO_USER.email}  (${DEMO_USER.name})`);
-  console.log(`   パスワード: ${DEMO_PASSWORD}`);
+  console.log(`   パスワード: （DEMO_PASSWORD env を使用。初回 create 時のみ反映）`);
   console.log(`   開放フェーズ: pre(常時) / ${OPEN_PHASES.join(" / ")}`);
 }
 

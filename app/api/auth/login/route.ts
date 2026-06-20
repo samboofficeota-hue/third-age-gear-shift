@@ -7,6 +7,12 @@ import {
   getCookieOptions,
   type SessionPayload,
 } from "@/lib/auth";
+import {
+  checkLoginAttempt,
+  clientIpFrom,
+  recordLoginFailure,
+  recordLoginSuccess,
+} from "@/lib/rateLimit";
 
 export async function POST(request: Request) {
   try {
@@ -21,11 +27,27 @@ export async function POST(request: Request) {
       );
     }
 
+    const ip = clientIpFrom(request.headers);
+    const gate = checkLoginAttempt(email, ip);
+    if (!gate.ok) {
+      return NextResponse.json(
+        {
+          error:
+            "試行回数の上限に達しました。しばらく時間をおいてから再度お試しください。",
+        },
+        {
+          status: 429,
+          headers: { "Retry-After": String(gate.retryAfterSec) },
+        }
+      );
+    }
+
     const user = await prisma.user.findUnique({
       where: { email },
     });
 
     if (!user) {
+      recordLoginFailure(email, ip);
       return NextResponse.json(
         { error: "メールアドレスまたはパスワードが正しくありません。" },
         { status: 401 }
@@ -45,11 +67,14 @@ export async function POST(request: Request) {
 
     const ok = await verifyPassword(password, user.passwordHash);
     if (!ok) {
+      recordLoginFailure(email, ip);
       return NextResponse.json(
         { error: "メールアドレスまたはパスワードが正しくありません。" },
         { status: 401 }
       );
     }
+
+    recordLoginSuccess(email);
 
     const payload: SessionPayload = {
       sub: user.id,
