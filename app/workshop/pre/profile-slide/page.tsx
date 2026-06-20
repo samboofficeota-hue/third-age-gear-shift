@@ -3,113 +3,30 @@
 import { useEffect, useRef, useState } from "react";
 import type { Area } from "react-easy-crop";
 import Link from "next/link";
-import { ImagePlus, Crop, Plus } from "lucide-react";
-import { PrintSheet } from "@/components/worksheet/PrintSheet";
-import { SheetHeader, formatHeaderName } from "@/components/worksheet/SheetHeader";
+import { formatHeaderName } from "@/components/worksheet/SheetHeader";
 import { WorksheetStage } from "@/components/worksheet/WorksheetStage";
 import { PrintButton } from "@/components/worksheet/PrintButton";
 import { CropModal } from "@/components/worksheet/CropModal";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { pad, padHist, type Slide, type Work, type HistRow } from "./_types";
+import { MIN_HIST_ROWS } from "./_constants";
+import { RuleSheet } from "./sheets/RuleSheet";
+import { IntroSheet } from "./sheets/IntroSheet";
+import { HistorySheet } from "./sheets/HistorySheet";
+import { WorkSheet } from "./sheets/WorkSheet";
 
-type HistRow = { year: string; event: string };
-type Work = {
-  company?: string;
-  dept?: string;
-  title?: string;
-  q1?: string; // 会社は何のため・誰に・何を
-  q2?: string; // あなたの役割・価値
-  q3?: string; // どんな仕事・役割・責任
-};
-type Slide = {
-  name?: string;
-  nickname?: string;
-  points?: string[];
-  photo?: string; // 表示用のトリミング済み画像URL
-  photoOriginal?: string; // トリミング前の元画像URL（後から再調整するため保持）
-  photoArea?: Area; // 直近のクロップ範囲(％)。再調整時に枠取りを復元する
-  history?: HistRow[];
-  work?: Work;
-};
-
-const WORK_FIELDS: { key: "company" | "dept" | "title"; label: string }[] = [
-  { key: "company", label: "会社名" },
-  { key: "dept", label: "部署名" },
-  { key: "title", label: "肩書き・役割" },
-];
-const WORK_QUESTIONS: { key: "q1" | "q2" | "q3"; title: string; q: string }[] = [
-  {
-    key: "q1",
-    title: "会社の役割",
-    q: "何のために、誰に向けて、何をしている会社？",
-  },
-  {
-    key: "q2",
-    title: "組織の役割",
-    q: "会社の中での役割は？\n担っている責任は？",
-  },
-  {
-    key: "q3",
-    title: "自分の役割",
-    q: "どんな仕事をしている？\n誰に対する仕事かな？\n組織の中での役割は？",
-  },
-];
-
-const MIN_HIST_ROWS = 6;
-
-// 入力欄のサンプル（プレースホルダ）。1行目=生年は任意、それ以降は記入例で誘導。
-const HIST_PH: HistRow[] = [
-  { year: "生年", event: "〇〇県で生まれる" },
-  { year: "19xx", event: "〇〇高校に入学" },
-  { year: "19xx", event: "〇〇大学を卒業" },
-  { year: "20xx", event: "〇〇株式会社に入社" },
-  { year: "20xx", event: "〇〇部署へ異動" },
-  { year: "20xx", event: "現在に至る" },
-];
-const HIST_PH_FALLBACK: HistRow = { year: "20xx", event: "出来事を記入" };
-
-function pad(points?: string[]): string[] {
-  const p = [...(points ?? [])];
-  while (p.length < 5) p.push("");
-  return p.slice(0, 5);
-}
-
-function padHist(history: HistRow[] | undefined, n: number): HistRow[] {
-  const h = [...(history ?? [])];
-  while (h.length < n) h.push({ year: "", event: "" });
-  return h;
-}
-
-/** 円形の写真枠（読み込み失敗時はプレースホルダ＋ヒント表示） */
-function PhotoFrame({ src }: { src?: string }) {
-  const [err, setErr] = useState(false);
-  useEffect(() => setErr(false), [src]);
-  return (
-    <div className="relative mx-auto flex aspect-square w-[300px] items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-ws-line bg-ws-fill">
-      {src && !err ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={src}
-          alt="プロフィール写真"
-          onError={() => setErr(true)}
-          className="h-full w-full object-cover"
-        />
-      ) : (
-        <div className="px-8 text-center">
-          <p className="text-base font-semibold text-ws-muted">写真</p>
-          <p className="mt-2 text-xs leading-relaxed text-ws-muted">
-            恥ずかしがらずに写真をドーンと！
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
+/**
+ * じぶん紹介（事前課題）オーケストレーター。
+ * 役割:
+ *  - WorkshopData.pre.profileSlide の load / save
+ *  - 写真アップロード／クロップ／再調整のフロー（ref と Storage API を持つ）
+ *  - 記入する / 記入例 のモード切替
+ *  - 各シート（ルール／#1 名前・写真・ポイント／#2 生い立ち／#3 今の会社）に slice を渡す
+ */
 export default function ProfileSlidePage() {
   const [data, setData] = useState<Slide>({ points: pad([]) });
   const [mode, setMode] = useState<"edit" | "sample">("edit");
-  // 記入例（DEMOアカウントの実データ）。初回の「記入例を見る」で取得
   const [example, setExample] = useState<Slide | null>(null);
   const [visibleCount, setVisibleCount] = useState(3);
   const [histCount, setHistCount] = useState(MIN_HIST_ROWS);
@@ -120,9 +37,7 @@ export default function ProfileSlidePage() {
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [cropInitial, setCropInitial] = useState<Area | undefined>(undefined);
   const fileRef = useRef<HTMLInputElement>(null);
-  // 新規アップロード時に保持する元画像（再調整時は null）
   const pendingOriginalRef = useRef<File | null>(null);
-  // fetchで作った blob: URL（クローズ時に解放する）
   const objectUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -136,7 +51,6 @@ export default function ProfileSlidePage() {
       };
       const ps = d?.workshopData?.pre?.profileSlide as Slide | undefined;
       const points = pad(ps?.points);
-      // 会社名・部署名は事前登録（DB）の値で初期化（未保存時のみ）。
       setData({
         ...ps,
         points,
@@ -155,7 +69,6 @@ export default function ProfileSlidePage() {
     })();
   }, []);
 
-  // 記入例（DEMOアカウントの実データ）を初回の「記入例を見る」で取得
   useEffect(() => {
     if (mode !== "sample" || example) return;
     (async () => {
@@ -172,11 +85,8 @@ export default function ProfileSlidePage() {
     ? example ?? { points: pad([]) }
     : { ...data, points: pad(data.points) };
 
-  // タイトル行の右側に出す「ニックネーム（お名前）」（全シート共通の表記）。
   const headerName = formatHeaderName(view.name, view.nickname);
 
-  // 右上スロット。①じぶん紹介（ルール＋名前ページ）までは「事前課題」、
-  // 自己紹介が済む②生い立ち以降は氏名を表示。
   const preTag = (
     <span className="text-sm font-semibold text-ws-teal">事前課題</span>
   );
@@ -213,7 +123,6 @@ export default function ProfileSlidePage() {
     setSaved(false);
   };
 
-  // blob: URL を解放してクロップモーダルを閉じる
   const closeCrop = () => {
     if (objectUrlRef.current) {
       URL.revokeObjectURL(objectUrlRef.current);
@@ -223,19 +132,17 @@ export default function ProfileSlidePage() {
     setCropInitial(undefined);
   };
 
-  // 新規ファイル選択 → 元画像を保持してクロップモーダルを開く
   const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || isSample) return;
-    pendingOriginalRef.current = file; // 新規アップロード：元画像も保存する
-    setCropInitial(undefined); // 新規は枠取りをリセット
+    pendingOriginalRef.current = file;
+    setCropInitial(undefined);
     const reader = new FileReader();
     reader.onload = () => setCropSrc(String(reader.result));
     reader.readAsDataURL(file);
     if (fileRef.current) fileRef.current.value = "";
   };
 
-  // 「写真を調整」→ 保存済みの元画像を取得してクロップモーダルを再度開く
   const onAdjust = async () => {
     if (isSample || !data.photoOriginal) return;
     try {
@@ -243,15 +150,14 @@ export default function ProfileSlidePage() {
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       objectUrlRef.current = url;
-      pendingOriginalRef.current = null; // 元画像は変更しない
-      setCropInitial(data.photoArea); // 前回の枠取りを復元
+      pendingOriginalRef.current = null;
+      setCropInitial(data.photoArea);
       setCropSrc(url);
     } catch {
       alert("写真の読み込みに失敗しました。お手数ですが写真を選び直してください。");
     }
   };
 
-  // クロップ確定 → Storage にアップロード → URL を保存
   const onCropped = async (blob: Blob, area: Area) => {
     const original = pendingOriginalRef.current;
     closeCrop();
@@ -259,7 +165,7 @@ export default function ProfileSlidePage() {
     try {
       const fd = new FormData();
       fd.append("file", new File([blob], "photo.jpg", { type: "image/jpeg" }));
-      if (original) fd.append("original", original); // 新規アップロード時のみ
+      if (original) fd.append("original", original);
       const res = await fetch("/api/workshop/me/photo", {
         method: "POST",
         credentials: "include",
@@ -289,7 +195,9 @@ export default function ProfileSlidePage() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ profileSlide: { ...data, points: pad(data.points) } }),
+        body: JSON.stringify({
+          profileSlide: { ...data, points: pad(data.points) },
+        }),
       });
       if (res.ok) setSaved(true);
     } finally {
@@ -305,7 +213,6 @@ export default function ProfileSlidePage() {
     );
   }
 
-  const allPoints = pad(view.points);
   const histRows = isSample
     ? (example?.history ?? []).filter((h) => h.year.trim() || h.event.trim())
     : padHist(data.history, histCount);
@@ -340,358 +247,40 @@ export default function ProfileSlidePage() {
         </div>
       </div>
 
-      {/* ── ルールシート ── */}
-      <PrintSheet>
-        <SheetHeader no={1} accent="じぶん" title="紹介" right={preTag} />
-        <div className="mt-10 rounded-2xl bg-ws-mint p-10">
-          <span className="inline-block rounded-full border border-ws-teal bg-white px-4 py-1 text-sm font-semibold text-ws-teal">
-            ルール
-          </span>
-          <dl className="mt-8 space-y-7 text-ws-ink">
-            <div className="flex gap-8">
-              <dt className="w-32 shrink-0 font-bold">● 発表時間</dt>
-              <dd>
-                <span className="text-2xl font-bold text-ws-accent">5分以内</span>
-                <span className="ml-2 text-sm text-ws-muted">（1ページ 1分以内を目安に）</span>
-              </dd>
-            </div>
-            <div className="flex gap-8">
-              <dt className="w-32 shrink-0 font-bold">● 目的</dt>
-              <dd className="space-y-1.5 leading-relaxed">
-                <p>他のメンバーに <span className="font-bold text-ws-accent">わたし</span> のことを知ってもらうこと</p>
-                <p>自分で <span className="font-bold text-ws-accent">わたし</span> について掘り下げてみること</p>
-              </dd>
-            </div>
-            <div className="flex gap-8">
-              <dt className="w-32 shrink-0 font-bold">● 内容</dt>
-              <dd className="space-y-1.5 leading-relaxed">
-                <p>知ってほしい 3つのポイント</p>
-                <p>生い立ち</p>
-                <p>今の会社・今の仕事</p>
-              </dd>
-            </div>
-          </dl>
-        </div>
-      </PrintSheet>
+      <RuleSheet preTag={preTag} />
 
-      {/* ── ページ① 名前＋写真＋3ポイント ── */}
-      <PrintSheet>
-        <SheetHeader no={1} accent="じぶん" title="紹介" right={preTag} />
+      <IntroSheet
+        preTag={preTag}
+        view={view}
+        data={data}
+        isSample={isSample}
+        visibleCount={visibleCount}
+        photoUploading={photoUploading}
+        fileRef={fileRef}
+        onPickFile={onFile}
+        onAdjustPhoto={onAdjust}
+        onUploadClick={() => fileRef.current?.click()}
+        onSetField={setField}
+        onSetPoint={setPoint}
+        onIncreaseVisible={() => setVisibleCount((c) => Math.min(5, c + 1))}
+      />
 
-        {/* 左右2カラム。シート高いっぱいに上下分散 */}
-        <div className="mt-6 flex min-h-[600px] gap-12">
-          {/* 左：写真=上寄せ ／ ニックネーム=下揃え */}
-          <div className="flex w-[340px] shrink-0 flex-col">
-            <div className="mt-[115px]">
-              <PhotoFrame src={view.photo} />
-            </div>
+      <HistorySheet
+        nameTag={nameTag}
+        rows={histRows}
+        isSample={isSample}
+        onSetHist={setHist}
+        onAddRow={() => setHistCount((c) => c + 1)}
+      />
 
-            {!isSample && (
-              <div className="no-print mt-4 flex flex-wrap items-center justify-center gap-2">
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  onChange={onFile}
-                  className="hidden"
-                />
-                {data.photoOriginal && (
-                  <button
-                    type="button"
-                    disabled={photoUploading}
-                    onClick={onAdjust}
-                    className="inline-flex items-center gap-2 rounded-lg border border-ws-line px-4 py-2 text-sm text-ws-ink hover:border-ws-teal disabled:opacity-60"
-                  >
-                    <Crop className="h-4 w-4" />
-                    写真を調整
-                  </button>
-                )}
-                <button
-                  type="button"
-                  disabled={photoUploading}
-                  onClick={() => fileRef.current?.click()}
-                  className="inline-flex items-center gap-2 rounded-lg border border-ws-line px-4 py-2 text-sm text-ws-ink hover:border-ws-teal disabled:opacity-60"
-                >
-                  <ImagePlus className="h-4 w-4" />
-                  {photoUploading
-                    ? "アップロード中…"
-                    : data.photo
-                      ? "写真を変更"
-                      : "写真をアップロード"}
-                </button>
-              </div>
-            )}
+      <WorkSheet
+        nameTag={nameTag}
+        view={view}
+        data={data}
+        isSample={isSample}
+        onSetWork={setWork}
+      />
 
-            {/* ニックネーム（下端から115px上げる） */}
-            <div className="mt-auto mb-[115px] pt-6">
-              {isSample ? (
-                <div className="text-center">
-                  <p className="text-xs font-semibold text-ws-muted">
-                    ニックネーム
-                  </p>
-                  <p className="mt-1 text-3xl font-bold text-ws-accent">
-                    {view.nickname}
-                  </p>
-                </div>
-              ) : (
-                <label className="block">
-                  <span className="mb-1 block text-xs font-semibold text-ws-muted">
-                    ニックネーム（研修中に呼ばれたい名前）
-                  </span>
-                  <input
-                    value={data.nickname ?? ""}
-                    onChange={(e) => setField({ nickname: e.target.value })}
-                    placeholder="ニックネーム"
-                    className="w-full rounded-md border border-ws-line px-3 py-2 text-center text-2xl font-bold text-ws-accent outline-none focus:border-ws-teal"
-                  />
-                </label>
-              )}
-            </div>
-          </div>
-
-          {/* 右：お名前=上寄せ ／ ポイント=分散（最後を下揃え） */}
-          <div className="flex flex-1 flex-col">
-            <div className="border-b border-ws-line pb-4">
-              {isSample ? (
-                <>
-                  <p className="text-xs font-semibold text-ws-muted">お名前</p>
-                  <p className="mt-1 text-3xl font-bold text-ws-ink">{view.name}</p>
-                </>
-              ) : (
-                <label className="block">
-                  <span className="mb-1 block text-xs font-semibold text-ws-muted">
-                    お名前
-                  </span>
-                  <input
-                    value={data.name ?? ""}
-                    onChange={(e) => setField({ name: e.target.value })}
-                    placeholder="お名前"
-                    className="w-full rounded-md border border-ws-line px-3 py-2 text-3xl font-bold text-ws-ink outline-none focus:border-ws-teal"
-                  />
-                </label>
-              )}
-            </div>
-
-            <p className="mt-6 text-sm font-semibold text-ws-teal">
-              知ってほしい 3つのポイント
-            </p>
-            {/* 常に5枠ぶんの位置を確保（3つでも上から並び、増えても行間は一定） */}
-            <ul className="mt-5 flex flex-1 flex-col justify-between py-2">
-              {[0, 1, 2, 3, 4].map((i) => {
-                const val = allPoints[i] ?? "";
-                const showInput = !isSample && i < visibleCount;
-                const isAddSlot =
-                  !isSample && i === visibleCount && visibleCount < 5;
-
-                if (isSample) {
-                  const has = !!val.trim();
-                  return (
-                    <li key={i} className="flex items-center gap-4">
-                      <span
-                        className={cn(
-                          "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ws-accent text-base font-bold text-white",
-                          !has && "opacity-0"
-                        )}
-                      >
-                        {i + 1}
-                      </span>
-                      <span className="text-3xl font-medium text-ws-ink">
-                        {val || "　"}
-                      </span>
-                    </li>
-                  );
-                }
-                if (showInput) {
-                  return (
-                    <li key={i} className="flex items-center gap-4">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ws-accent text-base font-bold text-white">
-                        {i + 1}
-                      </span>
-                      <input
-                        value={val}
-                        onChange={(e) => setPoint(i, e.target.value)}
-                        placeholder="（一言で）"
-                        maxLength={25}
-                        className="w-full rounded-md border border-ws-line px-3 py-2 text-3xl text-ws-ink outline-none focus:border-ws-teal"
-                      />
-                    </li>
-                  );
-                }
-                if (isAddSlot) {
-                  return (
-                    <li key={i} className="no-print flex items-center gap-4">
-                      <button
-                        type="button"
-                        onClick={() => setVisibleCount((c) => Math.min(5, c + 1))}
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-ws-line text-ws-muted hover:border-ws-teal hover:text-ws-teal"
-                        aria-label="ポイントを追加"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </button>
-                      <span className="text-sm text-ws-muted">
-                        ポイントを追加（最大5つ）
-                      </span>
-                    </li>
-                  );
-                }
-                // 空きスロット（位置を保持）
-                return (
-                  <li key={i} className="flex items-center gap-4" aria-hidden>
-                    <span className="h-9 w-9 shrink-0 opacity-0" />
-                    <span className="text-3xl opacity-0">　</span>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        </div>
-      </PrintSheet>
-
-      {/* ── ページ② 生い立ち（縦タイムライン） ── */}
-      <PrintSheet>
-        <SheetHeader
-          no={1}
-          accent="じぶん"
-          title="紹介"
-          sub="〜 生い立ち"
-          right={nameTag}
-        />
-
-        <p className="mt-3 text-sm text-ws-muted">
-          どんな環境で、どんな経歴を歩んできたか。年表でも文章でもOK。
-          <span className="text-ws-teal">生年は記入なしでもOKです。</span>
-        </p>
-
-        <ul className="mt-7">
-          {histRows.map((r, i) => {
-            const isLast = i === histRows.length - 1;
-            const ph = HIST_PH[i] ?? HIST_PH_FALLBACK;
-            return (
-              <li key={i} className="flex items-stretch gap-5">
-                {/* 年 */}
-                <div className="w-24 shrink-0 pt-1.5 text-right">
-                  {isSample ? (
-                    <span className="text-xl font-bold text-ws-teal">{r.year}</span>
-                  ) : (
-                    <input
-                      value={r.year}
-                      onChange={(e) => setHist(i, "year", e.target.value)}
-                      placeholder={ph.year}
-                      maxLength={9}
-                      className="w-full rounded-md border border-ws-line px-2 py-1.5 text-right text-lg font-bold text-ws-teal outline-none focus:border-ws-teal"
-                    />
-                  )}
-                </div>
-                {/* タイムライン（線＋ドット） */}
-                <div className="flex w-4 shrink-0 flex-col items-center pt-2.5">
-                  <span className="h-3.5 w-3.5 shrink-0 rounded-full bg-ws-teal" />
-                  {!isLast && <span className="w-0.5 flex-1 bg-ws-line" />}
-                </div>
-                {/* 出来事 */}
-                <div className="flex-1 pb-7">
-                  {isSample ? (
-                    <p className="pt-1 text-xl text-ws-ink">{r.event}</p>
-                  ) : (
-                    <input
-                      value={r.event}
-                      onChange={(e) => setHist(i, "event", e.target.value)}
-                      placeholder={ph.event}
-                      className="w-full rounded-md border border-ws-line px-3 py-2 text-lg text-ws-ink outline-none focus:border-ws-teal"
-                    />
-                  )}
-                </div>
-              </li>
-            );
-          })}
-
-          {/* 行を追加 */}
-          {!isSample && (
-            <li className="no-print flex gap-5">
-              <div className="w-24 shrink-0" />
-              <div className="flex w-4 shrink-0 justify-center">
-                <button
-                  type="button"
-                  onClick={() => setHistCount((c) => c + 1)}
-                  aria-label="行を追加"
-                  className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-dashed border-ws-line text-ws-muted hover:border-ws-teal hover:text-ws-teal"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
-              </div>
-              <span className="pt-1 text-sm text-ws-muted">行を追加</span>
-            </li>
-          )}
-        </ul>
-      </PrintSheet>
-
-      {/* ── ページ③ 今の会社・今の仕事 ── */}
-      <PrintSheet>
-        <SheetHeader
-          no={1}
-          accent="じぶん"
-          title="紹介"
-          sub="〜 今の会社・今の仕事"
-          right={nameTag}
-        />
-
-        {/* シート高いっぱいに使う */}
-        <div className="mt-7 flex min-h-[640px] flex-col">
-          {/* 会社名 / 部署名 / 役職名・肩書き・役割（2行分の高さを確保） */}
-          <div className="grid grid-cols-3 gap-7">
-            {WORK_FIELDS.map(({ key, label }) => {
-              // 会社名・部署名はDB値で初期化済み。役職名は空欄＋記入例を表示。
-              const ph =
-                key === "title" ? "例）部長・〇〇リーダー・プロデューサー" : label;
-              return (
-                <div key={key}>
-                  <span className="mb-3 block text-sm font-semibold text-ws-teal">
-                    {label}
-                  </span>
-                  {isSample ? (
-                    <p className="min-h-[5rem] whitespace-pre-wrap text-2xl font-bold leading-snug text-ws-ink">
-                      {view.work?.[key] || "　"}
-                    </p>
-                  ) : (
-                    <textarea
-                      value={data.work?.[key] ?? ""}
-                      onChange={(e) => setWork(key, e.target.value)}
-                      placeholder={ph}
-                      rows={2}
-                      className="w-full resize-none rounded-md border border-ws-line px-3 py-2 text-2xl font-bold leading-snug text-ws-ink outline-none placeholder:font-normal placeholder:text-ws-muted/70 focus:border-ws-teal"
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* 3つの問い＝3カラム。タイトル＝ティール文字（下線なし）、カラム間に薄い縦線 */}
-          <div className="mt-8 grid flex-1 grid-cols-3 divide-x divide-ws-line">
-            {WORK_QUESTIONS.map(({ key, title, q }) => (
-              <div
-                key={key}
-                className="flex flex-col px-6 first:pl-0 last:pr-0"
-              >
-                <p className="text-lg font-bold text-ws-teal">{title}</p>
-                {isSample ? (
-                  <p className="mt-7 flex-1 whitespace-pre-line text-2xl leading-relaxed text-ws-ink">
-                    {view.work?.[key]}
-                  </p>
-                ) : (
-                  <textarea
-                    value={data.work?.[key] ?? ""}
-                    onChange={(e) => setWork(key, e.target.value)}
-                    placeholder={q}
-                    className="mt-7 w-full flex-1 resize-none rounded-md border border-transparent bg-transparent text-2xl leading-relaxed text-ws-ink outline-none placeholder:text-ws-muted/70 focus:border-ws-teal"
-                  />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </PrintSheet>
-
-      {/* 保存（印刷されない） */}
       {!isSample && (
         <div className="no-print flex w-full max-w-[1123px] items-center gap-3">
           <Button onClick={save} disabled={saving}>
@@ -701,7 +290,6 @@ export default function ProfileSlidePage() {
         </div>
       )}
 
-      {/* クロップモーダル */}
       {cropSrc && (
         <CropModal
           src={cropSrc}
