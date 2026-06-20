@@ -12,7 +12,7 @@ export function SurveyShell({
   className,
 }: {
   title?: string;
-  description?: string;
+  description?: ReactNode;
   children: ReactNode;
   className?: string;
 }) {

@@ -186,6 +186,7 @@ export function SurveyTextArea({
   onChange,
   placeholder,
   rows = 4,
+  disabled = false,
 }: {
   label: string;
   hint?: string;
@@ -193,6 +194,7 @@ export function SurveyTextArea({
   onChange: (v: string) => void;
   placeholder?: string;
   rows?: number;
+  disabled?: boolean;
 }) {
   return (
     <QuestionFrame label={label} hint={hint}>
@@ -200,8 +202,12 @@ export function SurveyTextArea({
         rows={rows}
         value={value}
         placeholder={placeholder}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full resize-none rounded-lg border border-[rgba(0,255,136,0.25)] bg-[#0f1420] px-4 py-3 text-base leading-relaxed text-[#e0f0e8] outline-none focus:border-primary"
+        className={cn(
+          "w-full resize-none rounded-lg border border-[rgba(0,255,136,0.25)] bg-[#0f1420] px-4 py-3 text-base leading-relaxed text-[#e0f0e8] outline-none focus:border-primary",
+          disabled && "cursor-default opacity-90"
+        )}
       />
     </QuestionFrame>
   );

@@ -212,3 +212,91 @@ export const PRE_SAMPLE: Record<string, number | string | string[]> = {
   d_koyou: "skill_here",
   d_support: ["reskill", "flexible", "intro"],
 };
+
+/**
+ * §E 研修評価（事後直後・5問）
+ * 5段階リッカート（E1, E3, E4, E5） ＋ NPS 0-10（E2）の混在。
+ */
+export type PostScaleKind = "likert" | "nps";
+export type PostScaleQuestion = {
+  key: string;
+  text: string;
+  kind: PostScaleKind;
+  minLabel?: string;
+  maxLabel?: string;
+};
+
+export const SECTION_E: {
+  id: string;
+  title: string;
+  questions: PostScaleQuestion[];
+} = {
+  id: "E",
+  title: "研修評価",
+  questions: [
+    { key: "e1", text: "この研修全体に満足している", kind: "likert" },
+    {
+      key: "e2",
+      text: "この研修を、同年代の同僚にすすめたいと思う",
+      kind: "nps",
+      minLabel: "まったく勧めない",
+      maxLabel: "強く勧める",
+    },
+    { key: "e3", text: "「シフト戦略」に書いた内容は、納得できるものになった", kind: "likert" },
+    { key: "e4", text: "講師（ファシリテーター）の進行・関わり方は満足できるものだった", kind: "likert" },
+    { key: "e5", text: "一緒に学んだ他の参加者から、刺激や気づきを得られた", kind: "likert" },
+  ],
+};
+
+/** 事後アンケートの自由記述（任意） */
+export const POST_FREETEXT = {
+  key: "e_free",
+  label: "研修を通じて気づいたこと・これからやってみようと思ったこと",
+  hint: "（任意）",
+  placeholder: "（自由にお書きください）",
+};
+
+/** 事後直後アンケートで使う構成（§A〜D は事前と同一。§E を追加） */
+export const POST_SCALE_SECTIONS: ScaleSection[] = PRE_SCALE_SECTIONS;
+export const POST_CHOICE = SECTION_D;
+export const POST_NENDAI = NENDAI;
+
+/**
+ * §F 3ヶ月後フォロー（別送・3問）
+ * Vercel Cron + メール送信が実装されてから出番。
+ * f1=yes のときだけ f2 を表示。
+ */
+export const SECTION_F_F1: ChoiceQuestion = {
+  key: "f1",
+  title: "行動の有無",
+  text: "研修後、キャリアに関する具体的な行動を起こしましたか？",
+  options: [
+    { value: "yes", label: "はい" },
+    { value: "no", label: "いいえ" },
+  ],
+};
+
+export const SECTION_F_F2: ChoiceQuestion = {
+  key: "f2",
+  title: "起こした行動",
+  text: "どんな行動ですか？（複数選択可）",
+  options: [
+    { value: "internal", label: "社内公募・異動希望" },
+    { value: "boss_hr", label: "上司・人事との面談" },
+    { value: "learn", label: "学習・資格" },
+    { value: "side", label: "副業・兼業の検討着手" },
+    { value: "community", label: "社外コミュニティ・地域活動への参加" },
+    { value: "family", label: "家族との話し合い" },
+    { value: "other", label: "その他" },
+  ],
+};
+
+export const SECTION_F_F3: ChoiceQuestion = {
+  key: "f3",
+  title: "つながり",
+  text: "研修で出会った人と、その後つながりはありますか？",
+  options: [
+    { value: "yes", label: "はい" },
+    { value: "no", label: "いいえ" },
+  ],
+};
