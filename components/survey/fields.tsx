@@ -27,7 +27,10 @@ function QuestionFrame({
   );
 }
 
-/** 5段階リッカート尺度（1=そう思わない 〜 5=そう思う） */
+/**
+ * 数値スケール（1=そう思わない 〜 5=そう思う などの 5 段階／NPS 1〜10）。
+ * 選択肢が 7 個以上のときはコンパクト表示（1 行に収まるよう小さめのボタン）。
+ */
 export function LikertScale({
   label,
   hint,
@@ -50,9 +53,15 @@ export function LikertScale({
   disabled?: boolean;
 }) {
   const options = Array.from({ length: max - min + 1 }, (_, i) => min + i);
+  const compact = options.length >= 7;
   return (
     <QuestionFrame label={label} hint={hint}>
-      <div className="flex flex-wrap gap-2">
+      <div
+        className={cn(
+          "flex gap-1.5",
+          compact ? "flex-nowrap" : "flex-wrap gap-2"
+        )}
+      >
         {options.map((n) => (
           <button
             key={n}
@@ -60,7 +69,10 @@ export function LikertScale({
             disabled={disabled}
             onClick={() => onChange(n)}
             className={cn(
-              "h-14 min-w-14 flex-1 rounded-lg border-2 text-xl font-bold transition-colors",
+              "flex-1 rounded-lg border-2 font-bold transition-colors",
+              compact
+                ? "h-11 min-w-0 px-0 text-base sm:h-12 sm:text-lg"
+                : "h-14 min-w-14 text-xl",
               value === n
                 ? "border-primary bg-primary text-primary-foreground"
                 : "border-[rgba(0,255,136,0.3)] bg-[#0f1420] text-[#e0f0e8]",

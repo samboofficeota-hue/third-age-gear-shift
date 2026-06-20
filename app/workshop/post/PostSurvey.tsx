@@ -199,7 +199,7 @@ export function PostSurvey() {
               label={`${i + 1}. ${q.text}`}
               minLabel={q.minLabel ?? SCALE_MIN_LABEL}
               maxLabel={q.maxLabel ?? SCALE_MAX_LABEL}
-              min={isNps ? 0 : 1}
+              min={1}
               max={isNps ? 10 : 5}
               value={typeof answers[q.key] === "number" ? (answers[q.key] as number) : null}
               onChange={(v) => setScale(q.key, v)}
