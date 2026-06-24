@@ -57,6 +57,17 @@ export const EMPTY_WCM_META: WcmMeta = {
   futAge: "",
 };
 
+export type Backcast = {
+  issue: string;
+  goal: string;
+  firstStep: string;
+};
+export const EMPTY_BACKCAST: Backcast = {
+  issue: "",
+  goal: "",
+  firstStep: "",
+};
+
 export type Summary = {
   must: string;
   will: string;

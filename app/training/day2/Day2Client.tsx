@@ -14,16 +14,19 @@ import {
   EMPTY_WCM,
   EMPTY_WCM_META,
   EMPTY_SUMMARY,
+  EMPTY_BACKCAST,
   type Portfolio,
   type Diagnosis,
   type ActionPlan,
   type WCM,
   type WcmMeta,
+  type Backcast,
   type Summary,
 } from "./_types";
 import { PortfolioSheet } from "./sheets/PortfolioSheet";
 import { DiagnosisSheet } from "./sheets/DiagnosisSheet";
 import { ActionPlanSheet } from "./sheets/ActionPlanSheet";
+import { BackcastSheet } from "./sheets/BackcastSheet";
 import { WcmSheet } from "./sheets/WcmSheet";
 import { SummarySheet } from "./sheets/SummarySheet";
 
@@ -33,7 +36,7 @@ import { SummarySheet } from "./sheets/SummarySheet";
  *  - WorkshopData.day2 全体の load / save（Day1 portfolio も連動保存）
  *  - 操作バー（戻る・閲覧モード表示・印刷ボタン）
  *  - viewOnly の伝搬
- *  - 各シート（#8 ポートフォリオ／#9 自己診断／#10 アクションプラン／#11 WCM／#12 締め）の状態と onChange の橋渡し
+ *  - 各シート（#8 自己診断／#9 ポートフォリオ／#10 アクションプラン／#11 WCM／#12 締め）の状態と onChange の橋渡し
  *
  * シートは `app/training/day2/sheets/` に独立。types/constants/helpers は `_types.ts` ほかに切り出し。
  */
@@ -53,7 +56,13 @@ export function Day2Client({
   const [wcmCurrent, setWcmCurrent] = useState<WCM>(EMPTY_WCM);
   const [wcmFuture, setWcmFuture] = useState<WCM>(EMPTY_WCM);
   const [wcmMeta, setWcmMeta] = useState<WcmMeta>(EMPTY_WCM_META);
+  const [backcast, setBackcast] = useState<Backcast>(EMPTY_BACKCAST);
   const [summary, setSummary] = useState<Summary>(EMPTY_SUMMARY);
+
+  // 宿題の社会シナリオ（読み取り専用で表示）
+  const [societyScenario, setSocietyScenario] = useState<
+    Record<string, string>
+  >({});
 
   // 表示・保存系
   const [headerName, setHeaderName] = useState("");
@@ -64,7 +73,6 @@ export function Day2Client({
   // ステップ系
   const [step, setStep] = useState<"single" | "compare">("single");
   const [which, setWhich] = useState<"current" | "future">("current");
-  const [diagView, setDiagView] = useState<"table" | "chart">("table");
   const [apStep, setApStep] = useState<"select" | "entry">("select");
   const [wcmStep, setWcmStep] = useState<"current" | "both">("current");
 
@@ -98,6 +106,10 @@ export function Day2Client({
       setFuture(pf?.future ?? []);
       setYear(pf?.year ?? "");
       setShift(pf?.shift ?? "");
+      const hwScenario = d?.workshopData?.homework?.scenario as
+        | { society?: Record<string, string> }
+        | undefined;
+      setSocietyScenario(hwScenario?.society ?? {});
       setDiagnosis((d?.workshopData?.day2?.diagnosis as Diagnosis) ?? {});
       const ap = d?.workshopData?.day2?.actionPlan as ActionPlan | undefined;
       setActionPlan({
@@ -112,6 +124,10 @@ export function Day2Client({
       setWcmCurrent({ ...EMPTY_WCM, ...(wcm?.current ?? {}) });
       setWcmFuture({ ...EMPTY_WCM, ...(wcm?.future ?? {}) });
       setWcmMeta({ ...EMPTY_WCM_META, ...(wcm?.meta ?? {}) });
+      setBackcast({
+        ...EMPTY_BACKCAST,
+        ...((d?.workshopData?.day2?.backcast as Backcast) ?? {}),
+      });
       setSummary({
         ...EMPTY_SUMMARY,
         ...((d?.workshopData?.day2?.summary as Summary) ?? {}),
@@ -145,6 +161,7 @@ export function Day2Client({
           portfolio: { future, year, shift },
           diagnosis,
           actionPlan,
+          backcast,
           wcm: { current: wcmCurrent, future: wcmFuture, meta: wcmMeta },
           summary,
         }),
@@ -188,7 +205,15 @@ export function Day2Client({
         </div>
       </div>
 
-      {/* #8 マイ・ポートフォリオ 2.0 → 3.0 */}
+      {/* #8 コミュニティ活動力 自己診断 */}
+      <DiagnosisSheet
+        nameTag={nameTag}
+        diagnosis={diagnosis}
+        viewOnly={viewOnly}
+        onDiagnosisChange={dirty(setDiagnosis)}
+      />
+
+      {/* #9 マイ・ポートフォリオ 2.0 → 3.0 */}
       <PortfolioSheet
         nameTag={nameTag}
         step={step}
@@ -209,16 +234,6 @@ export function Day2Client({
         onSave={save}
       />
 
-      {/* #9 コミュニティ活動力 自己診断 */}
-      <DiagnosisSheet
-        nameTag={nameTag}
-        view={diagView}
-        diagnosis={diagnosis}
-        viewOnly={viewOnly}
-        onViewChange={setDiagView}
-        onDiagnosisChange={dirty(setDiagnosis)}
-      />
-
       {/* #10 ポートフォリオ戦略 アクションプラン */}
       <ActionPlanSheet
         nameTag={nameTag}
@@ -229,6 +244,15 @@ export function Day2Client({
         viewOnly={viewOnly}
         onApStepChange={setApStep}
         onActionPlanChange={dirty(setActionPlan)}
+      />
+
+      {/* #10 社会における バックキャスト */}
+      <BackcastSheet
+        nameTag={nameTag}
+        societyScenario={societyScenario}
+        backcast={backcast}
+        viewOnly={viewOnly}
+        onBackcastChange={dirty(setBackcast)}
       />
 
       {/* #11 会社での Will/Can/Must 2.0 → 3.0 */}

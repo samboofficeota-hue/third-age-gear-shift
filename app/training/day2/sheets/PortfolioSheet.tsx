@@ -13,7 +13,7 @@ import { MiniPortfolio } from "../_helpers";
 import { MINI_W } from "../_constants";
 
 /**
- * #8 マイ・ポートフォリオ 2.0→3.0
+ * #9 マイ・ポートフォリオ 2.0→3.0
  * single ステップ: 現在 ↔ 未来 をトグル表示
  * compare ステップ: 並べてシフト記入
  */
@@ -57,7 +57,7 @@ export function PortfolioSheet({
   return (
     <PrintSheet>
       <SheetHeader
-        no={8}
+        no={9}
         accent="マイ・ポートフォリオ"
         title="戦略 2.0 → 3.0"
         right={nameTag}
