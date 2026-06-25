@@ -57,14 +57,13 @@ S-1〜S-6      P-1       P-6    P-7    D-1〜3  D-4     A-1〜5  F-1〜4
 | **受講生** | `participant` | 個人ログイン | 実際に研修を受ける社員 |
 | **講師** | `facilitator` | 個人ログイン | 当日の研修を進行する |
 
-### 企業担当者アカウントの設計方針（AI案・未確定）
+### 企業担当者アカウントの設計方針
 
-> 以下はAI提案。担当者管理の方式は要検討・確定が必要。
-
-- 企業ごとに1アカウント（共通ログイン）案 — 担当者が複数いても同じID・PWを使い回す
-- 企業別の管理ページ（`/company/[orgId]` 相当）を用意し、自社の参加者・進捗・レポートのみ閲覧できる案
-- DB上は `Organization` に紐づく `coordinator` ロールのユーザー、または `OrganizationAccount` として管理（スキーマ要追加）
-- **→ 方針が決まるまでは事務局がCSVを代わりにアップロードする運用で進める**
+- 企業ごとに1アカウント（共通ログイン）— 担当者が複数いても同じID・PWを使い回す
+- 企業別の管理ページ（`/company/[orgId]` 相当）を用意し、自社の参加者・進捗・レポートのみ閲覧できる
+- **ユーザーDBは一本化（確定）**: 別テーブルは作らず、既存の `User` テーブルに `coordinator` ロールを追加
+  - `UserRole` enum に `coordinator` を追加（現状: `admin` / `facilitator` / `participant`）
+  - `Organization` との紐づけは既存の `organizationId` フィールドをそのまま使用
 
 ---
 
@@ -104,33 +103,41 @@ S-1〜S-6      P-1       P-6    P-7    D-1〜3  D-4     A-1〜5  F-1〜4
 | S-9 | アップロード内容の確認・修正 — 事務局が内容を承認してから招待メール送信へ | 〜 D1-14 | 事務局 | 🆕 未定義 | — |
 
 **未決事項**
-- `coordinator` ロールのDB設計・アカウント管理方式（AI案・未確定）
 - カレンダー連携の方式（M-2）
 - Meetリンクの発行方式（M-3）
 - CSVのフォーマット定義（必須カラム・文字コード・バリデーションルール）
 
-### 参加者リストとDBの統合方針（検討中）
+### 参加者リストとDBの統合方針（確定）
 
 **参加者リストの用途は「登録」だけでなく以下を兼ねる：**
 - 出欠確認（Day1 / Day2 それぞれ）
 - 事前課題の提出状況確認（事前アンケート / じぶん紹介）
 
-**統合案（AI案）**：既存DBに合流させる
+**方針（確定）**：ユーザーDBは一本化。CSVから既存の `User` / `WorkshopData` テーブルに流し込む。
 
 ```
 CSV アップロード
     ↓
-User レコード生成（既存テーブル）
+User レコード生成（既存テーブル・roleはparticipant）
     ↓
-出欠 → User または WorkshopData に attendanceDay1 / attendanceDay2 フィールド追加（新規）
-提出状況 → WorkshopData（既存）で管理
+出欠 → WorkshopData に attendanceDay1 / attendanceDay2 を追加（migration必要）
+提出状況 → WorkshopData.completedPhases（既存）で管理
 ```
 
-- メリット：新テーブル不要。参加者の進捗を1か所で管理できる
-- 課題：`attendanceDay1` / `attendanceDay2` フィールドが現スキーマにない → migration 追加が必要
-- 課題：「CSVの参加者情報」と「本人がログイン後に入力する情報」の2系統をどう扱うか（役職など）
+**必要なスキーマ変更（今後のmigration）**
 
-**→ 統合 or 分離の方針は要確認**
+| 追加先 | フィールド | 用途 |
+|---|---|---|
+| `UserRole` enum | `coordinator` | 企業担当者ロール |
+| `WorkshopData` | `attendanceDay1 Boolean?` | Day1出欠 |
+| `WorkshopData` | `attendanceDay2 Boolean?` | Day2出欠 |
+| `WorkshopData` | `followupSentAt DateTime?` | 3ヶ月後リマインド送信済みフラグ |
+| `WorkshopData` | `postSurveyReminderSentAt DateTime?` | 事後アンケートリマインド送信済みフラグ |
+| `WorkshopSession` | `facilitatorId String?` | 担当講師の紐づけ |
+| `WorkshopSession` | `location String?` | 会場名 or URL |
+| `WorkshopSession` | `isOnline Boolean` | オンライン / 対面区分 |
+
+> 「CSVの役職」と「本人がログイン後に入力する役職」は別フィールドで管理（DEV_ROADMAP §1.7-2 既記録）。
 
 ---
 
