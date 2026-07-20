@@ -3,6 +3,7 @@ import {
   ArrowRight,
   ClipboardList,
   UserCircle,
+  LineChart,
   CheckCircle2,
 } from "lucide-react";
 import { getSession } from "@/lib/auth";
@@ -18,6 +19,7 @@ export default async function PrePage() {
   let name = "";
   let surveyDone = false;
   let slideDone = false;
+  let lifeCurveDone = false;
 
   if (session) {
     const user = await prisma.user.findUnique({
@@ -26,10 +28,15 @@ export default async function PrePage() {
     });
     name = (user?.name ?? "").trim();
     const pre = user?.workshopData?.pre as
-      | { survey?: Record<string, unknown>; profileSlide?: Record<string, unknown> }
+      | {
+          survey?: Record<string, unknown>;
+          profileSlide?: Record<string, unknown>;
+          lifeCurve?: { points?: unknown[] };
+        }
       | null;
     surveyDone = !!pre?.survey && Object.keys(pre.survey).length > 0;
     slideDone = !!pre?.profileSlide && Object.keys(pre.profileSlide).length > 0;
+    lifeCurveDone = !!pre?.lifeCurve?.points && pre.lifeCurve.points.length > 0;
   }
 
   const bothDone = surveyDone && slideDone;
@@ -104,6 +111,35 @@ export default async function PrePage() {
             </li>
           ))}
         </ol>
+
+        <div className="mt-4">
+          <Link
+            href="/workshop/pre/life-plan"
+            className={cn(
+              "flex items-center gap-3 rounded-lg border border-dashed px-4 py-3 transition-colors",
+              lifeCurveDone
+                ? "border-primary/40 bg-primary/10 hover:border-primary"
+                : "border-[rgba(0,255,136,0.25)] hover:border-primary/50"
+            )}
+          >
+            {lifeCurveDone ? (
+              <CheckCircle2 className="h-5 w-5 shrink-0 text-primary" />
+            ) : (
+              <LineChart className="h-5 w-5 shrink-0 text-primary" />
+            )}
+            <span className="text-sm font-medium text-[#e0f0e8]">
+              ライフラインチャート
+            </span>
+            <span className="ml-auto flex items-center gap-2">
+              {lifeCurveDone && (
+                <span className="text-[11px] font-semibold text-primary">
+                  記入済み
+                </span>
+              )}
+              <span className="text-[11px] text-muted-foreground">任意</span>
+            </span>
+          </Link>
+        </div>
 
         {bothDone ? (
           <>

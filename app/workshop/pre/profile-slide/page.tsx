@@ -227,6 +227,12 @@ export default function ProfileSlidePage() {
         >
           ← 事前課題へ戻る
         </Link>
+        <Link
+          href="/workshop/pre/life-plan"
+          className="text-sm text-[#a0c0b0] transition-colors hover:text-primary"
+        >
+          ライフラインチャートをつくる（任意） →
+        </Link>
         <div className="flex items-center gap-2">
           {(["edit", "sample"] as const).map((m) => (
             <button

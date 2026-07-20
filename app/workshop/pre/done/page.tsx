@@ -173,6 +173,13 @@ export default async function PreDonePage() {
             <ArrowLeft className="h-3.5 w-3.5" />
             自己紹介シートを見直す
           </Link>
+          <Link
+            href="/workshop/pre/life-plan"
+            className="inline-flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-[#e0f0e8]"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            ライフラインチャートを見直す（任意）
+          </Link>
         </div>
       </div>
     </div>
