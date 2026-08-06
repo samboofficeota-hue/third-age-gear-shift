@@ -128,10 +128,10 @@ S-1〜S-6      P-1       P-6    P-7    D-1〜3  D-4     A-1〜5  F-1〜4
 |---|---|---|---|---|---|
 | S-1 | 企業担当者とのメールやり取り — 日程・形式・人数等を確認 | 〜 D1-45 | 事務局（手動） | — | なし（手動・クライアント対応） |
 | S-2 | CCメールの内容をシステムに記録 — 日程・場所・人数・要望 | S-1の都度 | AI補助 | 🆕 未定義（メール読み取り→入力補助） | 🆕 CC受信→AI抽出→管理画面に下書き 候補 |
-| S-3 | 会社（Organization）登録 — 会社名・役職定年・定年 | 〜 D1-30 | 事務局 | 🔧 UI未（DB直接） | なし |
-| S-4 | 研修セッション作成 — 研修コード・D1/D2日程・場所/オンライン区分 | 〜 D1-30 | 事務局 | 🔧 UI未（seed/SQL） | なし |
-| S-5 | 担当講師の割り当て — セッションに facilitator を紐づけ | 〜 D1-30 | 事務局 | 🆕 schema未（`facilitatorId` なし） | なし |
-| S-6 | 企業担当者アカウントの発行 — 企業別の共通ログイン情報を発行 | 〜 D1-30 | 事務局 | 🆕 未定義（`coordinator` ロール未実装） | なし |
+| S-3 | 会社（Organization）登録 — 会社名・役職定年・定年 | 〜 D1-30 | 事務局 | 🔧 API実装済（`/api/admin/organizations`）・UI未。招待時に会社名から自動作成される（制度情報は別途登録が必要） | なし |
+| S-4 | 研修セッション作成 — 研修コード・D1/D2日程・場所/オンライン区分 | 〜 D1-30 | 事務局 | ✅ /admin セッションタブ | なし |
+| S-5 | 担当講師の割り当て — セッションに facilitator を紐づけ | 〜 D1-30 | 事務局 | ✅ `WorkshopSession.facilitatorId`・セッション編集フォームで割り当て | なし |
+| S-6 | 企業担当者アカウントの発行 — 企業別の共通ログイン情報を発行 | 〜 D1-30 | 事務局 | 🔧 `coordinator` ロールは追加済（enum）。発行UI・企業管理ページは未 | なし |
 | S-7 | カレンダー招待の発行 — D1/D2 を企業担当者・講師へ | S-4完了後すぐ | 事務局 | 🆕 未定義（ICS or Google Calendar API） | 🆕 S-4完了トリガーで自動発行 候補 |
 | S-8 | オンライン回のMeetリンク登録 | S-4完了後すぐ | 事務局 | 🆕 未定義（Google Meet API or 手動URL） | 🆕 S-4完了時に自動生成 候補 |
 
@@ -165,18 +165,22 @@ User レコード生成（既存テーブル・roleはparticipant）
 提出状況 → WorkshopData.completedPhases（既存）で管理
 ```
 
-**必要なスキーマ変更（今後のmigration）**
+**必要なスキーマ変更 — ✅ 2026-08-06 すべて適用済み**
 
-| 追加先 | フィールド | 用途 |
-|---|---|---|
-| `UserRole` enum | `coordinator` | 企業担当者ロール |
-| `WorkshopData` | `attendanceDay1 Boolean?` | Day1出欠 |
-| `WorkshopData` | `attendanceDay2 Boolean?` | Day2出欠 |
-| `WorkshopData` | `followupSentAt DateTime?` | 3ヶ月後リマインド送信済みフラグ |
-| `WorkshopData` | `postSurveyReminderSentAt DateTime?` | 事後アンケートリマインド送信済みフラグ |
-| `WorkshopSession` | `facilitatorId String?` | 担当講師の紐づけ |
-| `WorkshopSession` | `location String?` | 会場名 or URL |
-| `WorkshopSession` | `isOnline Boolean` | オンライン / 対面区分 |
+| 追加先 | フィールド | 用途 | 状態 |
+|---|---|---|---|
+| `UserRole` enum | `coordinator` | 企業担当者ロール | ✅ |
+| `WorkshopData` | `attendanceDay1 Boolean?` | Day1出欠 | ✅ 名簿でトグル操作可 |
+| `WorkshopData` | `attendanceDay2 Boolean?` | Day2出欠 | ✅ 名簿でトグル操作可 |
+| `WorkshopData` | `completedAt DateTime?` | Day2修了（D-4・事後/フォロー自動化の起点） | ✅ 列のみ。書き込みは未実装 |
+| `WorkshopData` | `followupSentAt DateTime?` | 3ヶ月後リマインド送信済みフラグ | ✅ 列のみ |
+| `WorkshopData` | `postSurveyReminderSentAt DateTime?` | 事後アンケートリマインド送信済みフラグ | ✅ 列のみ |
+| `WorkshopSession` | `facilitatorId String?` | 担当講師の紐づけ | ✅ 講師のスコープ制御に使用中 |
+| `WorkshopSession` | `location String?` | 会場名 or URL | ✅ |
+| `WorkshopSession` | `isOnline Boolean` | オンライン / 対面区分 | ✅ |
+
+> ⚠️ **`prisma db push` は使わないこと。** この Supabase プロジェクトには本アプリ以外のテーブル（`marketing_subscribers` / `survey_responses`）が同居しており、`db push` はそれらを削除しようとする。
+> スキーマ変更は `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` 形式のSQLを `DIRECT_URL` に対して直接流し、`prisma/schema.prisma` を手で合わせてから `prisma generate` する。
 
 > 「CSVの役職」と「本人がログイン後に入力する役職」は別フィールドで管理（DEV_ROADMAP §1.7-2 既記録）。
 
@@ -190,7 +194,7 @@ User レコード生成（既存テーブル・roleはparticipant）
 
 | # | タスク | 目安 | 担当 | 実装状況 | オートメーション |
 |---|---|---|---|---|---|
-| P-1 | 招待メール送信 — アクティベーションURL ＋ PC入力推奨の案内 | D1-14 | 事務局 → Resend | 🔧 未実装（トークンはDB生成済み） | 🔧 S-4完了後にワンクリック一括送信 |
+| P-1 | 招待メール送信 — アクティベーションURL ＋ PC入力推奨の案内 | D1-14 | 事務局 → Resend | 🔧 **招待作成（トークン発行・URL表示）まで実装済**（/admin 招待タブ）。メール送信のみ未 | 🔧 発行済みURLを一括送信 |
 | P-2 | 受講生によるアカウント有効化（パスワード設定） | D1-14 〜 D1-7 | 受講生 | ✅ ActivateForm 実装済 | — |
 | P-3 | 事前アンケート回答 | D1-14 〜 D1-3 | 受講生 | ✅ 実装済 | — |
 | P-4 | じぶん紹介入力（Program A・ダーク） | D1-14 〜 D1-3 | 受講生 | ✅ 実装済 | — |
