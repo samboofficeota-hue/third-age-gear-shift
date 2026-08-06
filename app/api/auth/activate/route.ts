@@ -7,6 +7,7 @@ import {
   getCookieOptions,
   type SessionPayload,
 } from "@/lib/auth";
+import { INVITE_TTL_DAYS, isInviteExpired } from "@/lib/invite";
 
 /**
  * 招待リンク（トークン）から初回アクティベーション。
@@ -43,6 +44,14 @@ export async function POST(request: Request) {
     if (!user || user.activatedAt) {
       return NextResponse.json(
         { error: "この招待リンクは無効か、すでに使用されています。" },
+        { status: 410 }
+      );
+    }
+    if (isInviteExpired(user.invitedAt)) {
+      return NextResponse.json(
+        {
+          error: `この招待リンクは有効期限（${INVITE_TTL_DAYS}日）が切れています。お手数ですが事務局までご連絡ください。`,
+        },
         { status: 410 }
       );
     }
