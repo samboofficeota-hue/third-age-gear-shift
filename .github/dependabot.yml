@@ -1,0 +1,32 @@
+# 依存関係の脆弱性を「知らないまま放置しない」ための設定。
+# ゼロデイ対策の本体は、公表された瞬間に気づける体制を持つこと。
+# あわせて GitHub の Settings → Code security で
+# 「Dependabot alerts」と「Dependabot security updates」を有効にする。
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    groups:
+      # パッチ/マイナーはまとめて1本のPRにする（レビュー負荷を上げないため）
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+    ignore:
+      # メジャー更新は破壊的変更を伴うので、手動で計画して上げる
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly

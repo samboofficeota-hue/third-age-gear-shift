@@ -6,10 +6,16 @@ const COOKIE_NAME = process.env.JWT_COOKIE_NAME ?? "third_age_session";
 const SALT_ROUNDS = 10;
 
 function getJwtSecret(): string {
-  return process.env.JWT_SECRET ?? "dev-secret-change-in-production";
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error(
+      "JWT_SECRET is not set. Set a random string of 32+ characters (Vercel → Settings → Environment Variables)."
+    );
+  }
+  return secret;
 }
 
-export type UserRole = "admin" | "facilitator" | "participant";
+export type UserRole = "admin" | "facilitator" | "coordinator" | "participant";
 
 export type SessionPayload = {
   sub: string; // userId

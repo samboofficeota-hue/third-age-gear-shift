@@ -146,7 +146,9 @@ export default function ProfileSlidePage() {
   const onAdjust = async () => {
     if (isSample || !data.photoOriginal) return;
     try {
-      const res = await fetch(data.photoOriginal, { credentials: "omit" });
+      // 元画像は認証付きの /api/photo 経由（同一オリジン）で取得する
+      const res = await fetch(data.photoOriginal, { credentials: "include" });
+      if (!res.ok) throw new Error("failed to load original photo");
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       objectUrlRef.current = url;

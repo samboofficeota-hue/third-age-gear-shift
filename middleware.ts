@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import * as jose from "jose";
 
 const JWT_COOKIE = process.env.JWT_COOKIE_NAME ?? "third_age_session";
-const JWT_SECRET = process.env.JWT_SECRET ?? "dev-secret-change-in-production";
+const JWT_SECRET = process.env.JWT_SECRET;
 
 async function getPayload(request: NextRequest): Promise<{
   sub: string;
@@ -11,10 +11,11 @@ async function getPayload(request: NextRequest): Promise<{
 } | null> {
   const token = request.cookies.get(JWT_COOKIE)?.value;
   if (!token) return null;
+  // シークレット未設定・短すぎる場合は「未認証」として扱う（fail-closed）。
+  // lib/auth の検証条件と揃えないと、middleware だけが通してしまう穴になる。
+  if (!JWT_SECRET || JWT_SECRET.length < 32) return null;
   try {
-    const secret = new TextEncoder().encode(
-      (JWT_SECRET as string).slice(0, 64)
-    );
+    const secret = new TextEncoder().encode(JWT_SECRET.slice(0, 64));
     const { payload } = await jose.jwtVerify(token, secret);
     const sub = payload.sub as string;
     const role = payload.role as string;

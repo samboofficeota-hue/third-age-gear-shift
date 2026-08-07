@@ -1,43 +1,43 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getSession } from "@/lib/auth";
+import { requireStaff, resolveSession } from "@/lib/adminAuth";
 import { PHASE_IDS } from "@/lib/phases";
+import type { SessionPayload } from "@/lib/auth";
 
 const BLOCK_IDS = PHASE_IDS;
 
-async function getOrCreateDefaultSession() {
-  let ws = await prisma.workshopSession.findFirst({
-    orderBy: { createdAt: "desc" },
+/**
+ * 対象セッションを決める。講師は担当分のみ（resolveSession）。
+ * セッションが1件も無い状態は事務局の初回セットアップだけなので、admin のときだけ自動作成する。
+ */
+async function resolveOrBootstrapSession(
+  session: SessionPayload,
+  sessionId: string | null
+) {
+  const found = await resolveSession(session, sessionId);
+  if (found) return found;
+  if (sessionId || session.role !== "admin") return null;
+
+  const today = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+  return prisma.workshopSession.create({
+    data: { name: "デフォルトセッション", code: `session${today}` },
   });
-  if (!ws) {
-    const today = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-    ws = await prisma.workshopSession.create({
-      data: { name: "デフォルトセッション", code: `session${today}` },
-    });
-  }
-  return ws;
 }
 
 export async function GET(request: Request) {
-  const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: "ログインしてください。" }, { status: 401 });
-  }
-  if (session.role !== "admin" && session.role !== "facilitator") {
-    return NextResponse.json({ error: "権限がありません。" }, { status: 403 });
-  }
+  const guard = await requireStaff();
+  if (!guard.ok) return guard.response;
 
   const { searchParams } = new URL(request.url);
-  const sessionId = searchParams.get("sessionId");
-
-  let ws;
-  if (sessionId) {
-    ws = await prisma.workshopSession.findUnique({ where: { id: sessionId } });
-    if (!ws) {
-      return NextResponse.json({ error: "セッションが見つかりません。" }, { status: 404 });
-    }
-  } else {
-    ws = await getOrCreateDefaultSession();
+  const ws = await resolveOrBootstrapSession(
+    guard.session,
+    searchParams.get("sessionId")
+  );
+  if (!ws) {
+    return NextResponse.json(
+      { error: "セッションが見つからないか、閲覧権限がありません。" },
+      { status: 404 }
+    );
   }
 
   const blockStatuses = await prisma.blockStatus.findMany({
@@ -62,13 +62,8 @@ export async function GET(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: "ログインしてください。" }, { status: 401 });
-  }
-  if (session.role !== "admin" && session.role !== "facilitator") {
-    return NextResponse.json({ error: "権限がありません。" }, { status: 403 });
-  }
+  const guard = await requireStaff();
+  if (!guard.ok) return guard.response;
 
   const body = await request.json().catch(() => ({}));
   const { blockId, status, sessionId } = body as {
@@ -87,14 +82,12 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "無効なステータスです。" }, { status: 400 });
   }
 
-  let ws;
-  if (sessionId) {
-    ws = await prisma.workshopSession.findUnique({ where: { id: sessionId } });
-    if (!ws) {
-      return NextResponse.json({ error: "セッションが見つかりません。" }, { status: 404 });
-    }
-  } else {
-    ws = await getOrCreateDefaultSession();
+  const ws = await resolveOrBootstrapSession(guard.session, sessionId ?? null);
+  if (!ws) {
+    return NextResponse.json(
+      { error: "セッションが見つからないか、操作権限がありません。" },
+      { status: 404 }
+    );
   }
 
   const updated = await prisma.blockStatus.upsert({
@@ -102,7 +95,7 @@ export async function PATCH(request: Request) {
     update: {
       status: status as "LOCKED" | "PREVIEW" | "OPEN" | "CLOSED",
       ...(status === "OPEN"
-        ? { openedAt: new Date(), openedBy: session.sub }
+        ? { openedAt: new Date(), openedBy: guard.session.sub }
         : {}),
     },
     create: {
@@ -110,7 +103,7 @@ export async function PATCH(request: Request) {
       blockId,
       status: status as "LOCKED" | "PREVIEW" | "OPEN" | "CLOSED",
       ...(status === "OPEN"
-        ? { openedAt: new Date(), openedBy: session.sub }
+        ? { openedAt: new Date(), openedBy: guard.session.sub }
         : {}),
     },
   });
