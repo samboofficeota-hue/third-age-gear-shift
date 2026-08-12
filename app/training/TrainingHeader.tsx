@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { BRAND } from "@/lib/brand";
 
 /**
  * 研修本番（Program B）用の白基調ヘッダー。
@@ -31,7 +32,7 @@ export function TrainingHeader() {
             href="/training"
             className="text-sm font-bold text-ws-ink hover:text-ws-teal"
           >
-            サードエイジ じぶん戦略講座
+            {BRAND.name}
           </Link>
           <span className="rounded-full bg-ws-mint px-2 py-0.5 text-[11px] font-semibold text-ws-teal">
             研修本番

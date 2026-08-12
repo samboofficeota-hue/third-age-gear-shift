@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Noto_Sans_JP } from "next/font/google";
+import { BRAND } from "@/lib/brand";
 import "./globals.css";
 
 const notoSansJP = Noto_Sans_JP({
@@ -8,8 +9,8 @@ const notoSansJP = Noto_Sans_JP({
 });
 
 export const metadata: Metadata = {
-  title: "サードエイジ じぶん戦略講座",
-  description: "ミドルシニア社員向け　キャリア戦略プログラム",
+  title: BRAND.name,
+  description: BRAND.tagline,
 };
 
 export default function RootLayout({

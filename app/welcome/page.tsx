@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ClipboardList, UserCircle } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { ActivateForm } from "./ActivateForm";
+import { BRAND } from "@/lib/brand";
 
 function fmtDate(d: Date | null | undefined): string | null {
   if (!d) return null;
@@ -62,7 +63,7 @@ export default async function WelcomePage({
         </p>
         <div className="mt-3 space-y-3 text-sm leading-relaxed text-[#c8dccf]">
           <p>
-            この度は「サードエイジ じぶん戦略講座」にご参加をいただけるとのこと。
+            この度は「{BRAND.name}」にご参加をいただけるとのこと。
             誠にありがとうございます。
           </p>
           <p>ご参加に先立って、次の2つへの記入をお願いいたします。</p>

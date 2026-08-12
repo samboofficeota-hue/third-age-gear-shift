@@ -12,6 +12,7 @@ import {
 import { getDashboardState } from "@/lib/workshopAccess";
 import { PHASE_META_BY_ID, isPhaseAccessible } from "@/lib/phases";
 import { cn } from "@/lib/utils";
+import { BRAND } from "@/lib/brand";
 
 /**
  * Program A ダッシュボード（事前・事後の二態切替）。
@@ -19,6 +20,9 @@ import { cn } from "@/lib/utils";
  * - 事後モード: 事後アンケート ＋ じぶんのワーク記録 ＋ セルフ・チェック
  *   （セルフ・チェックは事前事後の両アンケートが揃ったら有効化）
  * トリガー: statuses.post === "OPEN" もしくは completedPhases に "post"
+ *
+ * スタイルは globals.css の規定（.nav-card / .icon-chip / .card-eyebrow /
+ * .nav-card-title / .nav-card-note / .tag-done）とトークンに従う。
  */
 export default async function WorkshopDashboard() {
   const state = await getDashboardState();
@@ -39,12 +43,12 @@ export default async function WorkshopDashboard() {
     <div className="mx-auto max-w-3xl px-4 py-10 md:px-8">
       <header className="mb-8">
         <p className="text-xs font-semibold uppercase tracking-widest text-primary">
-          ミドルシニア社員向け　キャリア戦略プログラム
+          {BRAND.tagline}
         </p>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight text-[#e0f0e8]">
-          サードエイジ じぶん戦略講座
+        <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground">
+          {BRAND.name}
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="subtitle mt-2">
           {isPostMode
             ? "研修お疲れさまでした。事後アンケートと、ご自身のワーク記録の入口です。"
             : "事前アンケートと、研修本番（Day1〜）への入口です。"}
@@ -52,11 +56,11 @@ export default async function WorkshopDashboard() {
       </header>
 
       {!sessionId && (
-        <div className="mb-6 rounded-lg border border-[rgba(0,255,136,0.25)] bg-[#141a2a] p-4">
-          <p className="text-sm text-[#e0f0e8]">研修コードがまだ未登録です。</p>
+        <div className="callout mb-6 flex-col gap-1">
+          <p className="text-sm text-foreground">研修コードがまだ未登録です。</p>
           <Link
             href="/workshop/join"
-            className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+            className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
           >
             研修コードを入力する <ArrowRight className="h-4 w-4" />
           </Link>
@@ -92,20 +96,15 @@ function PreModeMenu({
           done={preDone}
           href={preMeta.route}
         />
-        <Link
-          href="/training"
-          className="mt-3 flex items-center justify-between gap-4 rounded-xl border border-primary/40 bg-primary/10 p-4 transition-colors hover:border-primary"
-        >
+        <Link href="/training" className="nav-card is-feature mt-3">
           <div className="flex items-center gap-4">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary">
+            <span className="icon-chip">
               <GraduationCap className="h-5 w-5" />
             </span>
             <div>
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                研修本番
-              </span>
-              <p className="text-sm font-semibold text-[#e0f0e8]">Day1・宿題・Day2 へ</p>
-              <p className="text-xs text-muted-foreground">
+              <span className="card-eyebrow">研修本番</span>
+              <p className="nav-card-title">Day1・宿題・Day2 へ</p>
+              <p className="nav-card-note">
                 研修当日はこちらから（白い画面に切り替わります）
               </p>
             </div>
@@ -144,22 +143,15 @@ function PostModeMenu({
       </li>
 
       <li>
-        <Link
-          href="/workshop/records"
-          className="flex items-center justify-between gap-4 rounded-xl border border-[rgba(0,255,136,0.25)] bg-[#141a2a] p-4 transition-colors hover:border-primary"
-        >
+        <Link href="/workshop/records" className="nav-card">
           <div className="flex items-center gap-4">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+            <span className="icon-chip">
               <FileText className="h-5 w-5" />
             </span>
             <div>
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                ふりかえり
-              </span>
-              <p className="text-sm font-semibold text-[#e0f0e8]">
-                じぶんのワーク記録を見る
-              </p>
-              <p className="text-xs text-muted-foreground">
+              <span className="card-eyebrow">ふりかえり</span>
+              <p className="nav-card-title">じぶんのワーク記録を見る</p>
+              <p className="nav-card-note">
                 Day1／宿題／Day2 で書いた内容を読み返す（編集はできません）
               </p>
             </div>
@@ -170,18 +162,12 @@ function PostModeMenu({
 
       <li>
         {checkUnlocked ? (
-          <Link
-            href="/workshop/check"
-            className="flex items-center justify-between gap-4 rounded-xl border border-[rgba(0,255,136,0.25)] bg-[#141a2a] p-4 transition-colors hover:border-primary"
-          >
+          <Link href="/workshop/check" className="nav-card">
             <CheckCardInner unlocked />
             <ArrowRight className="h-5 w-5 shrink-0 text-primary" />
           </Link>
         ) : (
-          <div
-            aria-disabled
-            className="flex cursor-not-allowed items-center justify-between gap-4 rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0f1420] p-4 opacity-60"
-          >
+          <div aria-disabled className="nav-card is-locked">
             <CheckCardInner unlocked={false} preDone={preDone} postDone={postDone} />
             <Lock className="h-5 w-5 shrink-0 text-muted-foreground" />
           </div>
@@ -189,22 +175,15 @@ function PostModeMenu({
       </li>
 
       <li>
-        <Link
-          href="/workshop/followup"
-          className="flex items-center justify-between gap-4 rounded-xl border border-[rgba(0,255,136,0.25)] bg-[#141a2a] p-4 transition-colors hover:border-primary"
-        >
+        <Link href="/workshop/followup" className="nav-card">
           <div className="flex items-center gap-4">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+            <span className="icon-chip">
               <MessageCircleHeart className="h-5 w-5" />
             </span>
             <div>
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                3 ヶ月後
-              </span>
-              <p className="text-sm font-semibold text-[#e0f0e8]">
-                近況のお伺い
-              </p>
-              <p className="text-xs text-muted-foreground">
+              <span className="card-eyebrow">3 ヶ月後</span>
+              <p className="nav-card-title">近況のお伺い</p>
+              <p className="nav-card-note">
                 研修で書いた「社会」「会社」のテーマについて、今の動きを振り返る（所要約3分）
               </p>
             </div>
@@ -234,20 +213,13 @@ function CheckCardInner({
         : "";
   return (
     <div className="flex items-center gap-4">
-      <span
-        className={cn(
-          "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
-          unlocked ? "bg-primary/15 text-primary" : "bg-[#1a2030] text-muted-foreground"
-        )}
-      >
+      <span className={cn("icon-chip", !unlocked && "is-muted")}>
         <Sparkles className="h-5 w-5" />
       </span>
       <div>
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          セルフ・チェック
-        </span>
-        <p className="text-sm font-semibold text-[#e0f0e8]">事前と事後で見比べる</p>
-        <p className="text-xs text-muted-foreground">{hint}</p>
+        <span className="card-eyebrow">セルフ・チェック</span>
+        <p className="nav-card-title">事前と事後で見比べる</p>
+        <p className="nav-card-note">{hint}</p>
       </div>
     </div>
   );
@@ -271,40 +243,23 @@ function PhaseCard({
   href: string;
 }) {
   const card = (
-    <div
-      className={cn(
-        "flex items-center justify-between gap-4 rounded-xl border p-4 transition-colors",
-        accessible
-          ? "border-[rgba(0,255,136,0.25)] bg-[#141a2a] hover:border-primary"
-          : "border-[rgba(255,255,255,0.06)] bg-[#0f1420] opacity-60"
-      )}
-    >
+    <div className={cn("nav-card", !accessible && "is-locked")}>
       <div className="flex items-center gap-4">
         <span
           className={cn(
-            "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold",
-            done
-              ? "bg-primary text-primary-foreground"
-              : accessible
-                ? "bg-primary/15 text-primary"
-                : "bg-[#1a2030] text-muted-foreground"
+            "icon-chip text-sm font-bold",
+            done ? "is-solid" : !accessible && "is-muted"
           )}
         >
           {numberOrCheck === "check" ? <Check className="h-4 w-4" /> : numberOrCheck}
         </span>
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {day}
-            </span>
-            {done && (
-              <span className="rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary">
-                完了
-              </span>
-            )}
+            <span className="card-eyebrow">{day}</span>
+            {done && <span className="tag-done">完了</span>}
           </div>
-          <p className="text-sm font-semibold text-[#e0f0e8]">{label}</p>
-          <p className="text-xs text-muted-foreground">{description}</p>
+          <p className="nav-card-title">{label}</p>
+          <p className="nav-card-note">{description}</p>
         </div>
       </div>
       {accessible ? (
@@ -314,5 +269,11 @@ function PhaseCard({
       )}
     </div>
   );
-  return accessible ? <Link href={href}>{card}</Link> : <div aria-disabled className="cursor-not-allowed">{card}</div>;
+  return accessible ? (
+    <Link href={href}>{card}</Link>
+  ) : (
+    <div aria-disabled className="cursor-not-allowed">
+      {card}
+    </div>
+  );
 }

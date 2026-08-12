@@ -5,6 +5,41 @@
 
 ---
 
+## 0. 大原則（コーディング規約）
+
+UI実装は次の原則を最優先で守る。**これが破られている＝直す対象**。
+
+1. **世界観は「ネオン×ダーク」を維持**。色は変えない。整えるのはタイポグラフィ・行間・余白・カード・文言の「規律」。
+2. **個別のハードコード禁止**。ページ/コンポーネントに任意値を書かない：`text-[#...]`・`bg-[#...]`・`border-[rgba(...)]`・生の16進カラー・`bg-stone-50` のような文脈外の色。
+3. **単一の出所（Single Source of Truth）に従う**：
+   - 色・影・角丸・タイプスケール → `tailwind.config.ts` のトークン
+   - 可変ルート文字サイズ・見出しリズム・**セマンティッククラス** → `app/globals.css`
+   - ブランド名・タグライン等の**文言** → `lib/brand.ts` の `BRAND`
+4. **不足はまず出所に足す**。必要なパターンが無ければ、ページに直書きせず `globals.css` の `@layer components` にクラスを定義してから使う。
+5. 確認は参加者の**導線順**（トップ→ログイン→登録→ダッシュボード→事前→研修→事後）。実物は `/design`（スタイルガイド）で一望。
+
+### セマンティッククラス一覧（`app/globals.css`）
+
+| クラス | 用途 |
+|---|---|
+| `.eyebrow` | 英字・大文字・ネオンの小ラベル |
+| `.lead` | 導入文（本文より一段大きい） |
+| `.subtitle` | 見出し直下の説明・メタ |
+| `.callout` | 囲み・注記ボックス（アイコン＋文） |
+| `.brand-chip` | ⚙️ 等を入れる角丸ロゴチップ（ネオングロー） |
+| `.nav-card`（`.is-locked` / `.is-feature`） | クリックできる導線カード（横長メニュー行） |
+| `.icon-chip`（`.is-muted` / `.is-solid`） | 丸アイコンチップ |
+| `.card-eyebrow` / `.nav-card-title` / `.nav-card-note` | カード内の小ラベル・見出し・説明 |
+| `.tag-done` | 完了などの小タグ |
+
+### 文字サイズ（可変ルート）
+
+モバイル `17px` / 標準 `18px` / 大画面(≥1280px) `20px`。タイプスケールは rem 基準で連動。
+**A4ワークシートは印刷時 `16px` 固定**（`@media print`）で原寸維持。
+スケールは `tailwind.config.ts` の `fontSize`（`text-h1`〜`h4` / `body-lg` / `body` / `caption` / `kpi`、行間内蔵）。
+
+---
+
 ## 1. デザインコンセプト
 
 **「ネオングリーン × ダークUI」— ゲームの世界観を持つ実用ツール**
@@ -74,19 +109,46 @@ Tailwind 実装では `globals.css` の `body` に直接記述する。
 - **Noto Sans JP**（`var(--font-noto-sans-jp)`）を全体に使用
 - フォールバック: `-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`
 
-### スケール
+### 可変ルート文字サイズ（読みやすさの土台）
 
-| 要素 | サイズ | ウェイト | その他 |
-|---|---|---|---|
-| ページタイトル（h1） | `42px` / `text-4xl` | 900 | UPPERCASE, letter-spacing 0.05em, neon-green, glow shadow |
-| セクション見出し（h2） | `28px` / `text-2xl` | 800 | UPPERCASE, letter-spacing 0.05em, 左に neon-green 4px ボーダー |
-| カード見出し（h3） | `20px` / `text-xl` | 700 | UPPERCASE, letter-spacing 0.03em, neon-green |
-| 本文 | `16px` / `text-base` | 400 | line-height 1.7–1.8, `--text-secondary` |
-| 小テキスト | `12–13px` / `text-xs` | 400 | `--text-muted` |
-| KPI数値 | `36px` / `text-4xl` | 900 | neon-green, glow shadow |
-| ナビリンク | `14px` / `text-sm` | 600 | UPPERCASE, letter-spacing 0.5px |
+ミドルシニアの可読性を優先し、`html` のルートを画面幅で可変にする。
+タイプスケールは **rem 基準**なので、ルートが上がれば全体が連動して大きくなる。
 
-**UPPERCASE ルール**: 見出し・ボタン・バッジ・ナビリンクはすべて大文字表記（`text-transform: uppercase`）。
+| 画面幅 | `html` font-size |
+|---|---|
+| 〜768px（モバイル） | `17px` |
+| 標準 | `18px` |
+| 1280px〜（大画面） | `20px` |
+
+> ⚠️ **印刷（A4ワークシート）では `16px` に固定**する（`@media print`）。
+> ワークシートは 1123×794px の原寸設計のため、可変ルートで rem 文字が
+> はみ出すのを防ぐ。
+
+### スケール（`tailwind.config.ts` の `fontSize` に定義）
+
+すべてのサイズに **行間（line-height）を内蔵**し、行間のバラつきを封じている。
+標準キー（`text-xs`〜`text-5xl`）も同様に行間を持つ。
+
+| トークン | サイズ(rem) | 行間 | ウェイト | 用途 |
+|---|---|---|---|---|
+| `text-display` | 2.625rem | 1.15 | 900 | ヒーロー見出し |
+| `text-h1` | 2.25rem | 1.2 | 900 | ページ見出し |
+| `text-h2` | 1.75rem | 1.3 | 800 | セクション見出し |
+| `text-h3` | 1.375rem | 1.4 | 700 | カード見出し |
+| `text-h4` | 1.125rem | 1.5 | 700 | 小見出し |
+| `text-body-lg` | 1.125rem | 1.9 | 400 | 読み物本文 |
+| `text-body` | 1rem | 1.75 | 400 | 標準本文 |
+| `text-body-sm` | 0.875rem | 1.6 | 400 | 補足 |
+| `text-caption` | 0.75rem | 1.5 | 400 | キャプション・メタ |
+| `text-kpi` | 2.25rem | 1 | 900 | KPI数値（neon + glow） |
+
+素の `<h1>`〜`<h4>` にも `globals.css` の `@layer base` で行間 1.25・
+`letter-spacing 0.02em`・`font-feature-settings:"palt"` の既定が入る（サイズは
+ユーティリティ/トークンで上書き可）。
+
+**UPPERCASE ルール**: 見出し・ボタン・バッジ・ナビリンクの**欧文ラベル**は大文字表記
+（`uppercase`）＋ neon 色。和文見出しには `uppercase` を掛けない（効果がなく、
+`palt` 字詰めのみ効かせる）。
 
 ---
 
@@ -103,15 +165,23 @@ Tailwind 実装では `globals.css` の `body` に直接記述する。
 
 ## 6. コンポーネント仕様
 
-### カード
+### カード（`components/ui/card.tsx`）
 
 ```
 背景: --bg-card (#141a2a)
-ボーダー: 2px solid --border-line
-ボーダー半径: 8px
-パディング: 24px
-トップボーダーライン: hover時に linear-gradient(90deg, transparent, neon-green, transparent) が出現
-hover: translateY(-4px), border-color → neon-green, glow shadow
+ボーダー: 2px solid --border-line（border-border）
+ボーダー半径: 12px（rounded-xl）
+パディング: 24px（CardHeader / CardContent は p-6）
+影: shadow-neon（外周グロー + ドロップ）
+CardTitle: text-xl / font-bold / leading-snug
+```
+
+**ホバーは opt-in**。静的な情報カードは動かさない（既定）。押せるカードだけ
+`interactive` を付けると `hover:-translate-y-1` + 枠 neon + `shadow-neon-strong`。
+
+```tsx
+<Card>…</Card>              {/* 静的：ホバーで動かない */}
+<Card interactive>…</Card>  {/* クリック可：ホバーで浮く */}
 ```
 
 ### ナビゲーション
@@ -125,15 +195,28 @@ backdrop-filter: blur(10px)
 hover: neon-green-subtle 背景, neon-green ボーダー, glow
 ```
 
-### ボタン（プライマリ）
+### ボタン（`components/ui/button.tsx`）
+
+プライマリ（`variant="default"`）:
 
 ```
 背景: --neon-green (#00ff88)
 テキスト: --bg-dark (#0a0e1a)  ← 必ず暗色テキスト（白は使わない）
-font-weight: 700〜800
-box-shadow: 0 0 20px rgba(0,255,136,0.3)
-hover: --neon-green-dim (#00cc6a), glow 強化
+font-weight: 600（semibold）
+box-shadow: shadow-neon-glow（0 0 15px rgba(0,255,136,0.3)）
+hover: bg-neon-dim (#00cc6a), shadow-neon-strong, translateY(-2px)
 ```
+
+サイズ（可読性優先で従来より大きめ）:
+
+| size | 高さ | 文字 | 用途 |
+|---|---|---|---|
+| `sm` | 36px（h-9） | text-sm | コンパクトUI |
+| `default` | 44px（h-11） | 15px | 標準 |
+| `lg` | 48px（h-12） | text-base | ヒーロー・CTA |
+
+その他 variant: `outline`（透明+2px枠, neon文字）/ `secondary` / `ghost` /
+`link`。フォーカスは `ring-2 ring-ring` + `ring-offset-bg-dark`。
 
 ⚠️ `text-white` は使わない。`#00ff88` 上の白文字はコントラスト比 約1.7:1（WCAG不合格）。
 `#0a0e1a` を使うとコントラスト比 約15:1（WCAG AAA）になる。
@@ -244,4 +327,12 @@ body {
 
 ---
 
-_最終更新: 2026-03-25_
+## 10. ライブ・スタイルガイド
+
+`/design`（`app/design/page.tsx`）でタイプスケール・ボタン・カード・余白の
+実物を一望できる。デザインシステムを詰めるときはここで確認 → 各ページへ展開する。
+
+---
+
+_最終更新: 2026-08-12 — タイプスケール(rem+行間内蔵)・可変ルート(16/17/18px)・
+カード/ボタン刷新・`/design` スタイルガイド追加。ネオン×ダークの世界観は不変。_

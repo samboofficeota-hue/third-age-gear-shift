@@ -9,6 +9,7 @@ import {
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { cn } from "@/lib/utils";
+import { BRAND } from "@/lib/brand";
 
 /**
  * 事前課題の「扉（ウェルカム）／ハブ」シート。
@@ -66,7 +67,7 @@ export default async function PrePage() {
         </p>
         <div className="mt-3 space-y-3 text-sm leading-relaxed text-[#c8dccf]">
           <p>
-            この度は「サードエイジ じぶん戦略講座」にご参加をいただけるとのこと。
+            この度は「{BRAND.name}」にご参加をいただけるとのこと。
             誠にありがとうございます。
           </p>
           <p>ご参加に先立って、次の2つへの記入をお願いいたします。</p>

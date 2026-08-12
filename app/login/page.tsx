@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { BRAND } from "@/lib/brand";
+import { BrandMark } from "@/components/BrandMark";
 
 function roleDefaultPath(role: string): string {
   if (role === "admin" || role === "facilitator") return "/admin";
@@ -65,19 +67,15 @@ function LoginForm() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-transparent px-4">
       <div className="mb-8 text-center">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-2xl text-primary-foreground shadow-md">
-          ⚙️
-        </div>
-        <h1 className="text-2xl font-bold tracking-tight text-[#e0f0e8]">
-          サードエイジ じぶん戦略講座
+        <BrandMark className="mx-auto mb-4 h-14 w-14" />
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          {BRAND.name}
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          ミドルシニア社員向け　キャリア戦略プログラム
-        </p>
+        <p className="subtitle mt-1">{BRAND.tagline}</p>
       </div>
 
       <Card className="w-full max-w-sm shadow-lg">
-        <CardHeader className="space-y-1 pb-4">
+        <CardHeader className="space-y-1 pb-4 text-center">
           <CardTitle className="text-xl">ログイン</CardTitle>
           <CardDescription>メールアドレスとパスワードを入力してください</CardDescription>
         </CardHeader>
@@ -92,7 +90,7 @@ function LoginForm() {
                 autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
+                placeholder="メールアドレスを入力ください"
                 required
               />
             </div>
@@ -104,7 +102,7 @@ function LoginForm() {
                 autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="8文字以上"
                 required
               />
             </div>
@@ -124,6 +122,9 @@ function LoginForm() {
               <Link href="/register" className="font-medium text-primary hover:underline">
                 新規登録
               </Link>
+            </p>
+            <p className="text-center text-sm text-muted-foreground">
+              パスワードをお忘れの方は、事務局までご連絡ください。
             </p>
             <Link href="/" className="text-center text-xs text-muted-foreground hover:text-foreground">
               トップへ戻る

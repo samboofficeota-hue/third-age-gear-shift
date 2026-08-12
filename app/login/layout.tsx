@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+import { BRAND } from "@/lib/brand";
 
 export const metadata: Metadata = {
-  title: "ログイン | サードエイジ じぶん戦略講座",
+  title: `ログイン | ${BRAND.name}`,
 };
 
 export default function LoginLayout({

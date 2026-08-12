@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { BRAND } from "@/lib/brand";
+import { BrandMark } from "@/components/BrandMark";
 
 export default function JoinPage() {
   const router = useRouter();
@@ -68,19 +70,15 @@ export default function JoinPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4">
       <div className="mb-8 text-center">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-2xl text-primary-foreground shadow-md">
-          ⚙️
-        </div>
-        <h1 className="text-2xl font-bold tracking-tight text-[#e0f0e8]">
-          サードエイジ じぶん戦略講座
+        <BrandMark className="mx-auto mb-4 h-14 w-14" />
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          {BRAND.name}
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          ミドルシニア社員向け　キャリア戦略プログラム
-        </p>
+        <p className="subtitle mt-1">{BRAND.tagline}</p>
       </div>
 
       <Card className="w-full max-w-sm shadow-lg">
-        <CardHeader className="space-y-1 pb-4">
+        <CardHeader className="space-y-1 pb-4 text-center">
           <CardTitle className="text-xl">研修コードの入力</CardTitle>
           <CardDescription>講師からお渡しした共通コードを入力してください</CardDescription>
         </CardHeader>
