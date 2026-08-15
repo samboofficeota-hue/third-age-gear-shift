@@ -9,5 +9,7 @@ export const BRAND = {
   /** プロダクト名（画面タイトル・ヘッダー・metadata） */
   name: "じぶん経営 戦略講座",
   /** タグライン（サブタイトル・キャッチコピー） */
-  tagline: "サードエイジを面白くしていく",
+  tagline: "セカンドエイジからサードエイジへのシフト戦略をつくろう",
+  /** 事務局への問い合わせ先(自学習画面のフッターから起動) */
+  contactEmail: "info@communitysociety.co.jp",
 } as const;

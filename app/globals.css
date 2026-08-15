@@ -58,14 +58,14 @@ body {
     @apply text-sm font-semibold uppercase tracking-[0.2em] text-neon;
   }
 
-  /* リード文（本文より一段大きい導入文） */
+  /* リード文（導入文。本文より一段小さめ・控えめに） */
   .lead {
-    @apply text-body-lg text-secondary-foreground;
+    @apply text-body text-secondary-foreground;
   }
 
-  /* サブタイトル（見出し直下の説明・メタ） */
+  /* サブタイトル（見出し直下の説明・メタ。本文より一段大きめ） */
   .subtitle {
-    @apply text-base text-muted-foreground;
+    @apply text-lg text-muted-foreground;
   }
 
   /* 情報ボックス（囲み・注記）。アイコン + テキストを想定 */

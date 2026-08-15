@@ -1,30 +1,12 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import * as jose from "jose";
+import { createServerClient } from "@supabase/ssr";
 
-const JWT_COOKIE = process.env.JWT_COOKIE_NAME ?? "third_age_session";
-const JWT_SECRET = process.env.JWT_SECRET ?? "dev-secret-change-in-production";
-
-async function getPayload(request: NextRequest): Promise<{
-  sub: string;
-  role: string;
-} | null> {
-  const token = request.cookies.get(JWT_COOKIE)?.value;
-  if (!token) return null;
-  try {
-    const secret = new TextEncoder().encode(
-      (JWT_SECRET as string).slice(0, 64)
-    );
-    const { payload } = await jose.jwtVerify(token, secret);
-    const sub = payload.sub as string;
-    const role = payload.role as string;
-    if (!sub || !role) return null;
-    return { sub, role };
-  } catch {
-    return null;
-  }
-}
-
+/**
+ * Supabase Auth（マジックリンク）のセッションを毎リクエスト更新しつつ、
+ * ルートごとのアクセス制御を行う。role は DB を引かず auth.users の
+ * app_metadata から読む（Edge runtime で Prisma を呼ばないため）。
+ */
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
@@ -32,6 +14,8 @@ export async function middleware(request: NextRequest) {
   if (
     path.startsWith("/api/auth") ||
     path === "/login" ||
+    path === "/register" ||
+    path === "/auth/callback" ||
     path === "/" ||
     path.startsWith("/_next") ||
     path.startsWith("/favicon")
@@ -39,32 +23,58 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const payload = await getPayload(request);
+  let response = NextResponse.next({ request });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          response = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
+
+  // getUser() はトークンをSupabaseに検証させる（getSession()はローカル検証のみで偽装可能）
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const role = (user?.app_metadata?.role as string | undefined) ?? null;
 
   // /admin は admin または facilitator のみ
   if (path.startsWith("/admin")) {
-    if (!payload) {
+    if (!user) {
       const login = new URL("/login", request.url);
       login.searchParams.set("from", path);
       return NextResponse.redirect(login);
     }
-    if (payload.role !== "admin" && payload.role !== "facilitator") {
+    if (role !== "admin" && role !== "facilitator") {
       return NextResponse.redirect(new URL("/", request.url));
     }
-    return NextResponse.next();
+    return response;
   }
 
   // /workshop はログイン必須
   if (path.startsWith("/workshop")) {
-    if (!payload) {
+    if (!user) {
       const login = new URL("/login", request.url);
       login.searchParams.set("from", path);
       return NextResponse.redirect(login);
     }
-    return NextResponse.next();
+    return response;
   }
 
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {

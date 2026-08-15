@@ -22,12 +22,12 @@ export function SurveyShell({
         {(title || description) && (
           <header className="mb-7">
             {title && (
-              <h1 className="text-2xl font-bold tracking-tight text-[#e0f0e8] sm:text-3xl">
+              <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
                 {title}
               </h1>
             )}
             {description && (
-              <p className="mt-3 text-base leading-relaxed text-[#c8dccf]">
+              <p className="mt-3 text-base leading-relaxed text-secondary-foreground">
                 {description}
               </p>
             )}

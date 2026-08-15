@@ -49,6 +49,9 @@ model User {
   invitedAt      DateTime?     @map("invited_at")
   activatedAt    DateTime?     @map("activated_at")
 
+  // Supabase Auth（auth.users.id）との紐付け。マジックリンクログイン時に埋まる。
+  authUserId String? @unique @map("auth_user_id")
+
   workshopData              WorkshopData?
   participantBlockOverrides ParticipantBlockOverride[]
 

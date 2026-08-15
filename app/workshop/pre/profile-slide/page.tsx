@@ -223,13 +223,13 @@ export default function ProfileSlidePage() {
       <div className="no-print flex w-full max-w-[1123px] flex-wrap items-center justify-between gap-3">
         <Link
           href="/workshop/pre"
-          className="text-sm text-[#a0c0b0] transition-colors hover:text-primary"
+          className="text-sm text-secondary-foreground transition-colors hover:text-primary"
         >
           ← 事前課題へ戻る
         </Link>
         <Link
           href="/workshop/pre/life-plan"
-          className="text-sm text-[#a0c0b0] transition-colors hover:text-primary"
+          className="text-sm text-secondary-foreground transition-colors hover:text-primary"
         >
           ライフラインチャートをつくる（任意） →
         </Link>
@@ -243,7 +243,7 @@ export default function ProfileSlidePage() {
                 "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
                 mode === m
                   ? "border-primary bg-primary/15 text-primary"
-                  : "border-[rgba(0,255,136,0.2)] text-[#a0c0b0] hover:text-[#e0f0e8]"
+                  : "border-border text-secondary-foreground hover:text-foreground"
               )}
             >
               {m === "edit" ? "記入する" : "記入例を見る"}

@@ -114,7 +114,7 @@ export default function PreSurveyPage() {
               "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
               mode === m
                 ? "border-primary bg-primary/15 text-primary"
-                : "border-[rgba(0,255,136,0.2)] text-[#a0c0b0] hover:text-[#e0f0e8]"
+                : "border-border text-secondary-foreground hover:text-foreground"
             )}
           >
             {m === "edit" ? "記入する" : "記入例を見る"}
@@ -207,7 +207,7 @@ export default function PreSurveyPage() {
           {saved && <span className="text-sm text-primary">保存しました ✓</span>}
           <Link
             href="/workshop/pre"
-            className="ml-auto text-sm text-muted-foreground hover:text-[#e0f0e8]"
+            className="ml-auto text-sm text-muted-foreground hover:text-foreground"
           >
             事前課題へ戻る
           </Link>

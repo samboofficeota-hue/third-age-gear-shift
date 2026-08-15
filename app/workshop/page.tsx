@@ -57,13 +57,13 @@ export default async function WorkshopDashboard() {
 
       {!sessionId && (
         <div className="callout mb-6 flex-col gap-1">
-          <p className="text-sm text-foreground">研修コードがまだ未登録です。</p>
-          <Link
-            href="/workshop/join"
+          <p className="text-sm text-foreground">研修セッションが未設定です。</p>
+          <a
+            href={`mailto:${BRAND.contactEmail}`}
             className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
           >
-            研修コードを入力する <ArrowRight className="h-4 w-4" />
-          </Link>
+            事務局までお問合せください <ArrowRight className="h-4 w-4" />
+          </a>
         </div>
       )}
 

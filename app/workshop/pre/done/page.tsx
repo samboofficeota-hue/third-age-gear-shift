@@ -2,6 +2,8 @@ import Link from "next/link";
 import { CheckCircle2, CalendarDays, ArrowLeft } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { NavigatorMessage } from "./NavigatorMessage";
 
 type ProfileSlide = {
@@ -66,120 +68,125 @@ export default async function PreDonePage() {
     { label: "役割", value: slide?.work?.title?.trim() },
   ].filter((r) => r.value);
 
+  const hasProfile = photo || nickname || slideName || points.length > 0 || workRows.length > 0;
+
   return (
-    <div className="mx-auto max-w-xl px-4 py-14 md:px-6">
-      <div className="rounded-2xl border border-[rgba(0,255,136,0.2)] bg-[#141a2a] p-7 text-center sm:p-9">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/15">
-          <CheckCircle2 className="h-8 w-8 text-primary" />
+    <div className="mx-auto max-w-4xl px-4 py-14 md:px-6">
+      <div className="rounded-2xl border border-border bg-card p-7 sm:p-9">
+        <div className="text-center">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/15">
+            <CheckCircle2 className="h-8 w-8 text-primary" />
+          </div>
+
+          <h1 className="mt-5 text-xl font-bold text-foreground">
+            {name ? `${name}さん、` : ""}事前課題のご提出ありがとうございました！
+          </h1>
+
+          <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-secondary-foreground">
+            すてきな自己紹介を受け取りました。
+          </p>
         </div>
 
-        <h1 className="mt-5 text-xl font-bold text-[#e0f0e8]">
-          {name ? `${name}さん、` : ""}事前課題のご提出
-          <br className="sm:hidden" />
-          ありがとうございました！
-        </h1>
+        <div className={cn("mt-8 gap-6", hasProfile ? "grid md:grid-cols-2 md:items-start" : "mx-auto max-w-md")}>
+          {/* 左カラム：提出された自己紹介プレビュー */}
+          {hasProfile && (
+            <div className="rounded-xl border border-border bg-bg-panel p-5 text-left">
+              <div className="flex items-center gap-4">
+                {/* 写真＋名前 */}
+                <div className="h-20 w-20 shrink-0 overflow-hidden rounded-full border border-border bg-card">
+                  {photo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={photo}
+                      alt="プロフィール写真"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-caption text-muted-foreground">
+                      写真
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0 shrink-0">
+                  {nickname && (
+                    <p className="truncate text-lg font-bold text-primary">
+                      {nickname}
+                    </p>
+                  )}
+                  {slideName && (
+                    <p className="truncate text-sm text-foreground">{slideName}</p>
+                  )}
+                </div>
 
-        <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-[#c8dccf]">
-          すてきな自己紹介を受け取りました。
-        </p>
-
-        {/* 提出された自己紹介プレビュー */}
-        {(photo || nickname || slideName || points.length > 0 || workRows.length > 0) && (
-          <div className="mt-6 rounded-xl border border-[rgba(0,255,136,0.15)] bg-[#0f1420] p-5 text-left">
-            <div className="flex items-center gap-4">
-              {/* 写真＋名前 */}
-              <div className="h-20 w-20 shrink-0 overflow-hidden rounded-full border border-[rgba(0,255,136,0.25)] bg-[#1a2030]">
-                {photo ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={photo}
-                    alt="プロフィール写真"
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground">
-                    写真
+                {/* 右側：会社名／組織名／役割名（今の会社シートより） */}
+                {workRows.length > 0 && (
+                  <div className="ml-auto min-w-0 space-y-1 border-l border-hairline pl-4">
+                    {workRows.map((r) => (
+                      <p key={r.label} className="text-xs leading-snug">
+                        <span className="text-muted-foreground">{r.label}　</span>
+                        <span className="text-foreground">{r.value}</span>
+                      </p>
+                    ))}
                   </div>
                 )}
               </div>
-              <div className="min-w-0 shrink-0">
-                {nickname && (
-                  <p className="truncate text-lg font-bold text-primary">
-                    {nickname}
-                  </p>
-                )}
-                {slideName && (
-                  <p className="truncate text-sm text-[#e0f0e8]">{slideName}</p>
-                )}
-              </div>
 
-              {/* 右側：会社名／組織名／役割名（今の会社シートより） */}
-              {workRows.length > 0 && (
-                <div className="ml-auto min-w-0 space-y-1 border-l border-[rgba(255,255,255,0.08)] pl-4">
-                  {workRows.map((r) => (
-                    <p key={r.label} className="text-xs leading-snug">
-                      <span className="text-muted-foreground">{r.label}　</span>
-                      <span className="text-[#e0f0e8]">{r.value}</span>
-                    </p>
+              {points.length > 0 && (
+                <ul className="mt-4 space-y-2 border-t border-hairline pt-4">
+                  {points.map((p, i) => (
+                    <li key={i} className="flex items-start gap-2.5">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-caption font-bold text-primary-foreground">
+                        {i + 1}
+                      </span>
+                      <span className="text-sm leading-relaxed text-secondary-foreground">
+                        {p}
+                      </span>
+                    </li>
                   ))}
-                </div>
+                </ul>
               )}
             </div>
+          )}
 
-            {points.length > 0 && (
-              <ul className="mt-4 space-y-2 border-t border-[rgba(255,255,255,0.06)] pt-4">
-                {points.map((p, i) => (
-                  <li key={i} className="flex items-start gap-2.5">
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">
-                      {i + 1}
-                    </span>
-                    <span className="text-sm leading-relaxed text-[#c8dccf]">
-                      {p}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+          {/* 右カラム：AIナビゲーターのメッセージ＋Day1案内 */}
+          <div className="flex flex-col gap-4">
+            <NavigatorMessage initial={aiWelcome} />
+
+            {day1Str && (
+              <div className="inline-flex items-center gap-2 self-start rounded-lg border border-border bg-bg-panel px-4 py-2.5">
+                <CalendarDays className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium text-foreground">
+                  Day1：{day1Str}
+                </span>
+              </div>
             )}
+
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              自己紹介シートは Day1 で発表していただきます。当日まで追記・修正できます。
+            </p>
           </div>
-        )}
+        </div>
 
-        {/* AIナビゲーターからの歓迎メッセージ（AI生成・2行） */}
-        <NavigatorMessage initial={aiWelcome} />
-
-        <p className="mt-6 text-xs leading-relaxed text-muted-foreground">
-          自己紹介シートは Day1 で発表していただきます。当日まで追記・修正できます。
-        </p>
-
-        {day1Str && (
-          <div className="mx-auto mt-6 inline-flex items-center gap-2 rounded-lg border border-[rgba(0,255,136,0.2)] bg-[#0f1420] px-4 py-2.5">
-            <CalendarDays className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium text-[#e0f0e8]">
-              Day1：{day1Str}
-            </span>
+        <div className="mt-8 flex flex-col items-center gap-3 border-t border-hairline pt-8">
+          <Button asChild size="lg" className="w-full max-w-sm">
+            <Link href="/workshop">ダッシュボードへ戻る</Link>
+          </Button>
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+            <Link
+              href="/workshop/pre/profile-slide"
+              className="inline-flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              自己紹介シートを見直す
+            </Link>
+            <Link
+              href="/workshop/pre/life-plan"
+              className="inline-flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              ライフラインチャートを見直す（任意）
+            </Link>
           </div>
-        )}
-
-        <div className="mt-8 flex flex-col gap-3">
-          <Link
-            href="/workshop"
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-bold text-primary-foreground transition hover:bg-[#00cc6a]"
-          >
-            ダッシュボードへ戻る
-          </Link>
-          <Link
-            href="/workshop/pre/profile-slide"
-            className="inline-flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-[#e0f0e8]"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            自己紹介シートを見直す
-          </Link>
-          <Link
-            href="/workshop/pre/life-plan"
-            className="inline-flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-[#e0f0e8]"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            ライフラインチャートを見直す（任意）
-          </Link>
         </div>
       </div>
     </div>

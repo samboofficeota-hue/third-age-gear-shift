@@ -19,6 +19,7 @@ const config: Config = {
   			'bg-dark':  '#0a0e1a',    /* ページ背景 */
   			'bg-panel': '#0f1420',    /* ナビ・テーブルヘッダー */
   			'bg-card':  '#141a2a',    /* カード背景 */
+  			hairline:   'rgba(255,255,255,0.06)', /* 中立の区切り線（カード内セクション区切り等） */
 
   			/* ── ワークシート（白地A4横）パレット：WORKSHEET_DESIGN.md ── */
   			ws: {
