@@ -145,10 +145,9 @@ export function LifeLineChart({
   useLayoutEffect(() => {
     const aboveGroup = points.filter((p) => p.score >= 0);
     const belowGroup = points.filter((p) => p.score < 0);
-    const merged = new Map([
-      ...assignRows(aboveGroup, textRefs.current, true, prevRowsRef.current),
-      ...assignRows(belowGroup, textRefs.current, false, prevRowsRef.current),
-    ]);
+    const merged = new Map<number, number>();
+    assignRows(aboveGroup, textRefs.current, true, prevRowsRef.current).forEach((v, k) => merged.set(k, v));
+    assignRows(belowGroup, textRefs.current, false, prevRowsRef.current).forEach((v, k) => merged.set(k, v));
     prevRowsRef.current = merged;
     setRows(merged);
   }, [points]);
