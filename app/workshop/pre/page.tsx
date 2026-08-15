@@ -55,7 +55,7 @@ export default async function PrePage() {
       href: "/workshop/pre/profile-slide",
       icon: UserCircle,
       label: "自己紹介シート",
-      note: "Day1で発表",
+      note: "Day1で使用",
       done: slideDone,
     },
   ];
@@ -63,7 +63,8 @@ export default async function PrePage() {
   return (
     <div className="mx-auto max-w-xl px-4 py-12 md:px-6">
       <div className="rounded-2xl border border-border bg-card p-6 sm:p-8">
-        <p className="text-lg font-bold text-foreground">
+        <p className="eyebrow">事前課題</p>
+        <p className="mt-2 text-lg font-bold text-foreground">
           {name ? `${name}さん、こんにちは。` : "こんにちは。"}
         </p>
         <div className="mt-3 space-y-3 text-sm leading-relaxed text-secondary-foreground">
@@ -138,7 +139,7 @@ export default async function PrePage() {
                   記入済み
                 </span>
               )}
-              <span className="text-caption text-muted-foreground">任意</span>
+              <span className="text-caption text-muted-foreground">Day1で使用</span>
             </span>
           </Link>
         </div>
@@ -184,10 +185,10 @@ export default async function PrePage() {
 
       <div className="mt-4 text-center">
         <Link
-          href="/workshop"
+          href="/workshop/guide"
           className="text-xs text-muted-foreground hover:text-foreground"
         >
-          ← ダッシュボードへ戻る
+          ← 研修の流れへ戻る
         </Link>
       </div>
     </div>

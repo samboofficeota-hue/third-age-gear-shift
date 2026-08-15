@@ -169,7 +169,7 @@ export default async function PreDonePage() {
 
         <div className="mt-8 flex flex-col items-center gap-3 border-t border-hairline pt-8">
           <Button asChild size="lg" className="w-full max-w-sm">
-            <Link href="/workshop">ダッシュボードへ戻る</Link>
+            <Link href="/workshop/guide">研修の流れへ戻る</Link>
           </Button>
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
             <Link
@@ -184,7 +184,7 @@ export default async function PreDonePage() {
               className="inline-flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
-              ライフラインチャートを見直す（任意）
+              ライフラインチャートを見直す（Day1で使用）
             </Link>
           </div>
         </div>

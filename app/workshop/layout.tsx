@@ -10,7 +10,7 @@ export default function WorkshopLayout({
     <>
       <WorkshopHeader />
       <main>{children}</main>
-      <SiteFooter />
+      <SiteFooter className="mt-8" />
     </>
   );
 }

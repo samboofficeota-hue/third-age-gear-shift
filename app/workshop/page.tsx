@@ -4,7 +4,6 @@ import {
   Lock,
   Check,
   ArrowRight,
-  GraduationCap,
   FileText,
   Sparkles,
   MessageCircleHeart,
@@ -15,8 +14,8 @@ import { cn } from "@/lib/utils";
 import { BRAND } from "@/lib/brand";
 
 /**
- * Program A ダッシュボード（事前・事後の二態切替）。
- * - 事前モード: 事前課題 ＋ 研修本番(B)入口
+ * Program A ダッシュボード。事後モード専用（事前モードは /workshop/guide に一本化）。
+ * - 事前モード（未事後）: /workshop/guide へリダイレクトし、ここでは何も描画しない
  * - 事後モード: 事後アンケート ＋ じぶんのワーク記録 ＋ セルフ・チェック
  *   （セルフ・チェックは事前事後の両アンケートが揃ったら有効化）
  * トリガー: statuses.post === "OPEN" もしくは completedPhases に "post"
@@ -30,14 +29,14 @@ export default async function WorkshopDashboard() {
 
   const { sessionId, completedPhases, statuses } = state;
 
-  const preMeta = PHASE_META_BY_ID.pre;
   const postMeta = PHASE_META_BY_ID.post;
 
-  const preAccessible = isPhaseAccessible(preMeta, statuses.pre);
   const postAccessible = isPhaseAccessible(postMeta, statuses.post);
   const preDone = completedPhases.includes("pre");
   const postDone = completedPhases.includes("post");
   const isPostMode = postAccessible || postDone;
+
+  if (!isPostMode) redirect("/workshop/guide");
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 md:px-8">
@@ -49,9 +48,7 @@ export default async function WorkshopDashboard() {
           {BRAND.name}
         </h1>
         <p className="subtitle mt-2">
-          {isPostMode
-            ? "研修お疲れさまでした。事後アンケートと、ご自身のワーク記録の入口です。"
-            : "事前アンケートと、研修本番（Day1〜）への入口です。"}
+          研修お疲れさまでした。事後アンケートと、ご自身のワーク記録の入口です。
         </p>
       </header>
 
@@ -67,52 +64,8 @@ export default async function WorkshopDashboard() {
         </div>
       )}
 
-      {isPostMode ? (
-        <PostModeMenu postAccessible={postAccessible} postDone={postDone} preDone={preDone} />
-      ) : (
-        <PreModeMenu preAccessible={preAccessible} preDone={preDone} />
-      )}
+      <PostModeMenu postAccessible={postAccessible} postDone={postDone} preDone={preDone} />
     </div>
-  );
-}
-
-function PreModeMenu({
-  preAccessible,
-  preDone,
-}: {
-  preAccessible: boolean;
-  preDone: boolean;
-}) {
-  const preMeta = PHASE_META_BY_ID.pre;
-  return (
-    <ol className="space-y-3">
-      <li>
-        <PhaseCard
-          numberOrCheck={preDone ? "check" : 1}
-          day={preMeta.day}
-          label={preMeta.label}
-          description={preMeta.description}
-          accessible={preAccessible}
-          done={preDone}
-          href={preMeta.route}
-        />
-        <Link href="/training" className="nav-card is-feature mt-3">
-          <div className="flex items-center gap-4">
-            <span className="icon-chip">
-              <GraduationCap className="h-5 w-5" />
-            </span>
-            <div>
-              <span className="card-eyebrow">研修本番</span>
-              <p className="nav-card-title">Day1・宿題・Day2 へ</p>
-              <p className="nav-card-note">
-                研修当日はこちらから（白い画面に切り替わります）
-              </p>
-            </div>
-          </div>
-          <ArrowRight className="h-5 w-5 shrink-0 text-primary" />
-        </Link>
-      </li>
-    </ol>
   );
 }
 

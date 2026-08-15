@@ -93,7 +93,7 @@ export default async function WelcomePage({
           <li className="flex items-center gap-3 rounded-lg border border-border bg-bg-panel px-4 py-3">
             <UserCircle className="h-5 w-5 shrink-0 text-primary" />
             <span className="text-sm font-medium text-foreground">自己紹介シート</span>
-            <span className="ml-auto text-caption text-muted-foreground">Day1で発表</span>
+            <span className="ml-auto text-caption text-muted-foreground">Day1で使用</span>
           </li>
         </ol>
 

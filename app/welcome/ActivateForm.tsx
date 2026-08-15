@@ -18,7 +18,7 @@ export function ActivateForm({ defaultEmail }: { defaultEmail: string }) {
     setError(null);
     setSending(true);
     const callbackUrl = new URL("/auth/callback", window.location.origin);
-    callbackUrl.searchParams.set("next", "/workshop/pre/survey");
+    callbackUrl.searchParams.set("next", "/workshop/guide");
     const { error } = await getSupabaseBrowserClient().auth.signInWithOtp({
       email: defaultEmail,
       options: { emailRedirectTo: callbackUrl.toString() },
