@@ -47,54 +47,35 @@ export function IntroSheet({
     <PrintSheet>
       <SheetHeader no={1} accent="じぶん" title="紹介" right={preTag} />
 
-      <div className="mt-6 flex min-h-[600px] gap-12">
-        {/* 左：写真 + ニックネーム */}
-        <div className="flex w-[340px] shrink-0 flex-col">
-          <div className="mt-[115px]">
-            <PhotoFrame src={view.photo} />
+      <div className="mt-6 flex gap-10">
+        {/* 左：お名前 + ニックネーム + 写真 */}
+        <div className="flex w-[300px] shrink-0 flex-col gap-5">
+          <div>
+            {isSample ? (
+              <div className="text-center">
+                <p className="text-xs font-semibold text-ws-muted">お名前</p>
+                <p className="mt-1 text-2xl font-bold text-ws-ink">{view.name}</p>
+              </div>
+            ) : (
+              <label className="block">
+                <span className="mb-1 block text-xs font-semibold text-ws-muted">
+                  お名前
+                </span>
+                <input
+                  value={data.name ?? ""}
+                  onChange={(e) => onSetField({ name: e.target.value })}
+                  placeholder="お名前"
+                  className="w-full rounded-md border border-ws-line px-3 py-2 text-center text-2xl font-bold text-ws-ink outline-none focus:border-ws-teal"
+                />
+              </label>
+            )}
           </div>
 
-          {!isSample && (
-            <div className="no-print mt-4 flex flex-wrap items-center justify-center gap-2">
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                onChange={onPickFile}
-                className="hidden"
-              />
-              {data.photoOriginal && (
-                <button
-                  type="button"
-                  disabled={photoUploading}
-                  onClick={onAdjustPhoto}
-                  className="inline-flex items-center gap-2 rounded-lg border border-ws-line px-4 py-2 text-sm text-ws-ink hover:border-ws-teal disabled:opacity-60"
-                >
-                  <Crop className="h-4 w-4" />
-                  写真を調整
-                </button>
-              )}
-              <button
-                type="button"
-                disabled={photoUploading}
-                onClick={onUploadClick}
-                className="inline-flex items-center gap-2 rounded-lg border border-ws-line px-4 py-2 text-sm text-ws-ink hover:border-ws-teal disabled:opacity-60"
-              >
-                <ImagePlus className="h-4 w-4" />
-                {photoUploading
-                  ? "アップロード中…"
-                  : data.photo
-                    ? "写真を変更"
-                    : "写真をアップロード"}
-              </button>
-            </div>
-          )}
-
-          <div className="mt-auto mb-[115px] pt-6">
+          <div>
             {isSample ? (
               <div className="text-center">
                 <p className="text-xs font-semibold text-ws-muted">ニックネーム</p>
-                <p className="mt-1 text-3xl font-bold text-ws-accent">
+                <p className="mt-1 text-2xl font-bold text-ws-accent">
                   {view.nickname}
                 </p>
               </div>
@@ -107,37 +88,56 @@ export function IntroSheet({
                   value={data.nickname ?? ""}
                   onChange={(e) => onSetField({ nickname: e.target.value })}
                   placeholder="ニックネーム"
-                  className="w-full rounded-md border border-ws-line px-3 py-2 text-center text-2xl font-bold text-ws-accent outline-none focus:border-ws-teal"
+                  className="w-full rounded-md border border-ws-line px-3 py-2 text-center text-xl font-bold text-ws-accent outline-none focus:border-ws-teal"
                 />
               </label>
+            )}
+          </div>
+
+          <div>
+            <PhotoFrame src={view.photo} size={220} />
+
+            {!isSample && (
+              <div className="no-print mt-3 flex flex-wrap items-center justify-center gap-2">
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={onPickFile}
+                  className="hidden"
+                />
+                {data.photoOriginal && (
+                  <button
+                    type="button"
+                    disabled={photoUploading}
+                    onClick={onAdjustPhoto}
+                    className="inline-flex items-center gap-2 rounded-lg border border-ws-line px-3 py-1.5 text-xs text-ws-ink hover:border-ws-teal disabled:opacity-60"
+                  >
+                    <Crop className="h-3.5 w-3.5" />
+                    写真を調整
+                  </button>
+                )}
+                <button
+                  type="button"
+                  disabled={photoUploading}
+                  onClick={onUploadClick}
+                  className="inline-flex items-center gap-2 rounded-lg border border-ws-line px-3 py-1.5 text-xs text-ws-ink hover:border-ws-teal disabled:opacity-60"
+                >
+                  <ImagePlus className="h-3.5 w-3.5" />
+                  {photoUploading
+                    ? "アップロード中…"
+                    : data.photo
+                      ? "写真を変更"
+                      : "写真をアップロード"}
+                </button>
+              </div>
             )}
           </div>
         </div>
 
-        {/* 右：お名前 + 3 つのポイント */}
+        {/* 右：知ってほしい 3 つのポイント */}
         <div className="flex flex-1 flex-col">
-          <div className="border-b border-ws-line pb-4">
-            {isSample ? (
-              <>
-                <p className="text-xs font-semibold text-ws-muted">お名前</p>
-                <p className="mt-1 text-3xl font-bold text-ws-ink">{view.name}</p>
-              </>
-            ) : (
-              <label className="block">
-                <span className="mb-1 block text-xs font-semibold text-ws-muted">
-                  お名前
-                </span>
-                <input
-                  value={data.name ?? ""}
-                  onChange={(e) => onSetField({ name: e.target.value })}
-                  placeholder="お名前"
-                  className="w-full rounded-md border border-ws-line px-3 py-2 text-3xl font-bold text-ws-ink outline-none focus:border-ws-teal"
-                />
-              </label>
-            )}
-          </div>
-
-          <p className="mt-6 text-sm font-semibold text-ws-teal">
+          <p className="text-sm font-semibold text-ws-teal">
             知ってほしい 3つのポイント
           </p>
           <ul className="mt-5 flex flex-1 flex-col justify-between py-2">

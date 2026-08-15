@@ -17,7 +17,7 @@ export function RuleSheet({ preTag }: { preTag: ReactNode }) {
           <div className="flex gap-8">
             <dt className="w-32 shrink-0 font-bold">● 発表時間</dt>
             <dd>
-              <span className="text-2xl font-bold text-ws-accent">5分以内</span>
+              <span className="text-2xl font-bold text-ws-accent">3分以内</span>
               <span className="ml-2 text-sm text-ws-muted">
                 （1ページ 1分以内を目安に）
               </span>

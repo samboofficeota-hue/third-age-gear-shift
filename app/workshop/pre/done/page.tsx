@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CheckCircle2, CalendarDays, ArrowLeft } from "lucide-react";
+import { ArrowRight, CheckCircle2, CalendarDays } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Button } from "@/components/ui/button";
@@ -71,29 +71,30 @@ export default async function PreDonePage() {
   const hasProfile = photo || nickname || slideName || points.length > 0 || workRows.length > 0;
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-14 md:px-6">
-      <div className="rounded-2xl border border-border bg-card p-7 sm:p-9">
+    <div className="mx-auto max-w-4xl px-4 py-5 md:px-6">
+      <div className="rounded-2xl border border-border bg-card p-4 sm:p-5">
         <div className="text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/15">
-            <CheckCircle2 className="h-8 w-8 text-primary" />
+          <div className="flex items-center justify-center gap-2.5">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15">
+              <CheckCircle2 className="h-5 w-5 text-primary" />
+            </span>
+            <h1 className="text-xl font-bold text-foreground">
+              {name ? `${name}さん、` : ""}事前課題のご提出ありがとうございました！
+            </h1>
           </div>
 
-          <h1 className="mt-5 text-xl font-bold text-foreground">
-            {name ? `${name}さん、` : ""}事前課題のご提出ありがとうございました！
-          </h1>
-
-          <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-secondary-foreground">
-            すてきな自己紹介を受け取りました。
+          <p className="mt-1.5 whitespace-nowrap text-sm leading-relaxed text-secondary-foreground">
+            すてきな自己紹介を受け取りました。自己紹介シートは Day1 で発表いただきます。当日まで修正可能です。
           </p>
         </div>
 
-        <div className={cn("mt-8 gap-6", hasProfile ? "grid md:grid-cols-2 md:items-start" : "mx-auto max-w-md")}>
+        <div className={cn("mt-8 gap-4", hasProfile ? "grid md:grid-cols-2 md:items-start" : "mx-auto max-w-md")}>
           {/* 左カラム：提出された自己紹介プレビュー */}
           {hasProfile && (
-            <div className="rounded-xl border border-border bg-bg-panel p-5 text-left">
+            <div className="rounded-xl border border-border bg-bg-panel p-4 text-left">
               <div className="flex items-center gap-4">
                 {/* 写真＋名前 */}
-                <div className="h-20 w-20 shrink-0 overflow-hidden rounded-full border border-border bg-card">
+                <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border border-border bg-card">
                   {photo ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -132,7 +133,7 @@ export default async function PreDonePage() {
               </div>
 
               {points.length > 0 && (
-                <ul className="mt-4 space-y-2 border-t border-hairline pt-4">
+                <ul className="mt-3 space-y-1.5 border-t border-hairline pt-3">
                   {points.map((p, i) => (
                     <li key={i} className="flex items-start gap-2.5">
                       <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-caption font-bold text-primary-foreground">
@@ -149,44 +150,27 @@ export default async function PreDonePage() {
           )}
 
           {/* 右カラム：AIナビゲーターのメッセージ＋Day1案内 */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3">
             <NavigatorMessage initial={aiWelcome} />
 
             {day1Str && (
-              <div className="inline-flex items-center gap-2 self-start rounded-lg border border-border bg-bg-panel px-4 py-2.5">
+              <div className="inline-flex items-center gap-2 self-start rounded-lg border border-border bg-bg-panel px-4 py-2">
                 <CalendarDays className="h-4 w-4 text-primary" />
                 <span className="text-sm font-medium text-foreground">
                   Day1：{day1Str}
                 </span>
               </div>
             )}
-
-            <p className="text-xs leading-relaxed text-muted-foreground">
-              自己紹介シートは Day1 で発表していただきます。当日まで追記・修正できます。
-            </p>
           </div>
         </div>
 
-        <div className="mt-8 flex flex-col items-center gap-3 border-t border-hairline pt-8">
-          <Button asChild size="lg" className="w-full max-w-sm">
-            <Link href="/workshop/guide">研修の流れへ戻る</Link>
+        <div className="mt-4 flex justify-center border-t border-hairline pt-4">
+          <Button asChild>
+            <Link href="/workshop/guide">
+              研修ガイドへ戻る
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </Button>
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-            <Link
-              href="/workshop/pre/profile-slide"
-              className="inline-flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              自己紹介シートを見直す
-            </Link>
-            <Link
-              href="/workshop/pre/life-plan"
-              className="inline-flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              ライフラインチャートを見直す（Day1で使用）
-            </Link>
-          </div>
         </div>
       </div>
     </div>

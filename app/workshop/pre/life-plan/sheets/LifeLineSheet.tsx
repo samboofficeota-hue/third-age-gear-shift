@@ -7,10 +7,10 @@ import { PrintSheet } from "@/components/worksheet/PrintSheet";
 import { SheetHeader } from "@/components/worksheet/SheetHeader";
 import { LifeLineChart } from "@/components/worksheet/LifeLineChart";
 import {
-  DESCRIPTION_MAX_LENGTH,
   EMPTY_DRAFT,
   SCORE_MAX,
   SCORE_MIN,
+  TITLE_MAX_LENGTH,
   clampAge,
   clampScore,
   sortedForChart,
@@ -20,7 +20,7 @@ import {
 /**
  * ライフラインチャート：1シート構成。
  * チャートはフルワイドをメインに据え、画面下のコンパクトな1行の入力バーで
- * 年齢・見出し・説明・点数を登録する（SukiTokuiMatrix と同じ登録/編集の考え方）。
+ * 年齢・トピック・点数を登録する（SukiTokuiMatrix と同じ登録/編集の考え方）。
  * チャート上の既存プロットをクリックすると編集モードになり、入力バーに読み込まれる。
  */
 export function LifeLineSheet({
@@ -80,7 +80,7 @@ export function LifeLineSheet({
       </div>
 
       {/* ── 入力バー（1行・印刷されない） ── */}
-      <div className="no-print mt-6 flex items-end gap-3">
+      <div className="no-print mt-6 flex items-end gap-3 rounded-xl border border-ws-line bg-ws-fill p-4">
         {editing && (
           <span className="mb-2 shrink-0 rounded bg-ws-mint px-2 py-0.5 text-[11px] font-semibold text-ws-teal">
             編集中
@@ -88,7 +88,7 @@ export function LifeLineSheet({
         )}
 
         <label className="w-24 shrink-0">
-          <span className="mb-1 block whitespace-nowrap text-xs font-semibold text-ws-muted">年齢（半角）</span>
+          <span className="mb-1 block whitespace-nowrap text-xs font-semibold text-ws-teal">年齢（半角）</span>
           <input
             type="text"
             inputMode="numeric"
@@ -104,33 +104,22 @@ export function LifeLineSheet({
           />
         </label>
 
-        <label className="w-36 shrink-0">
-          <span className="mb-1 block text-xs font-semibold text-ws-muted">見出し</span>
+        <label className="w-[380px] shrink-0">
+          <span className="mb-1 block text-xs font-semibold text-ws-teal">
+            トピック（{TITLE_MAX_LENGTH}字以内）
+          </span>
           <input
             type="text"
             value={current.title}
-            onChange={(e) => setField({ title: e.target.value })}
+            onChange={(e) => setField({ title: e.target.value.slice(0, TITLE_MAX_LENGTH) })}
+            maxLength={TITLE_MAX_LENGTH}
             placeholder="例：転職、結婚"
             className="w-full rounded-md border border-ws-line px-3 py-1.5 text-sm text-ws-ink outline-none focus:border-ws-teal"
           />
         </label>
 
-        <label className="min-w-0 flex-1">
-          <span className="mb-1 block text-xs font-semibold text-ws-muted">
-            説明（{DESCRIPTION_MAX_LENGTH}字以内）
-          </span>
-          <input
-            type="text"
-            value={current.description}
-            onChange={(e) => setField({ description: e.target.value.slice(0, DESCRIPTION_MAX_LENGTH) })}
-            maxLength={DESCRIPTION_MAX_LENGTH}
-            placeholder="その時の状況や、率直な気持ち"
-            className="w-full rounded-md border border-ws-line px-3 py-1.5 text-sm text-ws-ink outline-none focus:border-ws-teal"
-          />
-        </label>
-
         <label className="w-44 shrink-0">
-          <span className="mb-1 flex items-center justify-between text-xs font-semibold text-ws-muted">
+          <span className="mb-1 flex items-center justify-between text-xs font-semibold text-ws-teal">
             <span>点数</span>
             <span className="font-bold text-ws-teal">{current.score > 0 ? `+${current.score}` : current.score}</span>
           </span>

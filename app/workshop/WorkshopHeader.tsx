@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { BRAND } from "@/lib/brand";
 
 export function WorkshopHeader() {
   const [loggingOut, setLoggingOut] = useState(false);
+  const pathname = usePathname();
+  const showGuideLink = pathname?.startsWith("/workshop/pre") ?? false;
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -29,14 +32,24 @@ export function WorkshopHeader() {
         >
           {BRAND.name}
         </Link>
-        <button
-          type="button"
-          onClick={handleLogout}
-          disabled={loggingOut}
-          className="rounded-lg px-3 py-1.5 text-sm text-secondary-foreground transition hover:bg-bg-panel hover:text-foreground disabled:opacity-60"
-        >
-          {loggingOut ? "ログアウト中..." : "ログアウト"}
-        </button>
+        <div className="flex items-center gap-4">
+          {showGuideLink && (
+            <Link
+              href="/workshop/guide"
+              className="text-xs text-secondary-foreground hover:text-foreground"
+            >
+              ガイドに戻る
+            </Link>
+          )}
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={loggingOut}
+            className="rounded-lg px-3 py-1.5 text-xs text-secondary-foreground transition hover:bg-bg-panel hover:text-foreground disabled:opacity-60"
+          >
+            {loggingOut ? "ログアウト中..." : "ログアウト"}
+          </button>
+        </div>
       </div>
     </header>
   );

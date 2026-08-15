@@ -3,31 +3,30 @@
 import { useEffect, useRef, useState } from "react";
 import type { Area } from "react-easy-crop";
 import Link from "next/link";
+import { ArrowRight, ImageIcon } from "lucide-react";
 import { formatHeaderName } from "@/components/worksheet/SheetHeader";
 import { WorksheetStage } from "@/components/worksheet/WorksheetStage";
-import { PrintButton } from "@/components/worksheet/PrintButton";
 import { CropModal } from "@/components/worksheet/CropModal";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { pad, padHist, type Slide, type Work, type HistRow } from "./_types";
-import { MIN_HIST_ROWS } from "./_constants";
+import { MIN_HIST_ROWS, MAX_HIST_ROWS } from "./_constants";
 import { RuleSheet } from "./sheets/RuleSheet";
 import { IntroSheet } from "./sheets/IntroSheet";
 import { HistorySheet } from "./sheets/HistorySheet";
 import { WorkSheet } from "./sheets/WorkSheet";
+import { SampleModal } from "./SampleModal";
 
 /**
  * じぶん紹介（事前課題）オーケストレーター。
  * 役割:
  *  - WorkshopData.pre.profileSlide の load / save
  *  - 写真アップロード／クロップ／再調整のフロー（ref と Storage API を持つ）
- *  - 記入する / 記入例 のモード切替
+ *  - 記入例モーダルの開閉
  *  - 各シート（ルール／#1 名前・写真・ポイント／#2 生い立ち／#3 今の会社）に slice を渡す
  */
 export default function ProfileSlidePage() {
   const [data, setData] = useState<Slide>({ points: pad([]) });
-  const [mode, setMode] = useState<"edit" | "sample">("edit");
-  const [example, setExample] = useState<Slide | null>(null);
+  const [sampleOpen, setSampleOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(3);
   const [histCount, setHistCount] = useState(MIN_HIST_ROWS);
   const [loading, setLoading] = useState(true);
@@ -69,21 +68,7 @@ export default function ProfileSlidePage() {
     })();
   }, []);
 
-  useEffect(() => {
-    if (mode !== "sample" || example) return;
-    (async () => {
-      const d = await fetch("/api/workshop/example", { credentials: "include" })
-        .then((r) => r.json())
-        .catch(() => ({}));
-      const ps = (d?.example?.pre?.profileSlide ?? {}) as Slide;
-      setExample({ ...ps, points: pad(ps.points) });
-    })();
-  }, [mode, example]);
-
-  const isSample = mode === "sample";
-  const view: Slide = isSample
-    ? example ?? { points: pad([]) }
-    : { ...data, points: pad(data.points) };
+  const view: Slide = { ...data, points: pad(data.points) };
 
   const headerName = formatHeaderName(view.name, view.nickname);
 
@@ -95,12 +80,10 @@ export default function ProfileSlidePage() {
   ) : null;
 
   const setField = (patch: Partial<Slide>) => {
-    if (isSample) return;
     setData((d) => ({ ...d, ...patch }));
     setSaved(false);
   };
   const setPoint = (i: number, v: string) => {
-    if (isSample) return;
     setData((d) => {
       const points = pad(d.points);
       points[i] = v;
@@ -109,12 +92,10 @@ export default function ProfileSlidePage() {
     setSaved(false);
   };
   const setWork = (key: keyof Work, v: string) => {
-    if (isSample) return;
     setData((d) => ({ ...d, work: { ...d.work, [key]: v } }));
     setSaved(false);
   };
   const setHist = (i: number, key: keyof HistRow, v: string) => {
-    if (isSample) return;
     setData((d) => {
       const history = padHist(d.history, histCount);
       history[i] = { ...history[i], [key]: v };
@@ -134,7 +115,7 @@ export default function ProfileSlidePage() {
 
   const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || isSample) return;
+    if (!file) return;
     pendingOriginalRef.current = file;
     setCropInitial(undefined);
     const reader = new FileReader();
@@ -144,7 +125,7 @@ export default function ProfileSlidePage() {
   };
 
   const onAdjust = async () => {
-    if (isSample || !data.photoOriginal) return;
+    if (!data.photoOriginal) return;
     try {
       const res = await fetch(data.photoOriginal, { credentials: "omit" });
       const blob = await res.blob();
@@ -213,53 +194,17 @@ export default function ProfileSlidePage() {
     );
   }
 
-  const histRows = isSample
-    ? (example?.history ?? []).filter((h) => h.year.trim() || h.event.trim())
-    : padHist(data.history, histCount);
+  const histRows = padHist(data.history, histCount);
 
   return (
     <WorksheetStage>
-      {/* 操作バー（印刷されない） */}
-      <div className="no-print flex w-full max-w-[1123px] flex-wrap items-center justify-between gap-3">
-        <Link
-          href="/workshop/pre"
-          className="text-sm text-secondary-foreground transition-colors hover:text-primary"
-        >
-          ← 事前課題へ戻る
-        </Link>
-        <Link
-          href="/workshop/pre/life-plan"
-          className="text-sm text-secondary-foreground transition-colors hover:text-primary"
-        >
-          ライフラインチャートをつくる（任意） →
-        </Link>
-        <div className="flex items-center gap-2">
-          {(["edit", "sample"] as const).map((m) => (
-            <button
-              key={m}
-              type="button"
-              onClick={() => setMode(m)}
-              className={cn(
-                "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
-                mode === m
-                  ? "border-primary bg-primary/15 text-primary"
-                  : "border-border text-secondary-foreground hover:text-foreground"
-              )}
-            >
-              {m === "edit" ? "記入する" : "記入例を見る"}
-            </button>
-          ))}
-          <PrintButton />
-        </div>
-      </div>
-
       <RuleSheet preTag={preTag} />
 
       <IntroSheet
         preTag={preTag}
         view={view}
         data={data}
-        isSample={isSample}
+        isSample={false}
         visibleCount={visibleCount}
         photoUploading={photoUploading}
         fileRef={fileRef}
@@ -274,27 +219,55 @@ export default function ProfileSlidePage() {
       <HistorySheet
         nameTag={nameTag}
         rows={histRows}
-        isSample={isSample}
+        isSample={false}
         onSetHist={setHist}
-        onAddRow={() => setHistCount((c) => c + 1)}
+        onAddRow={() => setHistCount((c) => Math.min(MAX_HIST_ROWS, c + 1))}
       />
 
       <WorkSheet
         nameTag={nameTag}
         view={view}
         data={data}
-        isSample={isSample}
+        isSample={false}
         onSetWork={setWork}
       />
 
-      {!isSample && (
-        <div className="no-print flex w-full max-w-[1123px] items-center gap-3">
-          <Button onClick={save} disabled={saving}>
-            {saving ? "保存中..." : "保存する"}
-          </Button>
-          {saved && <span className="text-sm text-primary">保存しました ✓</span>}
-        </div>
-      )}
+      <div className="no-print flex w-full max-w-[1123px] items-center gap-3">
+        {saved ? (
+          <>
+            <span className="text-sm text-primary">保存しました ✓</span>
+            <Button asChild className="ml-auto">
+              <Link href="/workshop/pre">
+                事前課題へ戻る
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button onClick={save} disabled={saving}>
+              {saving ? "保存中..." : "保存する"}
+            </Button>
+            <Link
+              href="/workshop/pre"
+              className="ml-auto text-sm text-muted-foreground hover:text-foreground"
+            >
+              事前課題へ戻る
+            </Link>
+          </>
+        )}
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setSampleOpen(true)}
+        className="no-print fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full border border-primary bg-bg-dark px-4 py-2.5 text-sm font-medium text-primary shadow-neon-glow transition hover:bg-primary/10"
+      >
+        <ImageIcon className="h-4 w-4" />
+        記入例を見る
+      </button>
+
+      {sampleOpen && <SampleModal onClose={() => setSampleOpen(false)} />}
 
       {cropSrc && (
         <CropModal

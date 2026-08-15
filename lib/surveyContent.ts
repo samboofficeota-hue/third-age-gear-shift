@@ -43,12 +43,12 @@ export const SECTION_A: ScaleSection = {
   ],
 };
 
-/** §B 自己理解 Want/Can/Must（3問・5段階・事前事後共通） */
+/** §B 自己理解 Will/Can/Must（3問・5段階・事前事後共通） */
 export const SECTION_B: ScaleSection = {
   id: "B",
-  title: "自己理解 — Want / Can / Must",
+  title: "自己理解 — Will / Can / Must",
   questions: [
-    { key: "b1", text: "自分の「やりたいこと・わくわくすること」を、自分の言葉で説明できる（Want）" },
+    { key: "b1", text: "自分の「やりたいこと・わくわくすること」を、自分の言葉で説明できる（Will）" },
     { key: "b2", text: "自分の「強み・力を発揮できる場面」を、自分の言葉で説明できる（Can）" },
     { key: "b3", text: "自分が周囲から求められている「役割・期待」を理解している（Must）" },
   ],

@@ -18,7 +18,7 @@ function QuestionFrame({
 }) {
   return (
     <div className="rounded-xl border border-border bg-card p-5">
-      <p className="text-lg font-semibold leading-relaxed text-foreground">
+      <p className="text-base font-semibold leading-relaxed text-foreground">
         {label}
       </p>
       {hint && <p className="mt-1.5 text-sm text-secondary-foreground">{hint}</p>}
@@ -40,6 +40,7 @@ export function LikertScale({
   max = 5,
   minLabel = "そう思わない",
   maxLabel = "そう思う",
+  midLabel = "どちらでもない",
   disabled = false,
 }: {
   label: string;
@@ -50,10 +51,12 @@ export function LikertScale({
   max?: number;
   minLabel?: string;
   maxLabel?: string;
+  midLabel?: string;
   disabled?: boolean;
 }) {
   const options = Array.from({ length: max - min + 1 }, (_, i) => min + i);
   const compact = options.length >= 7;
+  const hasMid = options.length % 2 === 1;
   return (
     <QuestionFrame label={label} hint={hint}>
       <div
@@ -71,8 +74,8 @@ export function LikertScale({
             className={cn(
               "flex-1 rounded-lg border-2 font-bold transition-colors",
               compact
-                ? "h-11 min-w-0 px-0 text-base sm:h-12 sm:text-lg"
-                : "h-14 min-w-14 text-xl",
+                ? "h-9 min-w-0 px-0 text-xs sm:h-10 sm:text-sm"
+                : "h-[60px] min-w-[60px] text-sm",
               value === n
                 ? "border-primary bg-primary text-primary-foreground"
                 : "border-border bg-bg-panel text-foreground",
@@ -83,9 +86,10 @@ export function LikertScale({
           </button>
         ))}
       </div>
-      <div className="mt-1.5 flex justify-between text-xs text-secondary-foreground">
-        <span>{minLabel}</span>
-        <span>{maxLabel}</span>
+      <div className="mt-1.5 flex text-xs text-secondary-foreground">
+        <span className="flex-1 text-left">{minLabel}</span>
+        {hasMid && <span className="flex-1 text-center">{midLabel}</span>}
+        <span className="flex-1 text-right">{maxLabel}</span>
       </div>
     </QuestionFrame>
   );
@@ -117,7 +121,7 @@ export function SingleChoice({
             disabled={disabled}
             onClick={() => onChange(o.value)}
             className={cn(
-              "block w-full rounded-lg border px-4 py-3.5 text-left text-base leading-relaxed transition-colors",
+              "block w-full rounded-lg border px-4 py-3 text-left text-sm font-medium leading-relaxed transition-colors",
               value === o.value
                 ? "border-primary bg-primary/15 text-foreground"
                 : "border-border bg-bg-panel text-foreground",
@@ -164,10 +168,10 @@ export function MultiChoice({
               disabled={disabled}
               onClick={() => toggle(o.value)}
               className={cn(
-                "flex w-full items-center gap-3 rounded-lg border px-4 py-3.5 text-left text-base leading-relaxed transition-colors",
+                "flex w-full items-center gap-3 rounded-lg border px-4 py-3 text-left text-sm font-medium leading-relaxed transition-colors",
                 checked
-                  ? "border-primary bg-primary/15 text-[#e0f0e8]"
-                  : "border-[rgba(0,255,136,0.25)] bg-[#0f1420] text-[#e0f0e8]",
+                  ? "border-primary bg-primary/15 text-foreground"
+                  : "border-border bg-bg-panel text-foreground",
                 disabled ? "cursor-default opacity-90" : "hover:border-primary"
               )}
             >

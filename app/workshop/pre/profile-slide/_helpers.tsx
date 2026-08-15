@@ -3,11 +3,14 @@
 import { useEffect, useState } from "react";
 
 /** 円形の写真枠（読み込み失敗時はプレースホルダ＋ヒント表示） */
-export function PhotoFrame({ src }: { src?: string }) {
+export function PhotoFrame({ src, size = 300 }: { src?: string; size?: number }) {
   const [err, setErr] = useState(false);
   useEffect(() => setErr(false), [src]);
   return (
-    <div className="relative mx-auto flex aspect-square w-[300px] items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-ws-line bg-ws-fill">
+    <div
+      className="relative mx-auto flex aspect-square items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-ws-line bg-ws-fill"
+      style={{ width: size }}
+    >
       {src && !err ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img

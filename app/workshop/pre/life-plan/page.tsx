@@ -1,24 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { WorksheetStage } from "@/components/worksheet/WorksheetStage";
-import { PrintButton } from "@/components/worksheet/PrintButton";
 import { Button } from "@/components/ui/button";
 import { LifeLineSheet } from "./sheets/LifeLineSheet";
 import { normalizePoints, type LifeCurvePoint } from "./_types";
 
 /**
- * ライフラインチャート（事前課題・任意）オーケストレーター。
+ * ライフラインチャート（事前課題）オーケストレーター。
  * WorkshopData.pre.lifeCurve の load / save。
- * 「入力を完了する」で保存し、事前課題トップへ戻る。
  */
 export default function LifePlanPage() {
-  const router = useRouter();
   const [points, setPoints] = useState<LifeCurvePoint[]>([]);
   const [loading, setLoading] = useState(true);
-  const [finishing, setFinishing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -31,8 +29,9 @@ export default function LifePlanPage() {
     })();
   }, []);
 
-  const finish = async () => {
-    setFinishing(true);
+  const save = async () => {
+    setSaving(true);
+    setSaved(false);
     try {
       const res = await fetch("/api/workshop/me/pre", {
         method: "PATCH",
@@ -40,12 +39,9 @@ export default function LifePlanPage() {
         credentials: "include",
         body: JSON.stringify({ lifeCurve: { points } }),
       });
-      if (res.ok) {
-        router.push("/workshop/pre");
-        return;
-      }
+      if (res.ok) setSaved(true);
     } finally {
-      setFinishing(false);
+      setSaving(false);
     }
   };
 
@@ -57,27 +53,44 @@ export default function LifePlanPage() {
     );
   }
 
-  const preTag = <span className="text-sm font-semibold text-ws-teal">事前課題・任意</span>;
+  const preTag = <span className="text-sm font-semibold text-ws-teal">事前課題</span>;
 
   return (
     <WorksheetStage>
-      {/* 操作バー（印刷されない） */}
-      <div className="no-print flex w-full max-w-[1123px] items-center justify-between gap-3">
-        <Link
-          href="/workshop/pre/profile-slide"
-          className="text-sm text-ws-muted transition-colors hover:text-ws-teal"
-        >
-          ← 自己紹介シートへ戻る
-        </Link>
-        <div className="flex items-center gap-2">
-          <PrintButton />
-          <Button onClick={finish} disabled={finishing}>
-            {finishing ? "保存中..." : "入力を完了する"}
-          </Button>
-        </div>
-      </div>
+      <LifeLineSheet
+        rightSlot={preTag}
+        points={points}
+        onChange={(p) => {
+          setPoints(p);
+          setSaved(false);
+        }}
+      />
 
-      <LifeLineSheet rightSlot={preTag} points={points} onChange={setPoints} />
+      <div className="no-print flex w-full max-w-[1123px] items-center gap-3">
+        {saved ? (
+          <>
+            <span className="text-sm text-primary">保存しました ✓</span>
+            <Button asChild className="ml-auto">
+              <Link href="/workshop/pre">
+                事前課題へ戻る
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button onClick={save} disabled={saving}>
+              {saving ? "保存中..." : "保存する"}
+            </Button>
+            <Link
+              href="/workshop/pre"
+              className="ml-auto text-sm text-muted-foreground hover:text-foreground"
+            >
+              事前課題へ戻る
+            </Link>
+          </>
+        )}
+      </div>
     </WorksheetStage>
   );
 }

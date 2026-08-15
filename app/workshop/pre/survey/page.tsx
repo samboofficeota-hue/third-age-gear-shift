@@ -2,15 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { SurveyShell } from "@/components/survey/SurveyShell";
 import { LikertScale, SingleChoice, MultiChoice } from "@/components/survey/fields";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import {
   PRE_NENDAI,
   PRE_SCALE_SECTIONS,
   PRE_CHOICE,
-  PRE_SAMPLE,
   SCALE_MIN_LABEL,
   SCALE_MAX_LABEL,
   REASON_TENSHOKU,
@@ -26,7 +25,6 @@ type Answers = Record<string, number | string | string[]>;
 
 export default function PreSurveyPage() {
   const [answers, setAnswers] = useState<Answers>({});
-  const [mode, setMode] = useState<"edit" | "sample">("edit");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -42,21 +40,17 @@ export default function PreSurveyPage() {
     })();
   }, []);
 
-  const isSample = mode === "sample";
-  const view: Answers = isSample ? PRE_SAMPLE : answers;
+  const view: Answers = answers;
 
   const setScale = (key: string, v: number) => {
-    if (isSample) return;
     setAnswers((a) => ({ ...a, [key]: v }));
     setSaved(false);
   };
   const setChoice = (key: string, v: string) => {
-    if (isSample) return;
     setAnswers((a) => pruneReasonAnswers({ ...a, [key]: v }));
     setSaved(false);
   };
   const setMulti = (key: string, v: string[]) => {
-    if (isSample) return;
     setAnswers((a) => pruneReasonAnswers({ ...a, [key]: v }));
     setSaved(false);
   };
@@ -69,7 +63,6 @@ export default function PreSurveyPage() {
         options={q.options}
         value={typeof view[q.key] === "string" ? (view[q.key] as string) : null}
         onChange={(v) => setChoice(q.key, v)}
-        disabled={isSample}
       />
     </section>
   );
@@ -101,33 +94,14 @@ export default function PreSurveyPage() {
   return (
     <SurveyShell
       title="事前アンケート"
-      description="ご自身のキャリアについて、お伺いしていきます。（所要時間 5分程度）回答いただいた内容は匿名の形で集計されます。各設問は 1（そう思わない）〜5（そう思う）でお答えください。"
+      description={
+        <>
+          まず、キャリアについて、お考えを教えてください。（所要時間 5分程度）
+          <br />
+          回答いただいた内容は、個人が特定できない形で集計されます。
+        </>
+      }
     >
-      {/* 記入する / 記入例トグル */}
-      <div className="flex items-center gap-2">
-        {(["edit", "sample"] as const).map((m) => (
-          <button
-            key={m}
-            type="button"
-            onClick={() => setMode(m)}
-            className={cn(
-              "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
-              mode === m
-                ? "border-primary bg-primary/15 text-primary"
-                : "border-border text-secondary-foreground hover:text-foreground"
-            )}
-          >
-            {m === "edit" ? "記入する" : "記入例を見る"}
-          </button>
-        ))}
-      </div>
-
-      {isSample && (
-        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2.5 text-sm text-amber-300">
-          記入例（太田義史さん）を表示中です。回答はできません。
-        </div>
-      )}
-
       {/* 年代（属性） */}
       <section className="space-y-5">
         <h2 className="text-lg font-bold text-primary">属性</h2>
@@ -136,7 +110,6 @@ export default function PreSurveyPage() {
           options={PRE_NENDAI.options}
           value={typeof view[PRE_NENDAI.key] === "string" ? (view[PRE_NENDAI.key] as string) : null}
           onChange={(v) => setChoice(PRE_NENDAI.key, v)}
-          disabled={isSample}
         />
       </section>
 
@@ -154,7 +127,6 @@ export default function PreSurveyPage() {
               maxLabel={SCALE_MAX_LABEL}
               value={typeof view[q.key] === "number" ? (view[q.key] as number) : null}
               onChange={(v) => setScale(q.key, v)}
-              disabled={isSample}
             />
           ))}
         </section>
@@ -170,7 +142,6 @@ export default function PreSurveyPage() {
           options={PRE_CHOICE.options}
           value={typeof view[PRE_CHOICE.key] === "string" ? (view[PRE_CHOICE.key] as string) : null}
           onChange={(v) => setChoice(PRE_CHOICE.key, v)}
-          disabled={isSample}
         />
       </section>
 
@@ -190,7 +161,6 @@ export default function PreSurveyPage() {
                   options={SUPPORT.options}
                   value={Array.isArray(view[SUPPORT.key]) ? (view[SUPPORT.key] as string[]) : []}
                   onChange={(v) => setMulti(SUPPORT.key, v)}
-                  disabled={isSample}
                 />
               </section>
             )}
@@ -199,20 +169,31 @@ export default function PreSurveyPage() {
       })()}
 
       {/* 保存 */}
-      {!isSample && (
-        <div className="flex items-center gap-3 pt-2">
-          <Button onClick={save} disabled={saving}>
-            {saving ? "保存中..." : "保存する"}
-          </Button>
-          {saved && <span className="text-sm text-primary">保存しました ✓</span>}
-          <Link
-            href="/workshop/pre"
-            className="ml-auto text-sm text-muted-foreground hover:text-foreground"
-          >
-            事前課題へ戻る
-          </Link>
-        </div>
-      )}
+      <div className="flex items-center gap-3 pt-2">
+        {saved ? (
+          <>
+            <span className="text-sm text-primary">保存しました ✓</span>
+            <Button asChild className="ml-auto">
+              <Link href="/workshop/pre">
+                事前課題へ戻る
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button onClick={save} disabled={saving}>
+              {saving ? "保存中..." : "保存する"}
+            </Button>
+            <Link
+              href="/workshop/pre"
+              className="ml-auto text-sm text-muted-foreground hover:text-foreground"
+            >
+              事前課題へ戻る
+            </Link>
+          </>
+        )}
+      </div>
     </SurveyShell>
   );
 }
