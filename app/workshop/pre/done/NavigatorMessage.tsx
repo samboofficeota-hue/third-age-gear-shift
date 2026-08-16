@@ -32,14 +32,14 @@ export function NavigatorMessage({ initial }: { initial: string | null }) {
   }, [initial]);
 
   return (
-    <div className="mt-5 rounded-xl border border-primary/25 bg-primary/5 p-4 text-left">
+    <div className="rounded-xl border border-primary/25 bg-primary/5 p-3 text-left">
       <div className="flex items-center gap-2">
         <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20">
           <Sparkles className="h-3.5 w-3.5 text-primary" />
         </span>
         <span className="text-xs font-bold text-primary">AIナビゲーターより</span>
       </div>
-      <p className="mt-2.5 whitespace-pre-line text-sm leading-relaxed text-[#e0f0e8]">
+      <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-foreground">
         {loading ? (
           <span className="text-muted-foreground">メッセージを準備中…</span>
         ) : (

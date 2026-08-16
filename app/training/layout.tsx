@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { TrainingHeader } from "./TrainingHeader";
+import { BRAND } from "@/lib/brand";
 
 export const metadata: Metadata = {
-  title: "研修本番 | サードエイジ じぶん戦略講座",
+  title: `研修本番 | ${BRAND.name}`,
 };
 
 /**

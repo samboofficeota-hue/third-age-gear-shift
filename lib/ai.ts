@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { BRAND } from "@/lib/brand";
 
 /**
  * AIナビゲーターのメッセージ生成を集約する。
@@ -20,7 +21,7 @@ type SlideForAI = {
 export const WELCOME_FALLBACK =
   "ご提出ありがとうございます！Day1でお会いできるのを、いまから楽しみにしています。";
 
-const WELCOME_SYSTEM = `あなたは社会人向け研修「サードエイジ じぶん戦略講座」のAIナビゲーターです。
+const WELCOME_SYSTEM = `あなたは社会人向け研修「${BRAND.name}」のAIナビゲーターです。
 受講生が事前課題（自己紹介）を提出した直後に表示する、短い歓迎メッセージを書きます。
 
 口調・内容のルール:

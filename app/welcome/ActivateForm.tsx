@@ -1,111 +1,60 @@
 "use client";
 
 import { useState } from "react";
+import { Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getSupabaseBrowserClient } from "@/lib/supabase/browserClient";
 
 /**
- * 招待リンクからの初回アクティベーション・フォーム。
- * メール確認 ＋ パスワード設定 → セッション発行 → 事前アンケートへ。
+ * 招待リンクからの初回ログイン。
+ * 本人と分かっているメールアドレス宛にログイン用リンクを送るだけ（パスワード不要）。
  */
-export function ActivateForm({
-  token,
-  defaultEmail,
-}: {
-  token: string;
-  defaultEmail: string;
-}) {
-  const [email, setEmail] = useState(defaultEmail);
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
+export function ActivateForm({ defaultEmail }: { defaultEmail: string }) {
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const send = async () => {
     setError(null);
-    if (password.length < 8) {
-      setError("パスワードは8文字以上で設定してください。");
+    setSending(true);
+    const callbackUrl = new URL("/auth/callback", window.location.origin);
+    callbackUrl.searchParams.set("next", "/workshop/guide");
+    const { error } = await getSupabaseBrowserClient().auth.signInWithOtp({
+      email: defaultEmail,
+      options: { emailRedirectTo: callbackUrl.toString() },
+    });
+    setSending(false);
+    if (error) {
+      setError(error.message);
       return;
     }
-    if (password !== confirm) {
-      setError("パスワード（確認）が一致しません。");
-      return;
-    }
-    setLoading(true);
-    try {
-      const res = await fetch("/api/auth/activate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ token, email, password }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data.error ?? "登録に失敗しました。");
-        setLoading(false);
-        return;
-      }
-      window.location.href = "/workshop/pre/survey";
-    } catch {
-      setError("通信エラーが発生しました。");
-      setLoading(false);
-    }
+    setSent(true);
   };
 
-  return (
-    <form onSubmit={submit} className="space-y-4">
-      <div className="space-y-1.5">
-        <label htmlFor="email" className="text-xs font-medium text-[#a0c0b0]">
-          メールアドレス
-        </label>
-        <input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          autoComplete="email"
-          required
-          className="w-full rounded-lg border border-[rgba(0,255,136,0.25)] bg-[#0f1420] px-3 py-2.5 text-sm text-[#e0f0e8] outline-none focus:border-primary"
-        />
+  if (sent) {
+    return (
+      <div className="flex items-center gap-3 rounded-lg border border-primary/25 bg-primary/5 px-4 py-3 text-left">
+        <Mail className="h-5 w-5 shrink-0 text-primary" />
+        <p className="text-sm text-secondary-foreground">
+          <span className="font-semibold text-foreground">{defaultEmail}</span> 宛にログイン用のリンクをお送りしました。メールを開いてリンクを押してください。
+        </p>
       </div>
-      <div className="space-y-1.5">
-        <label htmlFor="password" className="text-xs font-medium text-[#a0c0b0]">
-          パスワード（8文字以上・ご自身で設定）
-        </label>
-        <input
-          id="password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          autoComplete="new-password"
-          required
-          className="w-full rounded-lg border border-[rgba(0,255,136,0.25)] bg-[#0f1420] px-3 py-2.5 text-sm text-[#e0f0e8] outline-none focus:border-primary"
-        />
-      </div>
-      <div className="space-y-1.5">
-        <label htmlFor="confirm" className="text-xs font-medium text-[#a0c0b0]">
-          パスワード（確認）
-        </label>
-        <input
-          id="confirm"
-          type="password"
-          value={confirm}
-          onChange={(e) => setConfirm(e.target.value)}
-          autoComplete="new-password"
-          required
-          className="w-full rounded-lg border border-[rgba(0,255,136,0.25)] bg-[#0f1420] px-3 py-2.5 text-sm text-[#e0f0e8] outline-none focus:border-primary"
-        />
-      </div>
+    );
+  }
 
+  return (
+    <div className="space-y-3">
+      <Button type="button" className="w-full" onClick={send} disabled={sending}>
+        {sending ? "送信中..." : "ログイン用のリンクを送る"}
+      </Button>
+      <p className="text-xs text-muted-foreground">
+        {defaultEmail} 宛にお送りします。パスワードは不要です。
+      </p>
       {error && (
         <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
           {error}
         </p>
       )}
-
-      <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? "登録中..." : "登録して事前アンケートに進む"}
-      </Button>
-    </form>
+    </div>
   );
 }

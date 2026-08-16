@@ -2,14 +2,27 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * Card — ネオン×ダークの世界観を持つカード。
+ * デザインガイドライン §6「カード」準拠。
+ *   - 背景: bg-card (#141a2a)
+ *   - 枠: 2px の border-line（neon 20%）
+ *   - 角丸: rounded-xl (12px)
+ *   - 影: shadow-neon（外周グロー + ドロップ）
+ *   - interactive=true のときだけ hover で translateY + neon 枠 + グロー強化
+ *     （静的な情報カードを勝手に動かさないため、ホバーは opt-in）
+ */
 const Card = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
+  React.HTMLAttributes<HTMLDivElement> & { interactive?: boolean }
+>(({ className, interactive = false, ...props }, ref) => (
   <div
     ref={ref}
     className={cn(
-      "rounded-xl border bg-card text-card-foreground shadow",
+      "rounded-xl border-2 border-border bg-card text-card-foreground shadow-neon",
+      "transition-all duration-300",
+      interactive &&
+        "cursor-pointer hover:-translate-y-1 hover:border-neon hover:shadow-neon-strong",
       className
     )}
     {...props}
@@ -23,7 +36,7 @@ const CardHeader = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex flex-col space-y-1.5 p-6", className)}
+    className={cn("flex flex-col gap-1.5 p-6", className)}
     {...props}
   />
 ))
@@ -35,7 +48,7 @@ const CardTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("font-semibold leading-none tracking-tight", className)}
+    className={cn("text-xl font-bold leading-snug tracking-tight", className)}
     {...props}
   />
 ))

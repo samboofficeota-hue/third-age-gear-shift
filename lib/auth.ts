@@ -1,95 +1,95 @@
-import bcrypt from "bcryptjs";
-import * as jose from "jose";
-import { cookies } from "next/headers";
-
-const COOKIE_NAME = process.env.JWT_COOKIE_NAME ?? "third_age_session";
-const SALT_ROUNDS = 10;
-
-function getJwtSecret(): string {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error(
-      "JWT_SECRET is not set. Set a random string of 32+ characters (Vercel → Settings → Environment Variables)."
-    );
-  }
-  return secret;
-}
+import { prisma } from "@/lib/db";
+import { getSupabaseServerClient } from "@/lib/supabase/serverClient";
+import { getSupabaseAdminClient } from "@/lib/supabase/adminClient";
 
 export type UserRole = "admin" | "facilitator" | "coordinator" | "participant";
 
 export type SessionPayload = {
-  sub: string; // userId
+  sub: string; // userId（public.users.id）
   email: string;
   role: UserRole;
-  iat?: number;
-  exp?: number;
 };
 
-export async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, SALT_ROUNDS);
-}
-
-export async function verifyPassword(
-  password: string,
-  hash: string
-): Promise<boolean> {
-  return bcrypt.compare(password, hash);
-}
-
-function getSecretKey(): Uint8Array {
-  const secret = getJwtSecret();
-  if (secret.length < 32) {
-    throw new Error(
-      `JWT_SECRET must be at least 32 characters (got ${secret.length}). Check your environment variables (Vercel → Settings → Environment Variables): name must be exactly JWT_SECRET.`
-    );
-  }
-  return new TextEncoder().encode(secret.slice(0, 64));
-}
-
-export async function createToken(payload: SessionPayload): Promise<string> {
-  const key = getSecretKey();
-  return new jose.SignJWT({
-    email: payload.email,
-    role: payload.role,
-  })
-    .setProtectedHeader({ alg: "HS256" })
-    .setSubject(payload.sub)
-    .setIssuedAt()
-    .setExpirationTime("14d")
-    .sign(key);
-}
-
-export async function verifyToken(token: string): Promise<SessionPayload | null> {
-  try {
-    const key = getSecretKey();
-    const { payload } = await jose.jwtVerify(token, key);
-    const sub = payload.sub;
-    const email = payload.email as string;
-    const role = payload.role as UserRole;
-    if (!sub || !email || !role) return null;
-    return { sub, email, role };
-  } catch {
-    return null;
+/**
+ * Supabase Auth の app_metadata に role・内部userId(sub)を同期する。
+ * middleware が DB を引かずに role 判定できるようにするため。
+ */
+async function syncAuthMetadata(authUserId: string, data: { role: UserRole; sub: string }) {
+  const admin = getSupabaseAdminClient();
+  const { error } = await admin.auth.admin.updateUserById(authUserId, {
+    app_metadata: { role: data.role, sub: data.sub },
+  });
+  if (error) {
+    console.error("syncAuthMetadata:", error);
   }
 }
 
+/**
+ * Supabase Auth のユーザー（authUserId）と、既存の public.users を紐付ける。
+ * - authUserId で既に紐付け済み → そのまま
+ * - email で既存行がある（招待済み参加者・事務局など） → authUserId を埋めて紐付け（初回なら activatedAt も）
+ * - どちらもない → 新規 participant を作成（自己登録相当）
+ * 最後に role・内部id を app_metadata に同期する。
+ */
+export async function linkOrCreateUserForAuthId({
+  authUserId,
+  email,
+}: {
+  authUserId: string;
+  email: string;
+}): Promise<{ id: string; role: UserRole }> {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  let user = await prisma.user.findUnique({ where: { authUserId } });
+
+  if (!user) {
+    const byEmail = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+    if (byEmail) {
+      user = await prisma.user.update({
+        where: { id: byEmail.id },
+        data: {
+          authUserId,
+          activatedAt: byEmail.activatedAt ?? new Date(),
+        },
+      });
+    }
+  }
+
+  if (!user) {
+    user = await prisma.user.create({
+      data: {
+        email: normalizedEmail,
+        authUserId,
+        activatedAt: new Date(),
+      },
+    });
+  }
+
+  const role = user.role as UserRole;
+  await syncAuthMetadata(authUserId, { role, sub: user.id });
+
+  return { id: user.id, role };
+}
+
+/**
+ * 現在のセッションを取得する。Supabase Auth のセッションが無ければ null。
+ * role/内部id は app_metadata から読む（無ければ自己修復して埋める）。
+ */
 export async function getSession(): Promise<SessionPayload | null> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(COOKIE_NAME)?.value;
-  if (!token) return null;
-  return verifyToken(token);
-}
+  const supabase = await getSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-export function getCookieName(): string {
-  return COOKIE_NAME;
-}
+  if (!user || !user.email) return null;
 
-export function getCookieOptions() {
-  return {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax" as const,
-    maxAge: 60 * 60 * 24 * 14, // 14日
-    path: "/",
-  };
+  const metaRole = user.app_metadata?.role as UserRole | undefined;
+  const metaSub = user.app_metadata?.sub as string | undefined;
+
+  if (metaRole && metaSub) {
+    return { sub: metaSub, email: user.email, role: metaRole };
+  }
+
+  const linked = await linkOrCreateUserForAuthId({ authUserId: user.id, email: user.email });
+  return { sub: linked.id, email: user.email, role: linked.role };
 }

@@ -9,10 +9,12 @@ import {
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { cn } from "@/lib/utils";
+import { BRAND } from "@/lib/brand";
+import { Button } from "@/components/ui/button";
 
 /**
  * 事前課題の「扉（ウェルカム）／ハブ」シート。
- * 参加お礼 → 2課題（事前アンケート・自己紹介シート）の状況 → 両方そろえば提出。
+ * 参加お礼 → 3課題（事前アンケート・自己紹介シート・ライフラインチャート）の状況 → 揃えば提出。
  */
 export default async function PrePage() {
   const session = await getSession();
@@ -39,8 +41,6 @@ export default async function PrePage() {
     lifeCurveDone = !!pre?.lifeCurve?.points && pre.lifeCurve.points.length > 0;
   }
 
-  const bothDone = surveyDone && slideDone;
-
   const tasks = [
     {
       href: "/workshop/pre/survey",
@@ -53,28 +53,43 @@ export default async function PrePage() {
       href: "/workshop/pre/profile-slide",
       icon: UserCircle,
       label: "自己紹介シート",
-      note: "Day1で発表",
+      note: "Day1で使用",
       done: slideDone,
+    },
+    {
+      href: "/workshop/pre/life-plan",
+      icon: LineChart,
+      label: "ライフラインチャート",
+      note: "Day1で使用",
+      done: lifeCurveDone,
     },
   ];
 
+  const allDone = tasks.every((t) => t.done);
+  const nextTask = tasks.find((t) => !t.done);
+
   return (
     <div className="mx-auto max-w-xl px-4 py-12 md:px-6">
-      <div className="rounded-2xl border border-[rgba(0,255,136,0.2)] bg-[#141a2a] p-6 sm:p-8">
-        <p className="text-lg font-bold text-[#e0f0e8]">
+      <div className="rounded-2xl border border-border bg-card p-6 sm:p-8">
+        <p className="eyebrow">事前課題</p>
+        <p className="mt-2 text-lg font-bold text-foreground">
           {name ? `${name}さん、こんにちは。` : "こんにちは。"}
         </p>
-        <div className="mt-3 space-y-3 text-sm leading-relaxed text-[#c8dccf]">
+        <div className="mt-3 space-y-3 text-sm leading-relaxed text-secondary-foreground">
           <p>
-            この度は「サードエイジ じぶん戦略講座」にご参加をいただけるとのこと。
-            誠にありがとうございます。
+            この度は「{BRAND.name}」にご参加をいただき、ありがとうございます。
           </p>
-          <p>ご参加に先立って、次の2つへの記入をお願いいたします。</p>
+          <p>
+            研修当日に先立って、事前課題の記入およびご提出をお願いしています。
+            <br />
+            必ず、前日までにお済ませください。
+          </p>
         </div>
 
-        <p className="mt-4 rounded-lg border border-[rgba(0,255,136,0.15)] bg-[#0f1420] px-3 py-2.5 text-xs leading-relaxed text-[#a0c0b0]">
-          💻 記入は <span className="font-semibold text-primary">パソコン</span>{" "}
-          での操作をおすすめします（特に「自己紹介シート」はPC向けに作られています）。
+        <p className="mt-4 rounded-lg border border-border bg-bg-panel px-3 py-2.5 text-xs leading-relaxed text-secondary-foreground">
+          💻 記入は、スマホではなく
+          <span className="font-semibold text-primary">PC</span>
+          をご使用ください。ワークシートの多くが、PC版を前提に作られています。
         </p>
 
         <ol className="mt-5 space-y-2">
@@ -86,7 +101,7 @@ export default async function PrePage() {
                   "flex items-center gap-3 rounded-lg border px-4 py-3 transition-colors",
                   t.done
                     ? "border-primary/40 bg-primary/10 hover:border-primary"
-                    : "border-[rgba(0,255,136,0.15)] bg-[#0f1420] hover:border-primary/50"
+                    : "border-border bg-bg-panel hover:border-primary/50"
                 )}
               >
                 {t.done ? (
@@ -94,16 +109,16 @@ export default async function PrePage() {
                 ) : (
                   <t.icon className="h-5 w-5 shrink-0 text-primary" />
                 )}
-                <span className="text-sm font-medium text-[#e0f0e8]">
+                <span className="text-sm font-medium text-foreground">
                   {t.label}
                 </span>
                 <span className="ml-auto flex items-center gap-2">
                   {t.done && (
-                    <span className="text-[11px] font-semibold text-primary">
+                    <span className="text-caption font-semibold text-primary">
                       記入済み
                     </span>
                   )}
-                  <span className="text-[11px] text-muted-foreground">
+                  <span className="text-caption text-muted-foreground">
                     {t.note}
                   </span>
                 </span>
@@ -112,83 +127,37 @@ export default async function PrePage() {
           ))}
         </ol>
 
-        <div className="mt-4">
-          <Link
-            href="/workshop/pre/life-plan"
-            className={cn(
-              "flex items-center gap-3 rounded-lg border border-dashed px-4 py-3 transition-colors",
-              lifeCurveDone
-                ? "border-primary/40 bg-primary/10 hover:border-primary"
-                : "border-[rgba(0,255,136,0.25)] hover:border-primary/50"
-            )}
-          >
-            {lifeCurveDone ? (
-              <CheckCircle2 className="h-5 w-5 shrink-0 text-primary" />
-            ) : (
-              <LineChart className="h-5 w-5 shrink-0 text-primary" />
-            )}
-            <span className="text-sm font-medium text-[#e0f0e8]">
-              ライフラインチャート
-            </span>
-            <span className="ml-auto flex items-center gap-2">
-              {lifeCurveDone && (
-                <span className="text-[11px] font-semibold text-primary">
-                  記入済み
-                </span>
-              )}
-              <span className="text-[11px] text-muted-foreground">任意</span>
-            </span>
-          </Link>
-        </div>
-
-        {bothDone ? (
+        {allDone ? (
           <>
-            <p className="mt-6 text-sm text-[#c8dccf]">
-              両方そろいました。これで事前課題は完了です。
+            <p className="mt-6 text-sm text-secondary-foreground">
+              これで事前課題は完了です。おつかれさまでした。
             </p>
-            <div className="mt-4">
-              <Link
-                href="/workshop/pre/done"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-bold text-primary-foreground transition hover:bg-[#00cc6a]"
-              >
-                事前課題を提出する
-                <ArrowRight className="h-4 w-4" />
-              </Link>
+            <div className="mt-4 flex justify-center">
+              <Button asChild>
+                <Link href="/workshop/pre/done">
+                  事前課題を提出する
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
             </div>
           </>
         ) : (
           <>
-            <p className="mt-5 text-sm text-[#c8dccf]">
+            <p className="mt-5 text-sm text-secondary-foreground">
               まずは、
-              <span className="font-bold text-primary">事前アンケート</span>
+              <span className="font-bold text-primary">{nextTask?.label}</span>
               からお願いします。
             </p>
-            <div className="mt-6 flex flex-col gap-3">
-              <Link
-                href="/workshop/pre/survey"
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-bold text-primary-foreground transition hover:bg-[#00cc6a]"
-              >
-                {surveyDone ? "自己紹介シートに進む" : "事前アンケートに進む"}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                href="/workshop/pre/profile-slide"
-                className="text-center text-xs text-muted-foreground hover:text-[#e0f0e8]"
-              >
-                先に自己紹介シートを見る
-              </Link>
+            <div className="mt-6 flex justify-center">
+              <Button asChild>
+                <Link href={nextTask?.href ?? "/workshop/pre/survey"}>
+                  {nextTask?.label}に進む
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
             </div>
           </>
         )}
-      </div>
-
-      <div className="mt-4 text-center">
-        <Link
-          href="/workshop"
-          className="text-xs text-muted-foreground hover:text-[#e0f0e8]"
-        >
-          ← ダッシュボードへ戻る
-        </Link>
       </div>
     </div>
   );

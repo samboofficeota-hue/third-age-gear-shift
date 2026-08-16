@@ -4,6 +4,7 @@ import { Lock, Check, ArrowRight, ArrowLeft, UserCircle } from "lucide-react";
 import { getDashboardState } from "@/lib/workshopAccess";
 import { PHASE_META, isPhaseAccessible } from "@/lib/phases";
 import { cn } from "@/lib/utils";
+import { BRAND } from "@/lib/brand";
 
 /**
  * 研修本番（Program B）ダッシュボード。白基調。
@@ -32,13 +33,13 @@ export default async function TrainingDashboard() {
 
       {!sessionId && (
         <div className="mb-6 rounded-lg border border-ws-line bg-white p-4">
-          <p className="text-sm text-ws-ink">研修コードがまだ未登録です。</p>
-          <Link
-            href="/workshop/join"
+          <p className="text-sm text-ws-ink">研修セッションが未設定です。</p>
+          <a
+            href={`mailto:${BRAND.contactEmail}`}
             className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-ws-teal hover:underline"
           >
-            研修コードを入力する <ArrowRight className="h-4 w-4" />
-          </Link>
+            事務局までお問合せください <ArrowRight className="h-4 w-4" />
+          </a>
         </div>
       )}
 

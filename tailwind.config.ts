@@ -19,6 +19,7 @@ const config: Config = {
   			'bg-dark':  '#0a0e1a',    /* ページ背景 */
   			'bg-panel': '#0f1420',    /* ナビ・テーブルヘッダー */
   			'bg-card':  '#141a2a',    /* カード背景 */
+  			hairline:   'rgba(255,255,255,0.06)', /* 中立の区切り線（カード内セクション区切り等） */
 
   			/* ── ワークシート（白地A4横）パレット：WORKSHEET_DESIGN.md ── */
   			ws: {
@@ -35,10 +36,11 @@ const config: Config = {
   				learn:  '#22A06B',   /* 学習 */
   			},
 
-  			/* ── テキスト ── */
-  			'text-base':      '#e0f0e8',
-  			'text-secondary': '#a0c0b0',
-  			'text-muted-game': '#708070',
+  			/* ── テキスト（ゲームUI） ──
+  			   本文既定色は globals.css の body(#e0f0e8) と foreground が担う。
+  			   サブ/メタ色は shadcn の secondary-foreground(#a0c0b0) / muted-foreground(#708070)。
+  			   ※ 旧 'text-base' 色トークンは font-size ユーティリティ .text-base と
+  			     クラス名衝突するため撤去（2026-08-12）。 */
 
   			/* ── shadcn/ui CSS変数 ── */
   			background: 'hsl(var(--background))',
@@ -81,6 +83,37 @@ const config: Config = {
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
   			}
+  		},
+  		/* ── タイプスケール（rem基準・行間内蔵） ──
+  		   html ルートを 16/17/18px と可変にする（globals.css）ため rem で定義。
+  		   標準キー(xs..5xl)にも和文向けの line-height を必ず持たせ、行間のバラつきを封じる。
+  		   意味づけキー(h1..h4, body-*, kpi)は用途を固定して使う。 */
+  		fontSize: {
+  			xs:   ['0.75rem',  { lineHeight: '1.5'  }],
+  			sm:   ['0.875rem', { lineHeight: '1.6'  }],
+  			base: ['1rem',     { lineHeight: '1.75' }],
+  			lg:   ['1.125rem', { lineHeight: '1.8'  }],
+  			xl:   ['1.25rem',  { lineHeight: '1.6'  }],
+  			'2xl': ['1.5rem',   { lineHeight: '1.4'  }],
+  			'3xl': ['1.875rem', { lineHeight: '1.3'  }],
+  			'4xl': ['2.25rem',  { lineHeight: '1.2'  }],
+  			'5xl': ['3rem',     { lineHeight: '1.1'  }],
+
+  			/* 見出し（UPPERCASE運用はページ側のユーティリティで付与） */
+  			display: ['2.625rem', { lineHeight: '1.15', fontWeight: '900', letterSpacing: '0.02em' }],
+  			h1:      ['2.25rem',  { lineHeight: '1.2',  fontWeight: '900', letterSpacing: '0.02em' }],
+  			h2:      ['1.75rem',  { lineHeight: '1.3',  fontWeight: '800', letterSpacing: '0.01em' }],
+  			h3:      ['1.375rem', { lineHeight: '1.4',  fontWeight: '700' }],
+  			h4:      ['1.125rem', { lineHeight: '1.5',  fontWeight: '700' }],
+
+  			/* 本文 */
+  			'body-lg': ['1.125rem', { lineHeight: '1.9' }],
+  			body:      ['1rem',     { lineHeight: '1.75' }],
+  			'body-sm': ['0.875rem', { lineHeight: '1.6' }],
+  			caption:   ['0.75rem',  { lineHeight: '1.5' }],
+
+  			/* KPI・数値強調 */
+  			kpi: ['2.25rem', { lineHeight: '1', fontWeight: '900' }],
   		},
   		fontFamily: {
   			sans: [

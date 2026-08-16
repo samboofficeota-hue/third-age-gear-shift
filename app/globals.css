@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── ルート文字サイズ：可変（17 / 18 / 20px） ───
+   rem基準のタイプスケールを底上げする土台。ミドルシニアの可読性を最優先し、
+   一般的なWebより一段大きめに取る。標準18px、モバイル17px、大画面20px。
+   ※ A4ワークシートは印刷時16px固定（下部 @media print）で原寸維持。 */
+html {
+  font-size: 18px;
+}
+@media (max-width: 768px) {
+  html { font-size: 17px; }
+}
+@media (min-width: 1280px) {
+  html { font-size: 20px; }
+}
+
 /* ─── ページ背景：ダーク + グリーングリッド ─── */
 body {
   background-color: #0a0e1a;
@@ -10,7 +24,91 @@ body {
     linear-gradient(90deg, rgba(0, 255, 136, 0.03) 1px, transparent 1px);
   background-size: 40px 40px;
   color: #e0f0e8;
+  line-height: 1.75;   /* 本文既定の行間。行間ルールの土台 */
   @apply antialiased;
+}
+
+/* ─── 見出しの基本リズム（サイズはユーティリティ/トークンで上書き可） ───
+   Preflight で無地化された h1–h6 に、和文向けの行間・字詰めの既定を戻す。
+   UPPERCASE や neon 色はページ側のユーティリティで付与する運用を維持。 */
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    line-height: 1.25;
+    letter-spacing: 0.02em;
+    font-feature-settings: "palt";  /* 和文プロポーショナル字詰め */
+    font-weight: 800;
+    text-wrap: balance;
+  }
+  h1 { font-size: clamp(1.875rem, 4vw, 2.25rem); font-weight: 900; }
+  h2 { font-size: 1.75rem; }
+  h3 { font-size: 1.375rem; font-weight: 700; }
+  h4 { font-size: 1.125rem; font-weight: 700; }
+  /* 本文の段落間リズム（明示 margin/space-y が無い素の <p> 向けの控えめな既定） */
+  p { line-height: 1.75; }
+}
+
+/* ════════════════════════════════════════════════════════════
+   セマンティック・コンポーネントクラス
+   ページ側は原則ここで定義したクラス／トークンを使う。
+   任意値(text-[#...] 等)の個別ハードコードは禁止。不足はここに足す。
+   ════════════════════════════════════════════════════════════ */
+@layer components {
+  /* 小見出しラベル（英字・大文字・ネオン）例: "DESIGN SYSTEM" */
+  .eyebrow {
+    @apply text-sm font-semibold uppercase tracking-[0.2em] text-neon;
+  }
+
+  /* リード文（導入文。本文より一段小さめ・控えめに） */
+  .lead {
+    @apply text-body text-secondary-foreground;
+  }
+
+  /* サブタイトル（見出し直下の説明・メタ。本文より一段大きめ） */
+  .subtitle {
+    @apply text-lg text-muted-foreground;
+  }
+
+  /* 情報ボックス（囲み・注記）。アイコン + テキストを想定 */
+  .callout {
+    @apply flex items-start gap-3 rounded-xl border border-border bg-card px-4 py-3 text-left;
+  }
+
+  /* ブランドロゴの角丸チップ（⚙️ 等の絵文字を入れる） */
+  .brand-chip {
+    @apply flex items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-neon-glow;
+  }
+
+  /* ── メニュー行カード（クリックできる導線カード） ──
+     ダッシュボード・研修ハブ等の「アイコン＋見出し＋説明＋→」の横長カード。 */
+  .nav-card {
+    @apply flex items-center justify-between gap-4 rounded-xl border border-border bg-card p-4 transition-colors hover:border-neon;
+  }
+  /* ロック/無効状態（ホバーで光らせない） */
+  .nav-card.is-locked {
+    @apply cursor-not-allowed border-white/5 bg-bg-panel opacity-60 hover:border-white/5;
+  }
+  /* 強調バリアント（研修本番など、薄いネオン地で目立たせる） */
+  .nav-card.is-feature {
+    @apply border-neon/40 bg-neon/10;
+  }
+
+  /* 丸アイコンチップ（h-9 相当・ネオン地） */
+  .icon-chip {
+    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-neon/15 text-neon;
+  }
+  .icon-chip.is-muted { @apply bg-bg-panel text-muted-foreground; }
+  .icon-chip.is-solid { @apply bg-primary text-primary-foreground; }
+
+  /* カード内の小ラベル（"DAY 1" "研修本番" 等の上部ラベル） */
+  .card-eyebrow {
+    @apply text-xs font-semibold uppercase tracking-wider text-muted-foreground;
+  }
+  /* メニュー行の見出し・説明 */
+  .nav-card-title { @apply text-base font-semibold text-foreground; }
+  .nav-card-note  { @apply text-sm text-muted-foreground; }
+
+  /* 完了などの小タグ */
+  .tag-done { @apply rounded bg-neon/15 px-1.5 py-0.5 text-xs font-medium text-neon; }
 }
 
 @layer base {
@@ -92,8 +190,8 @@ body {
 
 /* ════════════════════════════════════════════════════════════
    ワークシート（A4横スライド型）フォーマット基盤
-   画面: 1920幅の暗いステージにシート(1123×794px=A4横@96dpi)を中央配置
-   印刷: @page A4 landscape にシートが1:1で収まる
+   画面: 1920幅の暗いステージにシート(1100×710px＝A4横の印刷安全域)を中央配置
+   印刷: A4横の物理ページ(1123×794px @96dpi)内にシートを1:1で中央配置
    ════════════════════════════════════════════════════════════ */
 
 /* 画面用：シートを並べる暗いステージ（印刷では透明化） */
@@ -106,10 +204,10 @@ body {
   min-height: 100vh;
 }
 
-/* A4横シート（210×297mm の横向き = 297×210mm = 1123×794px @96dpi） */
+/* ベースプラン 1100×710px（A4横 1123×794px @96dpi から印刷安全マージンを見込んだサイズ） */
 .print-sheet {
-  width: 1123px;
-  min-height: 794px;
+  width: 1100px;
+  min-height: 710px;
   box-sizing: border-box;
   margin: 0 auto;
   padding: 40px 56px;
@@ -124,6 +222,11 @@ body {
    text-white / text-ws-accent などのユーティリティは個別指定が優先される。 */
 
 @media print {
+  /* A4ワークシートは 16px 基準で原寸設計。可変ルート(17/18px)を印刷では無効化し、
+     rem由来の文字が固定キャンバスからはみ出すのを防ぐ。 */
+  html {
+    font-size: 16px !important;
+  }
   /* グリッド背景・ダークテーマを白に */
   body {
     background: #fff !important;
@@ -146,14 +249,16 @@ body {
     min-height: 0 !important;
     gap: 0 !important;
   }
-  /* シート = 1ページ。ページ枠を埋める */
+  /* シート = 1ページ。@page の余白は0のまま、シート自体を物理ページ(1123×794px)より
+     ひとまわり小さい1100×710pxに固定し、中央配置して印刷安全マージンを作る。 */
   .print-sheet {
-    width: 100% !important;
-    min-height: auto !important;
-    margin: 0 !important;
-    padding: 0 !important;
+    width: 1100px !important;
+    height: 710px !important;
+    min-height: 0 !important;
+    margin: 42px auto 0 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
+    overflow: hidden;
     break-inside: avoid;
   }
   /* 2枚目以降のシートは改ページ */
@@ -170,5 +275,5 @@ body {
 
 @page {
   size: A4 landscape;
-  margin: 12mm;
+  margin: 0;
 }

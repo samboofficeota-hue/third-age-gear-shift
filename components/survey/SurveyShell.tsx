@@ -17,23 +17,23 @@ export function SurveyShell({
   className?: string;
 }) {
   return (
-    <div className="min-h-screen px-4 py-8 sm:px-6">
-      <div className={cn("mx-auto w-full max-w-xl", className)}>
+    <div className="min-h-screen py-8">
+      <div className={cn("mx-auto w-full max-w-xl px-4 md:px-6", className)}>
         {(title || description) && (
-          <header className="mb-7">
+          <header className="mb-6">
             {title && (
-              <h1 className="text-2xl font-bold tracking-tight text-[#e0f0e8] sm:text-3xl">
+              <h1 className="text-xl font-bold tracking-tight text-foreground">
                 {title}
               </h1>
             )}
             {description && (
-              <p className="mt-3 text-base leading-relaxed text-[#c8dccf]">
+              <p className="mt-2 text-sm leading-relaxed text-secondary-foreground">
                 {description}
               </p>
             )}
           </header>
         )}
-        <div className="space-y-10">{children}</div>
+        <div className="space-y-8">{children}</div>
       </div>
     </div>
   );

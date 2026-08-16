@@ -82,6 +82,44 @@ Cursor のターミナルで次を順に実行する。
 
 **注意:** 同じメールのユーザーが既にいるときは「User already exists」と表示され、新規作成はスキップされる。
 
+## アカウント作成と回答データの紐付け
+
+参加者アカウントの作成には **2つの経路**がある。どちらでも、回答データ（`WorkshopData`）は
+**ログイン中のユーザーID（`WorkshopData.userId` はユニークFK）** に紐づく。
+全シートの保存は `patchPhaseData()`（`lib/workshopData.ts`）が `getSession().sub`（=userId）で
+該当行を引く/作るため、**ログインした本人のIDに必ず回答が載る**。
+
+### 経路A：招待 → アクティベーション（招待制の正道・推奨）
+
+1. 事務局が参加者を事前登録（`name` / `department` / `organizationId` / `inviteToken` 付き、`passwordHash` は null）。
+2. 参加者が招待リンク `/welcome?token=...` からパスワードを設定（`POST /api/auth/activate`）。
+   - **同じ `user.id` を引き継ぐ**ため、氏名・部署・企業が保持される。
+3. セッション発行 → 以降の回答はこの本人IDに紐づく。
+
+### 経路B：自己登録 → 研修コード参加
+
+1. `/register`（`POST /api/auth/register`）で email＋パスワードのみの**新規User**を作成（氏名・部署・セッションなし）。
+2. `/workshop/join`（`POST /api/workshop/join`）で研修コードを入力 → `WorkshopData.sessionId` にセッションを紐付け。
+3. 氏名等は事前アンケート/プロフィールで `WorkshopData.profile` に記録。
+
+### ⚠️ 運用ルール（データが割れないために）
+
+**同一人物を経路Aと経路Bの両方に載せない。** 参加者ごとに「招待でアクティベーション」**か**
+「自己登録＋コード参加」の**どちらか一方**に統一する。
+
+- 招待済みメールで自己登録 → `409`（既に登録済み）で失敗。
+- 別メールで自己登録 → **別アカウント**となり回答が2つに割れる。
+
+### パスワード忘れ
+
+認証は独自方式（Prisma `User` + bcrypt + jose JWT）で **Supabase Auth は未使用**（Supabaseはストレージのみ）。
+そのため Supabase の自動リセット（`resetPasswordForEmail`）は使えない。
+
+- **現行の対応 = 事務局対応（運用ベース）**：ログイン画面に
+  「パスワードをお忘れの方は、事務局までご連絡ください。」を表示し、事務局が招待トークン再発行等で対応。
+- セルフ復旧（本人がメールのリンクから再設定）を導入する場合は、`resetToken` 追加＋
+  メール送信基盤（Resend 等）＋リセットAPI/画面が別途必要（未実装）。
+
 ## 環境変数
 
 | 変数 | 説明 |
@@ -102,3 +140,6 @@ Cursor のターミナルで次を順に実行する。
 | `POST /api/auth/login` | body: `{ email, password }`。成功時は Cookie をセット。 |
 | `POST /api/auth/logout` | Cookie を削除。 |
 | `GET /api/auth/me` | 現在のユーザー（Cookie から）。未ログインは `{ user: null }`。 |
+| `POST /api/auth/register` | 経路B。body: `{ email, password }`。新規Userを作成しCookieをセット。 |
+| `POST /api/auth/activate` | 経路A。body: `{ token, email, password }`。招待トークンで既存Userを有効化。 |
+| `POST /api/workshop/join` | 研修コードで `WorkshopData.sessionId` を紐付け。 |

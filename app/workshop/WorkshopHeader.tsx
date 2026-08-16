@@ -1,10 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { BRAND } from "@/lib/brand";
 
 export function WorkshopHeader() {
   const [loggingOut, setLoggingOut] = useState(false);
+  const pathname = usePathname();
+  const showGuideLink = pathname?.startsWith("/workshop/pre") ?? false;
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -20,22 +24,32 @@ export function WorkshopHeader() {
   };
 
   return (
-    <header className="no-print sticky top-0 z-10 border-b border-[rgba(0,255,136,0.2)] bg-[#0a0e1a]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0a0e1a]/80">
+    <header className="no-print sticky top-0 z-10 border-b border-border bg-bg-dark/95 backdrop-blur supports-[backdrop-filter]:bg-bg-dark/80">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 md:px-8">
         <Link
           href="/workshop"
-          className="text-sm font-medium text-[#a0c0b0] hover:text-[#00ff88]"
+          className="text-sm font-medium text-secondary-foreground hover:text-neon"
         >
-          サードエイジ じぶん戦略講座
+          {BRAND.name}
         </Link>
-        <button
-          type="button"
-          onClick={handleLogout}
-          disabled={loggingOut}
-          className="rounded-lg px-3 py-1.5 text-sm text-[#a0c0b0] transition hover:bg-[#0f1420] hover:text-[#e0f0e8] disabled:opacity-60"
-        >
-          {loggingOut ? "ログアウト中..." : "ログアウト"}
-        </button>
+        <div className="flex items-center gap-4">
+          {showGuideLink && (
+            <Link
+              href="/workshop/guide"
+              className="text-xs text-secondary-foreground hover:text-foreground"
+            >
+              ガイドに戻る
+            </Link>
+          )}
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={loggingOut}
+            className="rounded-lg px-3 py-1.5 text-xs text-secondary-foreground transition hover:bg-bg-panel hover:text-foreground disabled:opacity-60"
+          >
+            {loggingOut ? "ログアウト中..." : "ログアウト"}
+          </button>
+        </div>
       </div>
     </header>
   );
