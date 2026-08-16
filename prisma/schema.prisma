@@ -16,6 +16,7 @@ datasource db {
 enum UserRole {
   admin
   facilitator
+  coordinator
   participant
 }
 
@@ -54,6 +55,7 @@ model User {
 
   workshopData              WorkshopData?
   participantBlockOverrides ParticipantBlockOverride[]
+  facilitatedSessions       WorkshopSession[]          @relation("SessionFacilitator")
 
   @@map("users")
 }
@@ -90,6 +92,15 @@ model WorkshopData {
   completedPhases String[] @map("completed_phases") // ["pre","day1","homework","day2","post"]
   lastUpdated    DateTime @updatedAt @map("last_updated")
 
+  // 出欠（参加者リスト＝DB一本化方針・ADMIN_WORKFLOW.md）
+  attendanceDay1 Boolean? @map("attendance_day1")
+  attendanceDay2 Boolean? @map("attendance_day2")
+  // Day2修了（D-4）。事後・フォローの自動化の起点
+  completedAt    DateTime? @map("completed_at")
+  // 二重送信防止フラグ（A-3 / F-1）
+  postSurveyReminderSentAt DateTime? @map("post_survey_reminder_sent_at")
+  followupSentAt           DateTime? @map("followup_sent_at")
+
   @@map("workshop_data")
 }
 
@@ -101,6 +112,12 @@ model WorkshopSession {
   isActive  Boolean   @default(true) @map("is_active")
   day1Date  DateTime? @map("day1_date") // 研修日 Day1
   day2Date  DateTime? @map("day2_date") // 研修日 Day2
+  // 開催情報（S-4）
+  location  String?   // 会場名 or オンラインURL
+  isOnline  Boolean   @default(false) @map("is_online")
+  // 担当講師（S-5 / T-4）。講師画面はこの紐付けで担当セッションに絞る
+  facilitatorId String? @map("facilitator_id")
+  facilitator   User?   @relation("SessionFacilitator", fields: [facilitatorId], references: [id], onDelete: SetNull)
   createdAt DateTime  @default(now()) @map("created_at")
 
   blockStatuses BlockStatus[]

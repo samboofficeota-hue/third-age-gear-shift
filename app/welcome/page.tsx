@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ClipboardList, UserCircle } from "lucide-react";
 import { prisma } from "@/lib/db";
+import { INVITE_TTL_DAYS, isInviteExpired } from "@/lib/invite";
 import { ActivateForm } from "./ActivateForm";
 import { BRAND } from "@/lib/brand";
 import { BrandMark } from "@/components/BrandMark";
@@ -45,13 +46,17 @@ export default async function WelcomePage({
       })
     : null;
 
-  if (!user || user.activatedAt) {
+  const expired = !!user && !user.activatedAt && isInviteExpired(user.invitedAt);
+
+  if (!user || user.activatedAt || expired) {
     return (
       <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-4">
         <WelcomeBrandHeader />
         <div className="w-full rounded-2xl border border-border bg-card p-6 text-center">
           <p className="text-sm text-foreground">
-            この招待リンクは無効か、すでに使用されています。
+            {expired
+              ? `この招待リンクは有効期限（${INVITE_TTL_DAYS}日）が切れています。お手数ですが事務局までご連絡ください。`
+              : "この招待リンクは無効か、すでに使用されています。"}
           </p>
           <Link
             href="/login"

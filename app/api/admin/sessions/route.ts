@@ -1,47 +1,77 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getSession } from "@/lib/auth";
+import { requireStaff, requireAdmin, sessionScopeFor } from "@/lib/adminAuth";
+
+/** 日付文字列（YYYY-MM-DD）→ Date | null。無効値は undefined（=更新しない） */
+function parseDateInput(v: unknown): Date | null | undefined {
+  if (v === null || v === "") return null;
+  if (typeof v !== "string") return undefined;
+  const d = new Date(`${v}T00:00:00+09:00`);
+  return Number.isNaN(d.getTime()) ? undefined : d;
+}
+
+function sessionDto(s: {
+  id: string;
+  name: string | null;
+  code: string;
+  isActive: boolean;
+  createdAt: Date;
+  day1Date: Date | null;
+  day2Date: Date | null;
+  location: string | null;
+  isOnline: boolean;
+  facilitatorId: string | null;
+  facilitator?: { id: string; name: string | null; email: string } | null;
+  _count?: { workshopData: number };
+}) {
+  return {
+    id: s.id,
+    name: s.name,
+    code: s.code,
+    isActive: s.isActive,
+    createdAt: s.createdAt,
+    day1Date: s.day1Date,
+    day2Date: s.day2Date,
+    location: s.location,
+    isOnline: s.isOnline,
+    facilitatorId: s.facilitatorId,
+    facilitatorName: s.facilitator?.name ?? s.facilitator?.email ?? null,
+    participantCount: s._count?.workshopData ?? 0,
+  };
+}
 
 export async function GET() {
-  const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: "ログインしてください。" }, { status: 401 });
-  }
-  if (session.role !== "admin" && session.role !== "facilitator") {
-    return NextResponse.json({ error: "権限がありません。" }, { status: 403 });
-  }
+  const guard = await requireStaff();
+  if (!guard.ok) return guard.response;
 
+  // 講師は担当セッションのみ（F-1）。未割り当ての場合は空になる
   const sessions = await prisma.workshopSession.findMany({
+    where: sessionScopeFor(guard.session),
     orderBy: { createdAt: "desc" },
     include: {
       _count: { select: { workshopData: true } },
+      facilitator: { select: { id: true, name: true, email: true } },
     },
   });
 
-  return NextResponse.json({
-    sessions: sessions.map((s) => ({
-      id: s.id,
-      name: s.name,
-      code: s.code,
-      isActive: s.isActive,
-      createdAt: s.createdAt,
-      participantCount: s._count.workshopData,
-    })),
-  });
+  return NextResponse.json({ sessions: sessions.map(sessionDto) });
 }
 
 export async function POST(request: Request) {
-  const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: "ログインしてください。" }, { status: 401 });
-  }
-  if (session.role !== "admin" && session.role !== "facilitator") {
-    return NextResponse.json({ error: "権限がありません。" }, { status: 403 });
-  }
+  const guard = await requireAdmin();
+  if (!guard.ok) return guard.response;
 
   const body = await request.json().catch(() => ({}));
   const name = typeof body.name === "string" ? body.name.trim() : "";
   const code = typeof body.code === "string" ? body.code.trim() : "";
+  const location = typeof body.location === "string" ? body.location.trim() : "";
+  const isOnline = body.isOnline === true;
+  const facilitatorId =
+    typeof body.facilitatorId === "string" && body.facilitatorId
+      ? body.facilitatorId
+      : null;
+  const day1Date = parseDateInput(body.day1Date);
+  const day2Date = parseDateInput(body.day2Date);
 
   if (!code) {
     return NextResponse.json({ error: "コードを入力してください。" }, { status: 400 });
@@ -55,9 +85,20 @@ export async function POST(request: Request) {
 
   try {
     const ws = await prisma.workshopSession.create({
-      data: { name: name || null, code },
+      data: {
+        name: name || null,
+        code,
+        location: location || null,
+        isOnline,
+        facilitatorId,
+        day1Date: day1Date ?? null,
+        day2Date: day2Date ?? null,
+      },
+      include: {
+        facilitator: { select: { id: true, name: true, email: true } },
+      },
     });
-    return NextResponse.json({ session: { id: ws.id, name: ws.name, code: ws.code, isActive: ws.isActive, createdAt: ws.createdAt } }, { status: 201 });
+    return NextResponse.json({ session: sessionDto(ws) }, { status: 201 });
   } catch (e: unknown) {
     if ((e as { code?: string }).code === "P2002") {
       return NextResponse.json({ error: "このコードはすでに使用されています。" }, { status: 409 });
@@ -68,25 +109,51 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: "ログインしてください。" }, { status: 401 });
-  }
-  if (session.role !== "admin" && session.role !== "facilitator") {
-    return NextResponse.json({ error: "権限がありません。" }, { status: 403 });
-  }
+  const guard = await requireAdmin();
+  if (!guard.ok) return guard.response;
 
   const body = await request.json().catch(() => ({}));
-  const { id, isActive } = body as { id?: string; isActive?: boolean };
-
-  if (!id || typeof isActive !== "boolean") {
-    return NextResponse.json({ error: "id と isActive が必要です。" }, { status: 400 });
+  const { id } = body as { id?: string };
+  if (!id) {
+    return NextResponse.json({ error: "id が必要です。" }, { status: 400 });
   }
 
-  const updated = await prisma.workshopSession.update({
-    where: { id },
-    data: { isActive },
-  });
+  const data: Record<string, unknown> = {};
+  if (typeof body.isActive === "boolean") data.isActive = body.isActive;
+  if (typeof body.name === "string") data.name = body.name.trim() || null;
+  if (typeof body.location === "string") data.location = body.location.trim() || null;
+  if (typeof body.isOnline === "boolean") data.isOnline = body.isOnline;
+  if ("facilitatorId" in body) {
+    data.facilitatorId =
+      typeof body.facilitatorId === "string" && body.facilitatorId
+        ? body.facilitatorId
+        : null;
+  }
+  if ("day1Date" in body) {
+    const d = parseDateInput(body.day1Date);
+    if (d !== undefined) data.day1Date = d;
+  }
+  if ("day2Date" in body) {
+    const d = parseDateInput(body.day2Date);
+    if (d !== undefined) data.day2Date = d;
+  }
 
-  return NextResponse.json({ session: { id: updated.id, isActive: updated.isActive } });
+  if (Object.keys(data).length === 0) {
+    return NextResponse.json({ error: "更新する項目がありません。" }, { status: 400 });
+  }
+
+  try {
+    const updated = await prisma.workshopSession.update({
+      where: { id },
+      data,
+      include: {
+        facilitator: { select: { id: true, name: true, email: true } },
+        _count: { select: { workshopData: true } },
+      },
+    });
+    return NextResponse.json({ session: sessionDto(updated) });
+  } catch (e) {
+    console.error("admin/sessions PATCH:", e);
+    return NextResponse.json({ error: "更新に失敗しました。" }, { status: 500 });
+  }
 }

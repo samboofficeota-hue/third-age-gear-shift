@@ -10,8 +10,10 @@ node_modules/
 .env.development.local
 .env.test.local
 .env.production.local
+# バックアップ・退避ファイルも秘密情報を含むので除外する
 .env.local.bak*
-*.env.bak*
+.env*.bak*
+.env*.backup*
 
 # Next.js
 .next/

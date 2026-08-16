@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import { getSupabaseServerClient } from "@/lib/supabase/serverClient";
 import { getSupabaseAdminClient } from "@/lib/supabase/adminClient";
 
-export type UserRole = "admin" | "facilitator" | "participant";
+export type UserRole = "admin" | "facilitator" | "coordinator" | "participant";
 
 export type SessionPayload = {
   sub: string; // userId（public.users.id）

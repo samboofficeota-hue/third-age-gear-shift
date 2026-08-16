@@ -33,9 +33,9 @@ async function uploadImage(
     console.error("photo upload:", error.message);
     return { error: "アップロードに失敗しました。", status: 500 };
   }
-  const { data } = admin.storage.from(PHOTO_BUCKET).getPublicUrl(path);
-  // upsert で同一パスのため、CDNキャッシュをバストする
-  return { url: `${data.publicUrl}?v=${Date.now()}` };
+  // バケットは非公開。配信は認証付きの /api/photo 経由に限る（公開URLは発行しない）。
+  // upsert で同一パスのため、ブラウザキャッシュをバストする
+  return { url: `/api/photo/${path}?v=${Date.now()}` };
 }
 
 /**
