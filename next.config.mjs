@@ -1,5 +1,10 @@
 const isDev = process.env.NODE_ENV !== "production";
 
+// ブラウザ側の Supabase クライアント（マジックリンクの signInWithOtp/verifyOtp、
+// auth/callback の exchangeCodeForSession）が直接 fetch する先。connect-src に穴を開けないと
+// CSP でブロックされ、ログインそのものが失敗する。
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+
 /**
  * セキュリティヘッダー。
  * 外部ホストからの読み込み・外部への送信を既定で遮断し、XSS が入り込んだ場合の
@@ -13,7 +18,7 @@ const csp = [
   // data:/blob: は写真のトリミング（canvas → blob）で必要
   "img-src 'self' data: blob:",
   "font-src 'self' data:",
-  "connect-src 'self'",
+  `connect-src 'self'${supabaseUrl ? ` ${supabaseUrl}` : ""}`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",

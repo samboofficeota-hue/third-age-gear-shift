@@ -78,14 +78,14 @@ function Field({
       <span
         className={
           headline
-            ? "mb-4 block text-center text-base font-bold text-ws-teal"
+            ? "mb-2.5 block whitespace-nowrap text-center text-base font-bold text-ws-teal"
             : "mb-1.5 block text-sm font-semibold text-ws-teal"
         }
       >
         {label}
       </span>
       {readOnly ? (
-        <p className="whitespace-pre-wrap rounded-md border border-ws-line px-3 py-2 text-base leading-relaxed text-ws-ink">
+        <p className="whitespace-pre-wrap rounded-md border border-ws-line px-3 py-2 text-sm leading-relaxed text-ws-ink">
           {value}
         </p>
       ) : (
@@ -94,7 +94,7 @@ function Field({
           onChange={(e) => onChange(e.target.value)}
           rows={rows}
           placeholder={placeholder}
-          className="w-full resize-none rounded-md border border-ws-line px-3 py-2 text-base leading-relaxed text-ws-ink outline-none placeholder:text-ws-muted/60 focus:border-ws-teal"
+          className="w-full resize-none rounded-md border border-ws-line px-3 py-2 text-sm leading-relaxed text-ws-ink outline-none placeholder:text-ws-muted/60 focus:border-ws-teal"
         />
       )}
     </div>
@@ -114,7 +114,7 @@ export function WorkAlignment({
     onChange?.({ ...value, ...patch });
 
   return (
-    <div className="mt-6">
+    <div className="mt-5">
       {/* 上段：3コラムのタイトル＋入力（左右は同サイズ・中央小さめ） */}
       <div
         className="grid items-start gap-12"
@@ -122,12 +122,12 @@ export function WorkAlignment({
       >
         {/* 左：原点（なぜ今の会社で働こうと思ったか） */}
         <Field
-          label="なぜ今の会社で働こうと思ったのか？"
+          label="なぜ今の会社で働こうと思った？"
           value={value.whyWork}
           placeholder={
             "なぜ他ではなく、この会社に？\nどんなことがやりたくて、この会社に？"
           }
-          rows={11}
+          rows={8}
           readOnly={readOnly}
           onChange={(v) => set({ whyWork: v })}
           headline
@@ -135,10 +135,10 @@ export function WorkAlignment({
 
         {/* 中央：会社のビジョン・ミッション */}
         <Field
-          label="会社のビジョン・ミッション"
+          label="会社の理念・ビジョン"
           value={value.vision}
           placeholder={"経営ビジョンとは？\n会社のミッションとは？"}
-          rows={6}
+          rows={5}
           readOnly={readOnly}
           onChange={(v) => set({ vision: v })}
           headline
@@ -146,12 +146,12 @@ export function WorkAlignment({
 
         {/* 右：実現したいこと */}
         <Field
-          label="今の会社で何を成し遂げたいのか？"
+          label="やりたいことと一致した点は？"
           value={value.achieve}
           placeholder={
             "ビジョン実現に向けて、何がしたい？\nミッション達成に向けて、自分の役割とは？\n何が実現できると、達成感を感じるのだろう？"
           }
-          rows={11}
+          rows={8}
           readOnly={readOnly}
           onChange={(v) => set({ achieve: v })}
           headline
@@ -159,7 +159,7 @@ export function WorkAlignment({
       </div>
 
       {/* 下段：ベン図（じぶん∩会社＝一致点）・中央寄せ */}
-      <div className="mx-auto mt-2 w-[520px] max-w-full">
+      <div className="mx-auto mt-1 w-[440px] max-w-full">
         <VennDiagram />
       </div>
     </div>

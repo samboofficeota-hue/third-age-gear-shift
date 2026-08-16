@@ -96,7 +96,7 @@ export function WorkOrigin({
 
             {/* 原点（言葉）— 枠つき */}
             {readOnly ? (
-              <p className="mt-2 flex min-h-[3.5rem] items-center justify-center whitespace-pre-wrap rounded-md border-2 border-ws-teal/60 bg-ws-mint px-4 py-3 text-center text-lg font-bold leading-snug text-ws-ink">
+              <p className="mt-2 flex min-h-[3.5rem] items-center justify-center whitespace-pre-wrap rounded-md border-2 border-ws-teal/60 bg-ws-mint px-4 py-3 text-center text-base font-bold leading-snug text-ws-ink">
                 {e.reason}
               </p>
             ) : (
@@ -105,7 +105,7 @@ export function WorkOrigin({
                 onChange={(ev) => setField(i, "reason", ev.target.value)}
                 rows={reasonRows}
                 placeholder={REASON_PH[i] ?? REASON_PH[0]}
-                className="mt-2 w-full resize-none rounded-md border-2 border-ws-teal/60 px-4 py-3 text-center text-lg font-bold leading-snug text-ws-ink outline-none placeholder:font-normal placeholder:text-ws-muted/60 focus:border-ws-teal"
+                className="mt-2 w-full resize-none rounded-md border-2 border-ws-teal/60 px-4 py-3 text-center text-base font-bold leading-snug text-ws-ink outline-none placeholder:font-normal placeholder:text-ws-muted/60 focus:border-ws-teal"
               />
             )}
 
@@ -114,7 +114,7 @@ export function WorkOrigin({
               その原体験
             </span>
             {readOnly ? (
-              <p className="mt-1.5 whitespace-pre-wrap rounded-md border border-ws-line px-3 py-2 text-base leading-relaxed text-ws-ink">
+              <p className="mt-1.5 whitespace-pre-wrap rounded-md border border-ws-line px-3 py-2 text-sm leading-relaxed text-ws-ink">
                 {e.experience}
               </p>
             ) : (
@@ -123,7 +123,7 @@ export function WorkOrigin({
                 onChange={(ev) => setField(i, "experience", ev.target.value)}
                 rows={expRows}
                 placeholder={EXP_PH[i] ?? EXP_PH[0]}
-                className="mt-1.5 w-full resize-none rounded-md border border-ws-line px-3 py-2 text-base leading-relaxed text-ws-ink outline-none placeholder:text-ws-muted/60 focus:border-ws-teal"
+                className="mt-1.5 w-full resize-none rounded-md border border-ws-line px-3 py-2 text-sm leading-relaxed text-ws-ink outline-none placeholder:text-ws-muted/60 focus:border-ws-teal"
               />
             )}
           </div>
@@ -141,7 +141,7 @@ export function WorkOrigin({
             <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-dashed border-ws-teal text-ws-teal">
               <Plus className="h-4 w-4" />
             </span>
-            原点を追加（最大{MAX}つ）
+            原点{LABELS[entries.length]}を追加する
           </button>
         </div>
       )}

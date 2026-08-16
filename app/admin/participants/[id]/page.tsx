@@ -6,10 +6,8 @@ import { prisma } from "@/lib/db";
 import { sessionScopeFor } from "@/lib/adminAuth";
 import { WorksheetStage } from "@/components/worksheet/WorksheetStage";
 import { PrintButton } from "@/components/worksheet/PrintButton";
-import {
-  ProfileSlideView,
-  type ProfileSlideData,
-} from "@/components/worksheet/ProfileSlideView";
+import { ProfileSlideReadOnly } from "@/components/worksheet/ProfileSlideReadOnly";
+import type { Slide } from "@/app/workshop/pre/profile-slide/_types";
 
 /**
  * 講師・事務局向け「じぶん紹介」の閲覧（F-2）。Day1の発表ファシリで使う。
@@ -42,7 +40,7 @@ export default async function AdminParticipantProfilePage({
   });
   if (!user) notFound();
 
-  const slide = (user.workshopData?.pre as { profileSlide?: ProfileSlideData } | null)
+  const slide = (user.workshopData?.pre as { profileSlide?: Slide } | null)
     ?.profileSlide;
   const hasData =
     !!slide &&
@@ -79,7 +77,7 @@ export default async function AdminParticipantProfilePage({
       </div>
 
       {hasData ? (
-        <ProfileSlideView data={slide} />
+        <ProfileSlideReadOnly data={slide as Slide} />
       ) : (
         <div className="mt-10 w-full max-w-[1123px] rounded-2xl border border-ws-line bg-white p-10 text-center">
           <p className="text-lg font-bold text-ws-ink">
