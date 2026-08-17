@@ -1,6 +1,24 @@
 const isDev = process.env.NODE_ENV !== "production";
 
 /**
+ * ブラウザ側の Supabase クライアントが直接 fetch する先。
+ * マジックリンクの signInWithOtp / verifyOtp、auth/callback の exchangeCodeForSession は
+ * すべてブラウザから Supabase のドメインへ出ていくので、connect-src に含めないと
+ * CSP がブロックしてログインが成立しない（リクエストが飛ばないので Supabase 側のログにも残らない）。
+ *
+ * ここで空文字にフォールバックすると「CSPだけ静かに壊れる」状態になり、
+ * 原因の分かりにくい障害になるため、本番ビルドでは明示的に失敗させる。
+ */
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+if (!supabaseUrl && !isDev) {
+  throw new Error(
+    "NEXT_PUBLIC_SUPABASE_URL is not set at build time. " +
+      "CSP の connect-src に Supabase を許可できず、マジックリンクのログインが動かなくなります。" +
+      "Vercel → Settings → Environment Variables を確認してください。"
+  );
+}
+
+/**
  * セキュリティヘッダー。
  * 外部ホストからの読み込み・外部への送信を既定で遮断し、XSS が入り込んだ場合の
  * 被害（情報の持ち出し・クリックジャッキング）を抑える。
@@ -13,7 +31,7 @@ const csp = [
   // data:/blob: は写真のトリミング（canvas → blob）で必要
   "img-src 'self' data: blob:",
   "font-src 'self' data:",
-  "connect-src 'self'",
+  `connect-src 'self'${supabaseUrl ? ` ${supabaseUrl}` : ""}`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
