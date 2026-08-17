@@ -8,14 +8,20 @@ const isDev = process.env.NODE_ENV !== "production";
  *
  * ここで空文字にフォールバックすると「CSPだけ静かに壊れる」状態になり、
  * 原因の分かりにくい障害になるため、本番ビルドでは明示的に失敗させる。
+ * ただし Vercel の Preview は環境変数が本番と別枠なので、止めずに警告に留める
+ * （プレビューを壊さないため。ログインを確認したい場合は Preview 側にも設定が必要）。
  */
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 if (!supabaseUrl && !isDev) {
-  throw new Error(
+  const message =
     "NEXT_PUBLIC_SUPABASE_URL is not set at build time. " +
-      "CSP の connect-src に Supabase を許可できず、マジックリンクのログインが動かなくなります。" +
-      "Vercel → Settings → Environment Variables を確認してください。"
-  );
+    "CSP の connect-src に Supabase を許可できず、マジックリンクのログインが動かなくなります。" +
+    "Vercel → Settings → Environment Variables を確認してください。";
+  if (process.env.VERCEL_ENV === "preview") {
+    console.warn(`⚠️  ${message}（Preview のためビルドは継続しますが、この環境ではログインできません）`);
+  } else {
+    throw new Error(message);
+  }
 }
 
 /**
