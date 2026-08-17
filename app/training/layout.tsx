@@ -3,7 +3,7 @@ import { TrainingHeader } from "./TrainingHeader";
 import { BRAND } from "@/lib/brand";
 
 export const metadata: Metadata = {
-  title: `研修本番 | ${BRAND.name}`,
+  title: `研修当日用 | ${BRAND.name}`,
 };
 
 /**

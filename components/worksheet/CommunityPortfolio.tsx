@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, Check } from "lucide-react";
+import { Plus, Trash2, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -18,16 +18,17 @@ export type PortfolioCircle = {
   size: number; // 1〜7
 };
 
+// 選択できる種類（「その他」は選べない。既存データ互換のため型・配置マップには残す）
 const TYPES: { key: CircleType; label: string; color: string }[] = [
   { key: "family", label: "家庭", color: "#3B82F6" },
   { key: "work", label: "仕事", color: "#E5277E" },
   { key: "gift", label: "ギフト", color: "#9A6A3C" },
   { key: "learning", label: "学び", color: "#22A06B" },
-  { key: "other", label: "その他", color: "#6B7280" },
 ];
-const TYPE_BY_KEY = Object.fromEntries(TYPES.map((t) => [t.key, t])) as Record<
+const ALL_TYPES = [...TYPES, { key: "other" as const, label: "その他", color: "#6B7280" }];
+const TYPE_BY_KEY = Object.fromEntries(ALL_TYPES.map((t) => [t.key, t])) as Record<
   CircleType,
-  (typeof TYPES)[number]
+  (typeof ALL_TYPES)[number]
 >;
 
 const MAX = 10;
@@ -151,7 +152,6 @@ export function CommunityPortfolio({
     setDraft(NEW_DRAFT);
   };
   const remove = (i: number) => {
-    if (!window.confirm(`「${value[i].title || "無題"}」を削除しますか？`)) return;
     onChange?.(value.filter((_, idx) => idx !== i));
     if (editingIndex === i) finishEdit();
     else if (editingIndex !== null && i < editingIndex)
@@ -159,157 +159,7 @@ export function CommunityPortfolio({
   };
 
   return (
-    <div className="mt-6 flex gap-8 print:justify-center">
-      {/* ── サイドメニュー（印刷されない・記入例では非表示） ── */}
-      {!readOnly && (
-      <div className="no-print w-[320px] shrink-0">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-bold text-ws-ink">コミュニティ入力</p>
-          {editing && (
-            <span className="rounded bg-ws-mint px-2 py-0.5 text-[11px] font-semibold text-ws-teal">
-              編集中
-            </span>
-          )}
-        </div>
-
-        <div className="mt-3 space-y-3">
-          {/* 種類（1行・罫線=キーカラー・選択で背景色） */}
-          <div>
-            <span className="mb-1.5 block text-xs font-semibold text-ws-muted">
-              種類
-            </span>
-            <div className="flex gap-1">
-              {TYPES.map((t) => {
-                const on = current.type === t.key;
-                return (
-                  <button
-                    key={t.key}
-                    type="button"
-                    onClick={() => setField({ type: t.key })}
-                    className="flex-1 rounded-md border-2 px-1 py-1.5 text-xs font-semibold transition-colors"
-                    style={{
-                      borderColor: t.color,
-                      backgroundColor: on ? t.color : "transparent",
-                      color: on ? "#fff" : t.color,
-                    }}
-                  >
-                    {t.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* タイトル */}
-          <label className="block">
-            <span className="mb-1 block text-xs font-semibold text-ws-muted">
-              タイトル
-            </span>
-            <input
-              value={current.title}
-              onChange={(e) => setField({ title: e.target.value })}
-              placeholder="どんな場所で何している？"
-              className="w-full rounded-md border border-ws-line px-3 py-2 text-sm text-ws-ink outline-none focus:border-ws-teal"
-            />
-          </label>
-
-          {/* 説明 */}
-          <label className="block">
-            <span className="mb-1 block text-xs font-semibold text-ws-muted">
-              説明（円にカーソルを乗せると表示）
-            </span>
-            <textarea
-              value={current.description ?? ""}
-              onChange={(e) => setField({ description: e.target.value })}
-              rows={2}
-              placeholder="どんなコミュニティ／活動か"
-              className="w-full resize-none rounded-md border border-ws-line px-3 py-2 text-sm text-ws-ink outline-none focus:border-ws-teal"
-            />
-          </label>
-
-          {/* サイズ（編集中はライブで拡大縮小） */}
-          <label className="block">
-            <span className="mb-1 flex items-center justify-between text-xs font-semibold text-ws-muted">
-              <span>円のサイズ（関わりの大きさ）</span>
-              <span className="text-ws-teal">
-                {current.size} / {MAX_SIZE}
-              </span>
-            </span>
-            <input
-              type="range"
-              min={1}
-              max={MAX_SIZE}
-              value={Math.min(MAX_SIZE, current.size)}
-              onChange={(e) => setField({ size: Number(e.target.value) })}
-              className="w-full accent-ws-teal"
-            />
-          </label>
-
-          {editing ? (
-            <button
-              type="button"
-              onClick={finishEdit}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-ws-teal px-4 py-2 text-sm font-bold text-white transition hover:opacity-90"
-            >
-              <Check className="h-4 w-4" />
-              編集を終える
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={add}
-              disabled={!draft.title.trim() || value.length >= MAX}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-ws-teal px-4 py-2 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-40"
-            >
-              <Plus className="h-4 w-4" />
-              円を追加（{value.length}/{MAX}）
-            </button>
-          )}
-        </div>
-
-        {/* 追加済みリスト（編集・削除） */}
-        {value.length > 0 && (
-          <ul className="mt-4 space-y-1 border-t border-ws-line pt-3">
-            {value.map((c, i) => (
-              <li
-                key={i}
-                className={cn(
-                  "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm",
-                  editingIndex === i && "bg-ws-mint"
-                )}
-              >
-                <span
-                  className="h-2.5 w-2.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: TYPE_BY_KEY[c.type].color }}
-                />
-                <span className="min-w-0 flex-1 truncate text-ws-ink">
-                  {c.title || "無題"}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => startEdit(i)}
-                  className="shrink-0 text-ws-muted hover:text-ws-teal"
-                  aria-label="編集"
-                  title="編集"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => remove(i)}
-                  className="shrink-0 text-ws-muted hover:text-ws-accent"
-                  aria-label="削除"
-                  title="削除"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-      )}
-
+    <div className="mt-6 flex flex-col items-center gap-4">
       {/* ── 表示エリア（固定サイズの横長フレーム・印刷対象） ── */}
       <div className="shrink-0">
         <div
@@ -328,9 +178,6 @@ export function CommunityPortfolio({
           </span>
           <span className="absolute bottom-2 right-3 text-xs font-bold text-[#22A06B]">
             学び
-          </span>
-          <span className="absolute left-1/2 top-1.5 -translate-x-1/2 text-[10px] font-bold text-ws-muted">
-            その他
           </span>
 
           {/* 円（バブル配置） */}
@@ -364,6 +211,102 @@ export function CommunityPortfolio({
           })}
         </div>
       </div>
+
+      {/* ── 編集バー（印刷されない・記入例では非表示・円をクリックすると読み込まれる） ── */}
+      {!readOnly && (
+        <div className="no-print flex w-full items-center gap-4 rounded-xl border border-ws-line bg-ws-fill px-4 py-2.5">
+          <div className="flex-1 space-y-1.5">
+            {/* 行1：種類＋サイズ */}
+            <div className="flex items-center gap-4">
+              <div className="flex shrink-0 items-center gap-1.5">
+                <span className="shrink-0 text-xs font-semibold text-ws-teal">種類</span>
+                <div className="flex gap-1">
+                  {TYPES.map((t) => {
+                    const on = current.type === t.key;
+                    return (
+                      <button
+                        key={t.key}
+                        type="button"
+                        onClick={() => setField({ type: t.key })}
+                        className="rounded-md border-2 px-2.5 py-0.5 text-[11px] font-bold transition-colors"
+                        style={{
+                          borderColor: t.color,
+                          backgroundColor: on ? t.color : "transparent",
+                          color: on ? "#fff" : t.color,
+                        }}
+                      >
+                        {t.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="flex shrink-0 items-center gap-1.5">
+                <span className="shrink-0 text-xs font-semibold text-ws-teal">サイズ</span>
+                <input
+                  type="range"
+                  min={1}
+                  max={MAX_SIZE}
+                  value={Math.min(MAX_SIZE, current.size)}
+                  onChange={(e) => setField({ size: Number(e.target.value) })}
+                  className="w-16 accent-ws-teal"
+                />
+                <span className="w-8 shrink-0 text-right text-xs text-ws-teal">
+                  {current.size}/{MAX_SIZE}
+                </span>
+              </div>
+            </div>
+
+            {/* 行2：タイトル */}
+            <div className="flex items-center gap-1.5">
+              <span className="shrink-0 text-xs font-semibold text-ws-teal">
+                タイトル{editing && <span className="text-ws-accent">（編集中）</span>}
+              </span>
+              <input
+                value={current.title}
+                onChange={(e) => setField({ title: e.target.value.slice(0, 30) })}
+                placeholder="どんな場所で何している？"
+                maxLength={30}
+                className={cn(
+                  "w-full rounded-md border px-2.5 py-1 text-sm text-ws-ink outline-none focus:border-ws-teal",
+                  editing ? "border-ws-accent/50 bg-ws-mint/20" : "border-ws-line"
+                )}
+              />
+            </div>
+          </div>
+
+          {/* 機能ボタン（カード右端に縦3つ・2行の高さに収める） */}
+          <div className="flex shrink-0 flex-col gap-1">
+            <button
+              type="button"
+              onClick={add}
+              disabled={editing || !draft.title.trim() || value.length >= MAX}
+              className="inline-flex items-center justify-center gap-1 rounded-md bg-ws-teal px-2.5 py-0.5 text-[11px] font-bold text-white transition hover:opacity-90 disabled:opacity-40"
+            >
+              <Plus className="h-3 w-3" />
+              円を追加
+            </button>
+            <button
+              type="button"
+              onClick={finishEdit}
+              disabled={!editing}
+              className="inline-flex items-center justify-center gap-1 rounded-md bg-ws-teal px-2.5 py-0.5 text-[11px] font-bold text-white transition hover:opacity-90 disabled:opacity-40"
+            >
+              <Check className="h-3 w-3" />
+              入力完了
+            </button>
+            <button
+              type="button"
+              onClick={() => remove(editingIndex as number)}
+              disabled={!editing}
+              className="inline-flex items-center justify-center gap-1 rounded-md border border-ws-line px-2.5 py-0.5 text-[11px] font-bold text-ws-muted transition hover:border-ws-accent hover:text-ws-accent disabled:opacity-40"
+            >
+              <Trash2 className="h-3 w-3" />
+              円を削除
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

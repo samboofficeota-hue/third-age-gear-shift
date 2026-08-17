@@ -28,7 +28,6 @@ import {
   type SocialContactData,
 } from "@/components/worksheet/SocialContact";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 type ShareRow = { bunjin: string; share: string; meaning: string };
 type Bunkai = { shareTable?: ShareRow[]; portfolio?: PortfolioCircle[] };
@@ -44,16 +43,6 @@ const EMPTY_SOCIAL: SocialContactData = { have: [], missing: [] };
 
 const MAX_ROWS = 10;
 const DEFAULT_ROWS = 5;
-
-// 記入例（「記入例を見る」）はハードコードではなく、DEMOアカウントの実データを読む
-type Example = {
-  shareTable: ShareRow[];
-  portfolio: PortfolioCircle[];
-  sukiTokui: MatrixEntry[];
-  workOrigin: WorkOriginEntry[];
-  alignment: AlignmentData;
-  socialContact: SocialContactData;
-};
 
 const EMPTY: ShareRow = { bunjin: "", share: "", meaning: "" };
 
@@ -73,15 +62,12 @@ export function Day1Client({ viewOnly = false }: { viewOnly?: boolean } = {}) {
   const [socialContact, setSocialContact] =
     useState<SocialContactData>(EMPTY_SOCIAL);
   const [headerName, setHeaderName] = useState("");
-  const [mode, setMode] = useState<"edit" | "sample">("edit");
-  const [example, setExample] = useState<Example | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const isSample = mode === "sample";
-  // viewOnly（事後の記録閲覧）と isSample（記入例）の両方で編集を止める
-  const isReadOnly = isSample || viewOnly;
+  // viewOnly（事後の記録閲覧）のときだけ編集を止める
+  const isReadOnly = viewOnly;
 
   useEffect(() => {
     (async () => {
@@ -114,31 +100,6 @@ export function Day1Client({ viewOnly = false }: { viewOnly?: boolean } = {}) {
     })();
   }, []);
 
-  // 記入例（DEMOアカウントの実データ）を初回の「記入例を見る」で取得
-  useEffect(() => {
-    if (mode !== "sample" || example) return;
-    (async () => {
-      const d = await fetch("/api/workshop/example", { credentials: "include" })
-        .then((r) => r.json())
-        .catch(() => ({}));
-      const day1 = (d?.example?.day1 ?? {}) as {
-        bunkai?: Bunkai;
-        bunseki?: Bunseki;
-      };
-      setExample({
-        shareTable: day1.bunkai?.shareTable ?? [],
-        portfolio: day1.bunkai?.portfolio ?? [],
-        sukiTokui: day1.bunseki?.sukiTokui ?? [],
-        workOrigin: day1.bunseki?.workOrigin ?? [],
-        alignment: { ...EMPTY_ALIGNMENT, ...(day1.bunseki?.alignment ?? {}) },
-        socialContact: {
-          ...EMPTY_SOCIAL,
-          ...(day1.bunseki?.socialContact ?? {}),
-        },
-      });
-    })();
-  }, [mode, example]);
-
   // 「保存しました ✓」は3秒で自動的に消す
   useEffect(() => {
     if (!saved) return;
@@ -146,11 +107,9 @@ export function Day1Client({ viewOnly = false }: { viewOnly?: boolean } = {}) {
     return () => clearTimeout(t);
   }, [saved]);
 
-  const view = isSample
-    ? (example?.shareTable ?? []).filter((r) => r.bunjin.trim())
-    : viewOnly
-      ? rows.filter((r) => r.bunjin.trim() || r.share.trim() || r.meaning.trim())
-      : padRows(rows, count);
+  const view = viewOnly
+    ? rows.filter((r) => r.bunjin.trim() || r.share.trim() || r.meaning.trim())
+    : padRows(rows, count);
 
   const setCell = (i: number, key: keyof ShareRow, v: string) => {
     if (isReadOnly) return;
@@ -243,40 +202,23 @@ export function Day1Client({ viewOnly = false }: { viewOnly?: boolean } = {}) {
 
   return (
     <WorksheetStage>
-      {/* 操作バー */}
-      <div className="no-print flex w-full max-w-[1123px] flex-wrap items-center justify-between gap-3">
-        <Link
-          href={viewOnly ? "/workshop/records" : "/training"}
-          className="inline-flex items-center gap-1.5 text-sm text-ws-muted hover:text-ws-ink"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {viewOnly ? "ワークの記録 一覧へ" : "研修本番へ戻る"}
-        </Link>
-        <div className="flex items-center gap-2">
-          {viewOnly ? (
+      {viewOnly && (
+        <div className="no-print flex w-full max-w-[1123px] flex-wrap items-center justify-between gap-3">
+          <Link
+            href="/workshop/records"
+            className="inline-flex items-center gap-1.5 text-sm text-ws-muted hover:text-ws-ink"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            ワークの記録 一覧へ
+          </Link>
+          <div className="flex items-center gap-2">
             <span className="rounded-full border border-ws-teal/30 bg-ws-mint/40 px-4 py-2 text-sm font-medium text-ws-teal">
               閲覧モード（書き込みはできません）
             </span>
-          ) : (
-            (["edit", "sample"] as const).map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => setMode(m)}
-                className={cn(
-                  "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
-                  mode === m
-                    ? "border-ws-teal bg-ws-mint text-ws-teal"
-                    : "border-ws-line text-ws-muted hover:text-ws-ink"
-                )}
-              >
-                {m === "edit" ? "記入する" : "記入例を見る"}
-              </button>
-            ))
-          )}
-          <PrintButton />
+            <PrintButton />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ── 分人シェア表 ── */}
       <PrintSheet>
@@ -284,32 +226,31 @@ export function Day1Client({ viewOnly = false }: { viewOnly?: boolean } = {}) {
           no={2}
           accent="じぶん"
           title="分解"
-          sub="〜 分人シェア表"
+          sub="〜 分人シェア"
           right={nameTag}
         />
 
         <p className="mt-3 text-sm text-ws-muted">
-          あなたの中にいる いろいろな「分人（ぶんじん）」を書き出し、シェア（割合・頻度）と、
-          自分の中での位置づけを書いてみましょう。（5つ以上・最大10）
+          あなたの中の いろいろな「分人」を書き出そう。（5つ以上・最大10）
         </p>
 
         {/* 列見出し */}
-        <div className="mt-6 flex items-center gap-3 border-b-2 border-ws-line pb-2 text-xs font-semibold text-ws-teal">
+        <div className="mt-4 flex items-center gap-2 border-b-2 border-ws-line pb-1.5 text-xs font-semibold text-ws-teal">
           <span className="w-9 shrink-0 text-center">No</span>
           <span className="w-12 shrink-0" />
-          <span className="flex-[2]">どんな分人</span>
-          <span className="w-52 shrink-0">割合・頻度</span>
+          <span className="flex-[3]">どんな分人</span>
+          <span className="w-[166px] shrink-0">割合・頻度</span>
           <span className="flex-[2]">自分の中の位置づけ</span>
         </div>
 
         {/* 行 */}
-        <ul className="mt-2">
+        <ul className="mt-1">
           {view.map((r, i) => (
             <li
               key={i}
-              className="flex items-center gap-3 border-b border-ws-line py-2"
+              className="flex items-center gap-2 border-b border-ws-line py-0.5"
             >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ws-accent text-sm font-bold text-white">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-ws-teal bg-white text-xs font-bold text-ws-teal">
                 {i + 1}
               </span>
 
@@ -341,9 +282,9 @@ export function Day1Client({ viewOnly = false }: { viewOnly?: boolean } = {}) {
 
               {isReadOnly ? (
                 <>
-                  <span className="flex-[2] text-lg text-ws-ink">{r.bunjin}</span>
-                  <span className="w-52 shrink-0 text-lg text-ws-ink">{r.share}</span>
-                  <span className="flex-[2] text-lg text-ws-ink">{r.meaning}</span>
+                  <span className="flex-[3] text-sm text-ws-ink">{r.bunjin}</span>
+                  <span className="w-[166px] shrink-0 text-sm text-ws-ink">{r.share}</span>
+                  <span className="flex-[2] text-sm text-ws-ink">{r.meaning}</span>
                 </>
               ) : (
                 <>
@@ -351,19 +292,19 @@ export function Day1Client({ viewOnly = false }: { viewOnly?: boolean } = {}) {
                     value={r.bunjin}
                     onChange={(e) => setCell(i, "bunjin", e.target.value)}
                     placeholder="〇〇な自分"
-                    className="flex-[2] rounded-md border border-ws-line px-3 py-2 text-lg text-ws-ink outline-none placeholder:text-ws-muted/60 focus:border-ws-teal"
+                    className="flex-[3] rounded-md border border-ws-line px-2.5 py-1 text-sm text-ws-ink outline-none placeholder:text-ws-muted/60 focus:border-ws-teal"
                   />
                   <input
                     value={r.share}
                     onChange={(e) => setCell(i, "share", e.target.value)}
                     placeholder="何%ぐらい？ 頻度は？"
-                    className="w-52 shrink-0 rounded-md border border-ws-line px-3 py-2 text-lg text-ws-ink outline-none placeholder:text-ws-muted/60 focus:border-ws-teal"
+                    className="w-[166px] shrink-0 rounded-md border border-ws-line px-2.5 py-1 text-sm text-ws-ink outline-none placeholder:text-ws-muted/60 focus:border-ws-teal"
                   />
                   <input
                     value={r.meaning}
                     onChange={(e) => setCell(i, "meaning", e.target.value)}
                     placeholder="自分の中のどんな存在"
-                    className="flex-[2] rounded-md border border-ws-line px-3 py-2 text-lg text-ws-ink outline-none placeholder:text-ws-muted/60 focus:border-ws-teal"
+                    className="flex-[2] rounded-md border border-ws-line px-2.5 py-1 text-sm text-ws-ink outline-none placeholder:text-ws-muted/60 focus:border-ws-teal"
                   />
                 </>
               )}
@@ -401,7 +342,7 @@ export function Day1Client({ viewOnly = false }: { viewOnly?: boolean } = {}) {
           あなたが関わっているコミュニティ・活動を、種類ごとに円で配置してみましょう。（円をクリックすると編集できます）
         </p>
         <CommunityPortfolio
-          value={isSample ? example?.portfolio ?? [] : portfolio}
+          value={portfolio}
           onChange={setPortfolioDirty}
           readOnly={isReadOnly}
         />
@@ -417,10 +358,10 @@ export function Day1Client({ viewOnly = false }: { viewOnly?: boolean } = {}) {
           right={nameTag}
         />
         <p className="mt-3 text-sm text-ws-muted">
-          「個人／会社」×「得意／好き」の4象限に、思いつくことを書き出してみましょう。（カードをクリックして編集可能）
+          好きなこと・得意なことを個人と会社に分けて書いてみよう。（カードをクリックして編集可能・各エリア2つまで）
         </p>
         <SukiTokuiMatrix
-          value={isSample ? example?.sukiTokui ?? [] : sukiTokui}
+          value={sukiTokui}
           onChange={setSukiTokuiDirty}
           readOnly={isReadOnly}
         />
@@ -429,17 +370,17 @@ export function Day1Client({ viewOnly = false }: { viewOnly?: boolean } = {}) {
       {/* ── "はたらく"の原点（じぶん分析） ── */}
       <PrintSheet>
         <SheetHeader
-          no={3}
+          no={4}
           accent="じぶん"
           title="分析"
           sub={'〜 "はたらく"の原点'}
           right={nameTag}
         />
         <p className="mt-3 text-sm text-ws-muted">
-          やりがいを感じた経験、働きがいを感じた瞬間など。なぜ自分は働くのか、その「原体験」を思い出してみましょう。（最大3点）
+          やりがいを感じたこと、働きがいを感じた瞬間など。なぜ自分が働きたいと思った、その「原体験」を思い出そう。（3つまで）
         </p>
         <WorkOrigin
-          value={isSample ? example?.workOrigin ?? [] : workOrigin}
+          value={workOrigin}
           onChange={setWorkOriginDirty}
           readOnly={isReadOnly}
         />
@@ -448,17 +389,17 @@ export function Day1Client({ viewOnly = false }: { viewOnly?: boolean } = {}) {
       {/* ── 会社とじぶんの一致点（じぶん分析） ── */}
       <PrintSheet>
         <SheetHeader
-          no={4}
+          no={5}
           accent="じぶん"
           title="分析"
           sub="〜 会社とじぶんの一致点"
           right={nameTag}
         />
         <p className="mt-3 text-sm text-ws-muted">
-          なぜ今の会社に入ろうと思ったのか。じぶんがやりたいことと、どう一致しているのか掘り下げてみよう。
+          今の会社に入ろうと思った理由、やりたいと思ったことは何でしたか？
         </p>
         <WorkAlignment
-          value={isSample ? example?.alignment ?? EMPTY_ALIGNMENT : alignment}
+          value={alignment}
           onChange={setAlignmentDirty}
           readOnly={isReadOnly}
         />
@@ -467,17 +408,17 @@ export function Day1Client({ viewOnly = false }: { viewOnly?: boolean } = {}) {
       {/* ── 社会とじぶんの接点（じぶん分析） ── */}
       <PrintSheet>
         <SheetHeader
-          no={5}
+          no={6}
           accent="じぶん"
           title="分析"
           sub="〜 社会とじぶんの接点"
           right={nameTag}
         />
         <p className="mt-3 text-sm text-ws-muted">
-          「どんな社会」と、どんな「接点」が持てているのか、逆に持てていないのか、書き出してみよう。
+          じぶんと社会の「接点」について、見えているもの、見えていないものを書き出してみよう。
         </p>
         <SocialContact
-          value={isSample ? example?.socialContact ?? EMPTY_SOCIAL : socialContact}
+          value={socialContact}
           onChange={setSocialContactDirty}
           readOnly={isReadOnly}
         />

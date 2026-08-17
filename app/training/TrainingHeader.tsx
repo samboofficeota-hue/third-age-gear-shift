@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { BRAND } from "@/lib/brand";
 
@@ -10,6 +11,8 @@ import { BRAND } from "@/lib/brand";
  */
 export function TrainingHeader() {
   const [loggingOut, setLoggingOut] = useState(false);
+  const pathname = usePathname();
+  const showGuideLink = pathname !== "/training";
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -34,18 +37,28 @@ export function TrainingHeader() {
           >
             {BRAND.name}
           </Link>
-          <span className="rounded-full bg-ws-mint px-2 py-0.5 text-[11px] font-semibold text-ws-teal">
-            研修本番
+          <span className="rounded-full bg-ws-mint px-2 py-0.5 text-caption font-semibold text-ws-teal">
+            研修当日用
           </span>
         </div>
-        <button
-          type="button"
-          onClick={handleLogout}
-          disabled={loggingOut}
-          className="rounded-lg px-3 py-1.5 text-sm text-ws-muted transition hover:bg-ws-fill hover:text-ws-ink disabled:opacity-60"
-        >
-          {loggingOut ? "ログアウト中..." : "ログアウト"}
-        </button>
+        <div className="flex items-center gap-4">
+          {showGuideLink && (
+            <Link
+              href="/training"
+              className="text-xs text-ws-muted hover:text-ws-ink"
+            >
+              ガイドに戻る
+            </Link>
+          )}
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={loggingOut}
+            className="rounded-lg px-3 py-1.5 text-xs text-ws-muted transition hover:bg-ws-fill hover:text-ws-ink disabled:opacity-60"
+          >
+            {loggingOut ? "ログアウト中..." : "ログアウト"}
+          </button>
+        </div>
       </div>
     </header>
   );

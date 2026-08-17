@@ -1,19 +1,20 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { WorksheetStage } from "@/components/worksheet/WorksheetStage";
-import { PrintButton } from "@/components/worksheet/PrintButton";
-import {
-  ProfileSlideView,
-  type ProfileSlideData,
-} from "@/components/worksheet/ProfileSlideView";
+import { PrintSheet } from "@/components/worksheet/PrintSheet";
+import { SheetHeader } from "@/components/worksheet/SheetHeader";
+import { LifeLineChart } from "@/components/worksheet/LifeLineChart";
+import { sortedForChart, type LifeCurvePoint } from "@/app/workshop/pre/life-plan/_types";
+import { ProfileSlideReadOnly } from "@/components/worksheet/ProfileSlideReadOnly";
+import type { Slide } from "@/app/workshop/pre/profile-slide/_types";
 
 /**
  * 研修本番（Program B）でのじぶん紹介＝読み取り専用ビュー（発表用）。
- * 事前課題（Program A）で入力した pre.profileSlide を Supabase から読み込んで表示する。
- * 編集は Program A 側（/workshop/pre/profile-slide）で行う。
+ * 事前課題（Program A）で入力した pre.profileSlide / pre.lifeCurve を
+ * Supabase から読み込んで表示する。編集は Program A 側（/workshop/pre/*）で行う。
  */
 export default async function TrainingIntroPage() {
   const session = await getSession();
@@ -23,8 +24,10 @@ export default async function TrainingIntroPage() {
     where: { userId: session.sub },
     select: { pre: true },
   });
-  const slide = (wd?.pre as { profileSlide?: ProfileSlideData } | null)
-    ?.profileSlide;
+  const pre = wd?.pre as
+    | { profileSlide?: Slide; lifeCurve?: { points?: LifeCurvePoint[] } }
+    | null;
+  const slide = pre?.profileSlide;
   const hasData =
     !!slide &&
     !!(
@@ -35,31 +38,13 @@ export default async function TrainingIntroPage() {
       (slide.history ?? []).some((h) => h.event?.trim())
     );
 
+  const lifeCurvePoints = sortedForChart(pre?.lifeCurve?.points ?? []);
+  const hasLifeCurve = lifeCurvePoints.length > 0;
+
   return (
     <WorksheetStage>
-      {/* 操作バー（印刷されない） */}
-      <div className="no-print flex w-full max-w-[1123px] flex-wrap items-center justify-between gap-3">
-        <Link
-          href="/training"
-          className="inline-flex items-center gap-1.5 text-sm text-ws-muted hover:text-ws-ink"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          研修本番へ戻る
-        </Link>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/workshop/pre/profile-slide"
-            className="inline-flex items-center gap-2 rounded-lg border border-ws-line px-4 py-2 text-sm text-ws-ink transition-colors hover:border-ws-teal"
-          >
-            <Pencil className="h-4 w-4" />
-            編集する（事前課題）
-          </Link>
-          {hasData && <PrintButton />}
-        </div>
-      </div>
-
       {hasData ? (
-        <ProfileSlideView data={slide} />
+        <ProfileSlideReadOnly data={slide as Slide} />
       ) : (
         <div className="mt-10 w-full max-w-[1123px] rounded-2xl border border-ws-line bg-white p-10 text-center">
           <p className="text-lg font-bold text-ws-ink">
@@ -70,6 +55,35 @@ export default async function TrainingIntroPage() {
           </p>
           <Link
             href="/workshop/pre/profile-slide"
+            className="mt-5 inline-flex items-center gap-2 rounded-lg bg-ws-teal px-5 py-2.5 text-sm font-bold text-white transition hover:opacity-90"
+          >
+            <Pencil className="h-4 w-4" />
+            事前課題で作成する
+          </Link>
+        </div>
+      )}
+
+      {hasLifeCurve ? (
+        <PrintSheet>
+          <SheetHeader
+            accent="ライフライン"
+            title="・チャート"
+            right={<span className="text-sm font-semibold text-ws-teal">事前課題</span>}
+          />
+          <div className="mt-4 w-full">
+            <LifeLineChart points={lifeCurvePoints} />
+          </div>
+        </PrintSheet>
+      ) : (
+        <div className="w-full max-w-[1123px] rounded-2xl border border-ws-line bg-white p-10 text-center">
+          <p className="text-lg font-bold text-ws-ink">
+            ライフラインチャートがまだ作成されていません
+          </p>
+          <p className="mt-2 text-sm text-ws-muted">
+            事前課題でライフラインチャートを作成すると、ここに表示されます。
+          </p>
+          <Link
+            href="/workshop/pre/life-plan"
             className="mt-5 inline-flex items-center gap-2 rounded-lg bg-ws-teal px-5 py-2.5 text-sm font-bold text-white transition hover:opacity-90"
           >
             <Pencil className="h-4 w-4" />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Pencil, Trash2, Check } from "lucide-react";
+import { Plus, Trash2, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -75,130 +75,15 @@ export function SukiTokuiMatrix({
     setEditingIndex(null);
     setDraft((d) => ({ ...d, text: "" }));
   };
-  const pickCell = (row: RowKey, col: ColKey) => {
-    finishEdit();
-    setDraft((d) => ({ ...d, row, col }));
-  };
   const remove = (i: number) => {
-    if (!window.confirm("この項目を削除しますか？")) return;
     onChange?.(value.filter((_, idx) => idx !== i));
     if (editingIndex === i) finishEdit();
     else if (editingIndex !== null && i < editingIndex)
       setEditingIndex(editingIndex - 1);
   };
 
-  const rowLabel = (k: RowKey) => ROWS.find((r) => r.key === k)!.label;
-  const colLabel = (k: ColKey) => COLS.find((c) => c.key === k)!.label;
-
   return (
-    <div className="mt-6 flex gap-8 print:justify-center">
-      {/* ── サイドメニュー（印刷されない・記入例では非表示） ── */}
-      {!readOnly && (
-      <div className="no-print w-[320px] shrink-0">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-bold text-ws-ink">好き・得意を追加</p>
-          {editing && (
-            <span className="rounded bg-ws-mint px-2 py-0.5 text-[11px] font-semibold text-ws-teal">
-              編集中
-            </span>
-          )}
-        </div>
-
-        <div className="mt-3 space-y-3">
-          {/* 縦軸：個人/会社 */}
-          <div>
-            <span className="mb-1.5 block text-xs font-semibold text-ws-muted">
-              個人 ／ 会社
-            </span>
-            <div className="flex gap-1">
-              {ROWS.map((r) => {
-                const on = current.row === r.key;
-                return (
-                  <button
-                    key={r.key}
-                    type="button"
-                    onClick={() => setField({ row: r.key })}
-                    className={cn(
-                      "flex-1 rounded-md border-2 py-1.5 text-xs font-semibold transition-colors",
-                      on
-                        ? "border-ws-teal bg-ws-teal text-white"
-                        : "border-ws-line text-ws-ink hover:border-ws-teal"
-                    )}
-                  >
-                    {r.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 横軸：得意/好き */}
-          <div>
-            <span className="mb-1.5 block text-xs font-semibold text-ws-muted">
-              得意 ／ 好き
-            </span>
-            <div className="flex gap-1">
-              {COLS.map((c) => {
-                const on = current.col === c.key;
-                return (
-                  <button
-                    key={c.key}
-                    type="button"
-                    onClick={() => setField({ col: c.key })}
-                    className={cn(
-                      "flex-1 rounded-md border-2 py-1.5 text-xs font-semibold transition-colors",
-                      on
-                        ? "border-ws-accent bg-ws-accent text-white"
-                        : "border-ws-line text-ws-ink hover:border-ws-accent"
-                    )}
-                  >
-                    {c.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* テキスト */}
-          <label className="block">
-            <span className="mb-1 block text-xs font-semibold text-ws-muted">
-              内容（1〜2行で簡潔に）
-            </span>
-            <textarea
-              value={current.text}
-              onChange={(e) => setField({ text: e.target.value })}
-              rows={2}
-              placeholder="アイデアをとりあえず資料に落とすこと"
-              className="w-full resize-none rounded-md border border-ws-line px-3 py-2 text-sm text-ws-ink outline-none focus:border-ws-teal"
-            />
-          </label>
-
-          {editing ? (
-            <button
-              type="button"
-              onClick={finishEdit}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-ws-teal px-4 py-2 text-sm font-bold text-white transition hover:opacity-90"
-            >
-              <Check className="h-4 w-4" />
-              編集を終える
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={add}
-              disabled={!draft.text.trim() || cellFull}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-ws-teal px-4 py-2 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-40"
-            >
-              <Plus className="h-4 w-4" />
-              {cellFull
-                ? `「${rowLabel(draft.row)}×${colLabel(draft.col)}」は最大2つ`
-                : "追加する"}
-            </button>
-          )}
-        </div>
-      </div>
-      )}
-
+    <div className="mt-6 flex flex-col items-center gap-4">
       {/* ── 表示エリア（2×2フレーム・印刷対象） ── */}
       <div className="shrink-0">
         <div
@@ -243,61 +128,147 @@ export function SukiTokuiMatrix({
           {ROWS.map((r, ri) =>
             COLS.map((c, ci) => {
               const entries = entriesOf(r.key, c.key);
-              const isPick =
-                !editing && draft.row === r.key && draft.col === c.key;
               return (
-                <button
+                <div
                   key={`${r.key}-${c.key}`}
-                  type="button"
                   style={{ gridColumn: String(ci + 2), gridRow: String(ri + 2) }}
-                  onClick={readOnly ? undefined : () => pickCell(r.key, c.key)}
-                  className={cn(
-                    "relative flex flex-col items-stretch justify-center gap-1.5 border border-ws-line p-3 text-left transition-colors",
-                    readOnly
-                      ? "cursor-default bg-white"
-                      : isPick
-                      ? "bg-ws-mint/50"
-                      : "bg-white hover:bg-ws-fill/60"
-                  )}
+                  className="relative flex flex-col items-stretch justify-center gap-1.5 border border-ws-line bg-white p-3 text-left"
                 >
-                  {entries.length === 0 ? (
-                    !readOnly && (
-                      <span className="text-center text-xs text-ws-muted/70">
-                        クリックして追加
-                      </span>
-                    )
-                  ) : (
-                    entries.map((x) => (
-                      <span
-                        key={x.i}
-                        role={readOnly ? undefined : "button"}
-                        tabIndex={readOnly ? undefined : 0}
-                        onClick={
-                          readOnly
-                            ? undefined
-                            : (ev) => {
-                                ev.stopPropagation();
-                                startEdit(x.i);
-                              }
-                        }
-                        className={cn(
-                          "flex min-h-[3.5rem] items-center justify-center whitespace-pre-wrap rounded-md border border-ws-teal bg-ws-mint px-3 py-2 text-center text-base font-bold leading-snug text-ws-ink",
-                          !readOnly &&
-                            (editingIndex === x.i
-                              ? "border-ws-line bg-ws-fill hover:border-ws-ink"
-                              : "hover:bg-ws-mint/70")
-                        )}
-                      >
-                        {x.e.text}
-                      </span>
-                    ))
-                  )}
-                </button>
+                  {entries.map((x) => (
+                    <span
+                      key={x.i}
+                      role={readOnly ? undefined : "button"}
+                      tabIndex={readOnly ? undefined : 0}
+                      onClick={readOnly ? undefined : () => startEdit(x.i)}
+                      className={cn(
+                        "flex min-h-[3.5rem] items-center justify-center whitespace-pre-wrap rounded-md border border-ws-teal bg-ws-mint px-3 py-2 text-center text-sm font-bold leading-snug text-ws-ink",
+                        !readOnly &&
+                          (editingIndex === x.i
+                            ? "border-ws-line bg-ws-fill hover:border-ws-ink"
+                            : "cursor-pointer hover:bg-ws-mint/70")
+                      )}
+                    >
+                      {x.e.text}
+                    </span>
+                  ))}
+                </div>
               );
             })
           )}
         </div>
       </div>
+
+      {/* ── 編集バー（印刷されない・記入例では非表示） ── */}
+      {!readOnly && (
+        <div className="no-print flex w-full items-center gap-4 rounded-xl border border-ws-line bg-ws-fill px-4 py-2.5">
+          <div className="flex-1 space-y-1.5">
+            {/* 行1：個人/会社＋得意/好き */}
+            <div className="flex items-center gap-4">
+              <div className="flex shrink-0 items-center gap-1.5">
+                <span className="shrink-0 text-xs font-semibold text-ws-teal">個人/会社</span>
+                <div className="flex gap-1">
+                  {ROWS.map((r) => {
+                    const on = current.row === r.key;
+                    return (
+                      <button
+                        key={r.key}
+                        type="button"
+                        onClick={() => setField({ row: r.key })}
+                        className={cn(
+                          "rounded-md border-2 px-2.5 py-0.5 text-[11px] font-bold transition-colors",
+                          on
+                            ? "border-ws-teal bg-ws-teal text-white"
+                            : "border-ws-line text-ws-ink hover:border-ws-teal"
+                        )}
+                      >
+                        {r.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="flex shrink-0 items-center gap-1.5">
+                <span className="shrink-0 text-xs font-semibold text-ws-accent">得意/好き</span>
+                <div className="flex gap-1">
+                  {COLS.map((c) => {
+                    const on = current.col === c.key;
+                    return (
+                      <button
+                        key={c.key}
+                        type="button"
+                        onClick={() => setField({ col: c.key })}
+                        className={cn(
+                          "rounded-md border-2 px-2.5 py-0.5 text-[11px] font-bold transition-colors",
+                          on
+                            ? "border-ws-accent bg-ws-accent text-white"
+                            : "border-ws-line text-ws-ink hover:border-ws-accent"
+                        )}
+                      >
+                        {c.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* 行2：内容 */}
+            <div className="flex items-center gap-1.5">
+              <span className="shrink-0 text-xs font-semibold text-ws-teal">
+                内容
+                {editing ? (
+                  <span className="text-ws-accent">（編集中）</span>
+                ) : (
+                  <span className="text-ws-muted">
+                    （{countOf(draft.row, draft.col)}/{MAX_PER_CELL}）
+                  </span>
+                )}
+              </span>
+              <input
+                value={current.text}
+                onChange={(e) => setField({ text: e.target.value.slice(0, 30) })}
+                placeholder="アイデアをとりあえず資料に落とすこと"
+                maxLength={30}
+                className={cn(
+                  "w-full rounded-md border px-2.5 py-1 text-sm text-ws-ink outline-none focus:border-ws-teal",
+                  editing ? "border-ws-accent/50 bg-ws-mint/20" : "border-ws-line"
+                )}
+              />
+            </div>
+          </div>
+
+          {/* 機能ボタン（カード右端に縦3つ・ポートフォリオと同サイズ） */}
+          <div className="flex shrink-0 flex-col gap-1">
+            <button
+              type="button"
+              onClick={add}
+              disabled={editing || !draft.text.trim() || cellFull}
+              className="inline-flex items-center justify-center gap-1 rounded-md bg-ws-teal px-2.5 py-0.5 text-[11px] font-bold text-white transition hover:opacity-90 disabled:opacity-40"
+            >
+              <Plus className="h-3 w-3" />
+              追加する
+            </button>
+            <button
+              type="button"
+              onClick={finishEdit}
+              disabled={!editing}
+              className="inline-flex items-center justify-center gap-1 rounded-md bg-ws-teal px-2.5 py-0.5 text-[11px] font-bold text-white transition hover:opacity-90 disabled:opacity-40"
+            >
+              <Check className="h-3 w-3" />
+              入力完了
+            </button>
+            <button
+              type="button"
+              onClick={() => remove(editingIndex as number)}
+              disabled={!editing}
+              className="inline-flex items-center justify-center gap-1 rounded-md border border-ws-line px-2.5 py-0.5 text-[11px] font-bold text-ws-muted transition hover:border-ws-accent hover:text-ws-accent disabled:opacity-40"
+            >
+              <Trash2 className="h-3 w-3" />
+              削除する
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
