@@ -101,7 +101,7 @@ function RegisterForm() {
               <button
                 type="button"
                 onClick={() => setSent(false)}
-                className="text-center text-sm font-medium text-primary hover:underline"
+                className="mt-3 text-center text-xs font-medium text-primary hover:underline"
               >
                 別のメールアドレスで送り直す
               </button>
@@ -144,7 +144,7 @@ function RegisterForm() {
                 <Button type="submit" disabled={sending || email.trim() === ""}>
                   {sending ? "送信中..." : "登録してはじめる"}
                 </Button>
-                <p className="text-center text-sm text-muted-foreground">
+                <p className="mt-3 text-center text-xs text-muted-foreground">
                   すでにアカウントをお持ちの方は{" "}
                   <Link href="/login" className="font-medium text-primary hover:underline">
                     ログインページへ
