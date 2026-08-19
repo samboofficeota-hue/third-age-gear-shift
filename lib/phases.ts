@@ -56,9 +56,9 @@ export const PHASE_META: PhaseMeta[] = [
     label: "宿題：プチ越境体験・ホームワーク",
     day: "宿題",
     track: "worksheet",
-    program: "B",
+    program: "A",
     gated: true,
-    route: "/training/homework",
+    route: "/workshop/homework",
     description: "越境体験と感想、みらいシナリオ、じぶん資産表",
   },
   {

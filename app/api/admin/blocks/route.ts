@@ -108,5 +108,32 @@ export async function PATCH(request: Request) {
     },
   });
 
-  return NextResponse.json({ block: { blockId: updated.blockId, status: updated.status } });
+  // 宿題は「Day1が終了したら始まる」課題。Day1を停止した瞬間に、まだ講師が
+  // 触っていなければ（LOCKEDのまま）自動で開放する。すでに講師が手動で
+  // 開放/締切/ロックを操作済みなら、その判断を優先して上書きしない。
+  const cascaded: { blockId: string; status: "LOCKED" | "PREVIEW" | "OPEN" | "CLOSED" }[] = [];
+  if (blockId === "day1" && status === "CLOSED") {
+    const homework = await prisma.blockStatus.findUnique({
+      where: { sessionId_blockId: { sessionId: ws.id, blockId: "homework" } },
+    });
+    if (!homework || homework.status === "LOCKED") {
+      const openedHomework = await prisma.blockStatus.upsert({
+        where: { sessionId_blockId: { sessionId: ws.id, blockId: "homework" } },
+        update: { status: "OPEN", openedAt: new Date(), openedBy: guard.session.sub },
+        create: {
+          sessionId: ws.id,
+          blockId: "homework",
+          status: "OPEN",
+          openedAt: new Date(),
+          openedBy: guard.session.sub,
+        },
+      });
+      cascaded.push({ blockId: openedHomework.blockId, status: openedHomework.status });
+    }
+  }
+
+  return NextResponse.json({
+    block: { blockId: updated.blockId, status: updated.status },
+    cascaded,
+  });
 }

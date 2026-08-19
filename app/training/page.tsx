@@ -15,7 +15,10 @@ export default async function TrainingDashboard() {
   if (!state) redirect("/login?from=/training");
 
   const { sessionId, statuses } = state;
-  const phases = PHASE_META.filter((p) => p.program === "B");
+  // Day1 / 宿題 / Day2 を並べる。宿題は Program A（/workshop/homework の扉）だが、
+  // 研修当日ポータルからも同じ場所に見えるよう、ここでは program を問わず明示リストで拾う。
+  const TRAINING_LIST_IDS = ["day1", "homework", "day2"];
+  const phases = PHASE_META.filter((p) => TRAINING_LIST_IDS.includes(p.id));
   const preMeta = PHASE_META_BY_ID.pre;
   const preAccessible = isPhaseAccessible(preMeta, statuses.pre);
 

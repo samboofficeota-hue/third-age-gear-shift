@@ -7,8 +7,15 @@ import { BRAND } from "@/lib/brand";
 
 export function WorkshopHeader() {
   const [loggingOut, setLoggingOut] = useState(false);
-  const pathname = usePathname();
-  const showGuideLink = pathname?.startsWith("/workshop/pre") ?? false;
+  const pathname = usePathname() ?? "";
+
+  // 宿題の入力パート（扉のサブページ）は「宿題トップへ戻る」に統一。
+  // 事前課題のサブページは、これまでどおり「ガイドに戻る」。
+  const backLink = pathname.startsWith("/workshop/homework/")
+    ? { href: "/workshop/homework", label: "宿題トップへ戻る" }
+    : pathname.startsWith("/workshop/pre")
+      ? { href: "/workshop/guide", label: "ガイドに戻る" }
+      : null;
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -33,12 +40,12 @@ export function WorkshopHeader() {
           {BRAND.name}
         </Link>
         <div className="flex items-center gap-4">
-          {showGuideLink && (
+          {backLink && (
             <Link
-              href="/workshop/guide"
+              href={backLink.href}
               className="text-xs text-secondary-foreground hover:text-foreground"
             >
-              ガイドに戻る
+              {backLink.label}
             </Link>
           )}
           <button

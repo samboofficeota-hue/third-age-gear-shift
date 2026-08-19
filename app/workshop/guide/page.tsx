@@ -1,39 +1,111 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, Lock } from "lucide-react";
+import { ArrowRight, Check, Lock } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { PHASE_META, type PhaseId } from "@/lib/phases";
+import { getDashboardState } from "@/lib/workshopAccess";
 import { cn } from "@/lib/utils";
 import { BRAND } from "@/lib/brand";
 
+// フェーズの正順。「今ここ」は、この順で最初に completedPhases に無いフェーズ。
+const FORWARD_ORDER: PhaseId[] = ["pre", "day1", "homework", "day2", "post"];
+
+type PrimaryAction = {
+  label: string;
+  href: string;
+  locked: boolean;
+  lockedNote?: string | null;
+};
+
+function formatDateJa(d: Date | null): string | null {
+  if (!d) return null;
+  return new Intl.DateTimeFormat("ja-JP", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    weekday: "short",
+    timeZone: "Asia/Tokyo",
+  }).format(d);
+}
+
 /**
  * 事前課題に入る前の「全体ガイダンス」。
- * 目的：講座全体の流れを一覧で見せ、「今ここ＝事前課題」を理解してもらう。
- * ねらい・目的の詳細は研修当日に説明するため、ここでは記載しない。
+ * 目的：講座全体の流れを一覧で見せ、「今ここ」を理解してもらい、
+ * 今やるべき1つのアクションへ導く。
  */
 export default async function WorkshopGuidePage() {
   const session = await getSession();
   if (!session) redirect("/login?from=/workshop/guide");
 
-  const currentPhaseId: PhaseId = "pre";
+  const state = await getDashboardState();
+  const statuses = state?.statuses;
+  const completedPhases = state?.completedPhases ?? [];
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.sub },
-    select: { workshopData: { select: { session: { select: { day1Date: true } } } } },
-  });
-  const day1Date = user?.workshopData?.session?.day1Date ?? null;
-  const canJoinTraining = !!day1Date && Date.now() >= day1Date.getTime();
-  const day1Str = day1Date
-    ? new Intl.DateTimeFormat("ja-JP", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        weekday: "short",
-        timeZone: "Asia/Tokyo",
-      }).format(day1Date)
+  let currentPhaseId: PhaseId | null = null;
+  for (const id of FORWARD_ORDER) {
+    if (!completedPhases.includes(id)) {
+      currentPhaseId = id;
+      break;
+    }
+  }
+
+  const wsSession = state?.sessionId
+    ? await prisma.workshopSession.findUnique({
+        where: { id: state.sessionId },
+        select: { day1Date: true, day2Date: true },
+      })
     : null;
+  const day1Date = wsSession?.day1Date ?? null;
+  const day2Date = wsSession?.day2Date ?? null;
+  const canJoinDay1 = !!day1Date && Date.now() >= day1Date.getTime();
+  const canJoinDay2 = !!day2Date && Date.now() >= day2Date.getTime();
+  const day1Str = formatDateJa(day1Date);
+  const day2Str = formatDateJa(day2Date);
+  const homeworkOpen = statuses?.homework === "OPEN";
+
+  const primaryAction: PrimaryAction | null = (() => {
+    switch (currentPhaseId) {
+      case "pre":
+        return { label: "事前課題をはじめる", href: "/workshop/pre", locked: false };
+      case "day1":
+        return {
+          label: "研修に参加する",
+          href: "/training",
+          locked: !canJoinDay1,
+          lockedNote: day1Str ? `Day1（${day1Str}）から参加できます` : null,
+        };
+      case "homework":
+        return {
+          label: "宿題をはじめる",
+          href: "/workshop/homework",
+          locked: !homeworkOpen,
+          lockedNote: "Day1終了後、開放されます",
+        };
+      case "day2":
+        return {
+          label: "研修に参加する",
+          href: "/training",
+          locked: !canJoinDay2,
+          lockedNote: day2Str ? `Day2（${day2Str}）から参加できます` : null,
+        };
+      case "post":
+        return { label: "事後課題へ進む", href: "/workshop", locked: false };
+      default:
+        return null;
+    }
+  })();
+
+const introNote = !currentPhaseId ? (
+    "すべての課題が完了しています。おつかれさまでした。"
+  ) : currentPhaseId === "pre" ? (
+    "まずは事前課題からはじめていきましょう。"
+  ) : (
+    <>
+      次は「<span className="font-semibold text-primary">{primaryAction?.label}</span>」です。
+    </>
+  );
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 md:px-8">
@@ -52,74 +124,96 @@ export default async function WorkshopGuidePage() {
           <br />
           講座の流れは次のようになっています。
           <br />
-          まずは事前課題からはじめていきましょう。
+          {introNote}
         </p>
       </header>
 
       <div className="mt-8 flex items-center justify-center gap-1.5 sm:gap-2">
-        {PHASE_META.map((p, i) => (
-          <div key={p.id} className="flex items-center gap-1.5 sm:gap-2">
-            <FlowStep label={p.day} current={p.id === currentPhaseId} />
-            {i < PHASE_META.length - 1 && (
-              <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-            )}
-          </div>
-        ))}
+        {PHASE_META.map((p, i) => {
+          const flowState = completedPhases.includes(p.id)
+            ? "done"
+            : p.id === currentPhaseId
+              ? "current"
+              : "upcoming";
+          return (
+            <div key={p.id} className="flex items-center gap-1.5 sm:gap-2">
+              <FlowStep label={p.day} state={flowState} />
+              {i < PHASE_META.length - 1 && (
+                <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+              )}
+            </div>
+          );
+        })}
       </div>
       <p className="mt-3 text-center text-xs text-muted-foreground">
         Day 1〜Day 2 は、約3週間の期間をかけて進みます
       </p>
 
-      <div className="mx-auto mt-8 grid max-w-lg grid-cols-2 items-start gap-3">
-        <Button asChild size="lg" className="w-full">
-          <Link href="/workshop/pre">
-            事前課題をはじめる
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </Button>
-
-        {canJoinTraining ? (
-          <Button asChild size="lg" variant="outline" className="w-full">
-            <Link href="/training">
-              研修に参加する
+      <div className="mx-auto mt-8 flex justify-center">
+        {primaryAction ? (
+          primaryAction.locked ? (
+            <div className="flex w-56 flex-col items-center gap-1.5">
+              <div className="inline-flex h-12 w-full cursor-not-allowed items-center justify-center gap-2 rounded-md border-2 border-border bg-bg-panel px-5 text-base font-semibold text-muted-foreground">
+                <Lock className="h-4 w-4" />
+                {primaryAction.label}
+              </div>
+              {primaryAction.lockedNote && (
+                <p className="text-xs text-muted-foreground">{primaryAction.lockedNote}</p>
+              )}
+            </div>
+          ) : (
+            <Button asChild size="lg" className="w-56">
+              <Link href={primaryAction.href}>
+                {primaryAction.label}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          )
+        ) : (
+          <Button asChild size="lg" variant="outline" className="w-56">
+            <Link href="/workshop">
+              じぶんのワーク記録を見る
               <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
-        ) : (
-          <div className="flex flex-col items-center gap-1.5">
-            <div className="inline-flex h-12 w-full cursor-not-allowed items-center justify-center gap-2 rounded-md border-2 border-border bg-bg-panel px-5 text-base font-semibold text-muted-foreground">
-              <Lock className="h-4 w-4" />
-              研修に参加する
-            </div>
-            {day1Str && (
-              <p className="text-xs text-muted-foreground">Day1（{day1Str}）から参加できます</p>
-            )}
-          </div>
         )}
       </div>
     </div>
   );
 }
 
-function FlowStep({ label, current }: { label: string; current: boolean }) {
+function FlowStep({
+  label,
+  state,
+}: {
+  label: string;
+  state: "done" | "current" | "upcoming";
+}) {
   return (
     <div
       className={cn(
-        "flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-xl border text-center sm:h-20 sm:w-20",
-        current
+        "flex h-16 w-16 shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl border text-center sm:h-20 sm:w-20",
+        state === "current"
           ? "border-primary bg-primary/10 shadow-neon-glow"
-          : "border-border bg-card"
+          : state === "done"
+            ? "border-primary/30 bg-card"
+            : "border-border bg-card"
       )}
     >
-      {current && (
-        <span className="mb-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
+      {state === "current" && (
+        <span className="text-[10px] font-bold uppercase tracking-wide text-primary">
           今ここ
         </span>
       )}
+      {state === "done" && <Check className="h-3.5 w-3.5 text-primary/70" />}
       <span
         className={cn(
           "text-xs font-bold sm:text-sm",
-          current ? "text-primary" : "text-foreground"
+          state === "current"
+            ? "text-primary"
+            : state === "done"
+              ? "text-secondary-foreground"
+              : "text-muted-foreground"
         )}
       >
         {label}

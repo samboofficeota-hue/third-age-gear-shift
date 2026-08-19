@@ -15,7 +15,7 @@ import { getStorageAdmin, PHOTO_BUCKET } from "@/lib/supabaseStorage";
  *   - その受講生が属するセッションの担当講師（facilitator）
  */
 
-const FILE_PATTERN = /^profile(-original)?\.(png|jpg|webp)$/;
+const FILE_PATTERN = /^(profile|excursion)(-original)?\.(png|jpg|webp)$/;
 const ID_PATTERN = /^[A-Za-z0-9_-]+$/;
 
 async function canView(

@@ -50,7 +50,7 @@ export default async function RecordsPage() {
       id: "homework",
       label: "宿題：みらいシナリオ",
       description: "会社編／社会編（穴埋め）",
-      route: "/training/homework?mode=view",
+      route: "/workshop/homework/scenario?mode=view",
       hasData: isFilled(wd?.homework),
     },
     {

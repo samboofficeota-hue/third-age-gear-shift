@@ -6,20 +6,30 @@ import { Button } from "@/components/ui/button";
 import { getCroppedBlob, type PixelArea } from "@/lib/cropImage";
 
 /**
- * 画像の位置調整・拡大縮小（円形プレビュー）モーダル。
- * onConfirm に正方形クロップ済みの Blob と、再調整用のクロップ範囲(％)を返す。
+ * 画像の位置調整・拡大縮小モーダル。
+ * onConfirm にクロップ済みの Blob と、再調整用のクロップ範囲(％)を返す。
  * initialArea を渡すと前回の枠取りを復元する。
+ * デフォルトは正方形・円形プレビュー（プロフィール写真）。aspect/cropShape を
+ * 渡せば、長方形の写真（宿題レポート等）にも使える。
  */
 export function CropModal({
   src,
   initialArea,
   onCancel,
   onConfirm,
+  aspect = 1,
+  cropShape = "round",
+  outputWidth = 600,
 }: {
   src: string;
   initialArea?: Area | null;
   onCancel: () => void;
   onConfirm: (blob: Blob, area: Area) => void;
+  /** 幅 / 高さ。1=正方形、16/9=横長など */
+  aspect?: number;
+  cropShape?: "round" | "rect";
+  /** 出力画像の幅(px)。高さは aspect から計算する */
+  outputWidth?: number;
 }) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -36,7 +46,7 @@ export function CropModal({
     if (!area || !percent) return;
     setBusy(true);
     try {
-      const blob = await getCroppedBlob(src, area);
+      const blob = await getCroppedBlob(src, area, outputWidth, Math.round(outputWidth / aspect));
       onConfirm(blob, percent);
     } finally {
       setBusy(false);
@@ -54,9 +64,9 @@ export function CropModal({
             image={src}
             crop={crop}
             zoom={zoom}
-            aspect={1}
-            cropShape="round"
-            showGrid={false}
+            aspect={aspect}
+            cropShape={cropShape}
+            showGrid={cropShape === "rect"}
             initialCroppedAreaPercentages={initialArea ?? undefined}
             onCropChange={setCrop}
             onZoomChange={setZoom}

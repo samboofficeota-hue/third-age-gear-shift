@@ -127,21 +127,26 @@ export default function AdminPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ blockId, status, sessionId: selectedSessionId }),
       });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}));
-        alert(d.error ?? "更新に失敗しました。");
+        alert(data.error ?? "更新に失敗しました。");
         return;
       }
+      // cascaded: 例）Day1を停止すると、まだ講師が触っていなければ宿題が自動開放される
+      const changes: { blockId: string; status: BlockStatus }[] = [
+        { blockId, status },
+        ...((data.cascaded ?? []) as { blockId: string; status: BlockStatus }[]),
+      ];
       setBlocks((prev) =>
-        prev.map((b) =>
-          b.blockId === blockId
-            ? {
-                ...b,
-                status,
-                openedAt: status === "OPEN" ? new Date().toISOString() : b.openedAt,
-              }
-            : b
-        )
+        prev.map((b) => {
+          const change = changes.find((c) => c.blockId === b.blockId);
+          if (!change) return b;
+          return {
+            ...b,
+            status: change.status,
+            openedAt: change.status === "OPEN" ? new Date().toISOString() : b.openedAt,
+          };
+        })
       );
     } finally {
       setUpdating(null);
