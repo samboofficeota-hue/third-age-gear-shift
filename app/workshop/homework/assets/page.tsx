@@ -6,6 +6,8 @@ import { prisma } from "@/lib/db";
 import { canAccessPhase } from "@/lib/workshopAccess";
 import { cn } from "@/lib/utils";
 import { ASSET_KEYS, ASSET_META, hasText, type AssetsData } from "@/lib/homework/assets/meta";
+import { LifeLineModal } from "@/components/worksheet/LifeLineModal";
+import type { LifeCurvePoint } from "@/app/workshop/pre/life-plan/_types";
 
 /**
  * 宿題(c) じぶん資産表（Program A＝個別・非同期）。講師が開放したときのみアクセス可。
@@ -20,9 +22,11 @@ export default async function HomeworkAssetsPage() {
 
   const wd = await prisma.workshopData.findUnique({
     where: { userId: session.sub },
-    select: { homework: true },
+    select: { homework: true, pre: true },
   });
   const assets = (wd?.homework as { assets?: AssetsData } | null)?.assets;
+  const lifeCurvePoints =
+    (wd?.pre as { lifeCurve?: { points?: LifeCurvePoint[] } } | null)?.lifeCurve?.points ?? [];
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10 md:px-6">
@@ -31,9 +35,17 @@ export default async function HomeworkAssetsPage() {
         <p className="mt-1 text-lg font-bold text-foreground">じぶん資産表を作ろう</p>
         <p className="mt-2 text-sm leading-relaxed text-secondary-foreground">
           Day 1のワークや対話を通じて、自分を振り返るドアが開き始めました。
-          ここからは、これまでの自分の経験を「評価＝棚卸し」していきます。
-          じぶんを形成している3つの無形資産を、それぞれ棚卸ししましょう。
+          <br />
+          ここからは、じぶんが今もっている「資産を評価」していきます。
+          <br />
+          経験・知見・関係などをもとに、どんな資産があるか、その価値は何か。
+          <br />
+          次の3つの無形資産に分けて、自分の言葉として書き出してみましょう。
         </p>
+
+        <div className="mt-4 flex justify-center">
+          <LifeLineModal points={lifeCurvePoints} />
+        </div>
 
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
           {ASSET_KEYS.map((key) => {

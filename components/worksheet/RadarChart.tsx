@@ -15,8 +15,8 @@ export function RadarChart({
   step?: number;
 }) {
   const N = items.length;
-  const cx = 300;
-  const cy = 300;
+  const cx = 350;
+  const cy = 330;
   const R = 200;
 
   const angle = (i: number) => ((-90 + (i * 360) / N) * Math.PI) / 180;
@@ -34,7 +34,7 @@ export function RadarChart({
     .join(" ");
 
   return (
-    <svg viewBox="0 0 600 620" className="h-auto w-full" role="img" aria-label="自己診断レーダーチャート">
+    <svg viewBox="0 0 700 660" className="h-auto w-full" role="img" aria-label="自己診断レーダーチャート">
       {/* グリッド（同心円） */}
       {steps.map((s) => (
         <circle
@@ -85,7 +85,7 @@ export function RadarChart({
             y={y + 4}
             textAnchor={anchor}
             className="fill-ws-ink"
-            style={{ fontSize: 14, fontWeight: 600 }}
+            style={{ fontSize: 16, fontWeight: 600 }}
           >
             {it.label}
           </text>

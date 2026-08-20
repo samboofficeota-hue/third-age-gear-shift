@@ -186,24 +186,25 @@ export function Day2Client({
 
   return (
     <WorksheetStage>
-      {/* 操作バー */}
-      <div className="no-print flex w-full max-w-[1123px] items-center justify-between gap-3">
-        <Link
-          href={viewOnly ? "/workshop/records" : "/training"}
-          className="inline-flex items-center gap-1.5 text-sm text-ws-muted hover:text-ws-ink"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {viewOnly ? "ワークの記録 一覧へ" : "研修本番へ戻る"}
-        </Link>
-        <div className="flex items-center gap-2">
-          {viewOnly && (
+      {/* 操作バー：編集モードは戻りリンクなし（ヘッダーの「ガイドに戻る」に一本化）。
+          閲覧モード（事後の記録閲覧）のときだけ、記録一覧への戻り導線とバッジ／PDFを出す。 */}
+      {viewOnly && (
+        <div className="no-print flex w-full max-w-[1123px] items-center justify-between gap-3">
+          <Link
+            href="/workshop/records"
+            className="inline-flex items-center gap-1.5 text-sm text-ws-muted hover:text-ws-ink"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            ワークの記録 一覧へ
+          </Link>
+          <div className="flex items-center gap-2">
             <span className="rounded-full border border-ws-teal/30 bg-ws-mint/40 px-4 py-2 text-sm font-medium text-ws-teal">
               閲覧モード（書き込みはできません）
             </span>
-          )}
-          <PrintButton />
+            <PrintButton />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* #8 コミュニティ活動力 自己診断 */}
       <DiagnosisSheet

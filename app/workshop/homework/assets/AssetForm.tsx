@@ -19,7 +19,7 @@ import {
   type AssetsData,
 } from "@/lib/homework/assets/meta";
 
-/** #1〜#3の設問行。#1だけ資産ごとの問いかけ（q1Hint）を添える。 */
+/** #1〜#3の設問行。プレースホルダーの問いかけ（hint）は3行とも共通。 */
 function QuestionRow({
   no,
   color,
@@ -29,7 +29,7 @@ function QuestionRow({
 }: {
   no: number;
   color: string;
-  hint?: string;
+  hint: string;
   value: string;
   onChange: (v: string) => void;
 }) {
@@ -45,7 +45,7 @@ function QuestionRow({
         <textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder={hint ? `どんな資産？（${hint}）` : "どんな資産？"}
+          placeholder={`どんな資産？（${hint}）`}
           rows={2}
           className="w-full resize-none rounded-xl border border-ws-line px-4 py-3 text-base font-bold leading-snug text-ws-ink outline-none placeholder:font-normal placeholder:text-ws-muted/60 focus:border-ws-teal"
         />
@@ -123,66 +123,71 @@ export function AssetForm({ assetKey }: { assetKey: AssetKey }) {
           no={9}
           accent="じぶん"
           title="資産表"
-          sub={`〜 ${meta.label}を棚卸しする`}
+          sub={`〜 ${meta.label}の価値を規定する`}
           right={nameTag}
         />
 
-        <div className="mt-4 flex items-start gap-6">
-          <div className="shrink-0">
-            <span
-              className="inline-block rounded-xl px-6 py-2.5 text-lg font-bold text-white"
-              style={{ backgroundColor: meta.color }}
-            >
-              {meta.label}
-            </span>
-            <p className="mt-2 text-sm leading-relaxed text-ws-muted">
-              {meta.description.map((line, i) => (
-                <span key={i} className="block">
-                  {line}
-                </span>
-              ))}
-            </p>
+        {/* タイトル行：バッジ＋説明を1行に並べる */}
+        <div className="mt-4 flex items-center gap-4">
+          <span
+            className="shrink-0 rounded-xl px-6 py-2.5 text-lg font-bold text-white"
+            style={{ backgroundColor: meta.color }}
+          >
+            {meta.label}
+          </span>
+          <p className="whitespace-pre-line text-sm leading-relaxed text-ws-muted">
+            {meta.description}
+          </p>
+        </div>
 
-            <div className="mt-6 space-y-1.5">
-              <p className="text-caption font-semibold text-ws-muted">他の資産</p>
-              {ASSET_KEYS.filter((k) => k !== assetKey).map((k) => {
-                const otherMeta = ASSET_META[k];
-                const done = hasText(allAssets[k]);
-                return (
-                  <Link
-                    key={k}
-                    href={`/workshop/homework/assets/${k}`}
-                    className={cn(
-                      "flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition-colors",
-                      done
-                        ? "border-ws-line/60 text-ws-muted hover:border-ws-teal hover:text-ws-ink"
-                        : "border-ws-line text-ws-ink hover:border-ws-teal"
-                    )}
-                  >
-                    <span
-                      className="h-2.5 w-2.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: otherMeta.color }}
-                    />
-                    {otherMeta.label}
-                    {done && <CheckCircle2 className="ml-auto h-4 w-4 shrink-0" />}
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
+        {/* 質問タイトル */}
+        <div
+          className="mt-4 rounded-lg px-4 py-2.5 text-base font-bold"
+          style={{ backgroundColor: `${meta.color}1A`, color: meta.color }}
+        >
+          {meta.questionTitle}
+        </div>
 
-          <div className="flex-1 space-y-3">
-            {values.map((v, i) => (
-              <QuestionRow
-                key={i}
-                no={i + 1}
-                color={meta.color}
-                hint={i === 0 ? meta.q1Hint : undefined}
-                value={v}
-                onChange={(nv) => setAt(i, nv)}
-              />
-            ))}
-          </div>
+        {/* 回答欄 */}
+        <div className="mt-4 space-y-3">
+          {values.map((v, i) => (
+            <QuestionRow
+              key={i}
+              no={i + 1}
+              color={meta.color}
+              hint={meta.hint}
+              value={v}
+              onChange={(nv) => setAt(i, nv)}
+            />
+          ))}
+        </div>
+
+        {/* 他の資産 */}
+        <div className="mt-6 flex items-center gap-3">
+          <p className="shrink-0 text-caption font-semibold text-ws-muted">他の資産</p>
+          {ASSET_KEYS.filter((k) => k !== assetKey).map((k) => {
+            const otherMeta = ASSET_META[k];
+            const done = hasText(allAssets[k]);
+            return (
+              <Link
+                key={k}
+                href={`/workshop/homework/assets/${k}`}
+                className={cn(
+                  "flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-semibold transition-colors",
+                  done
+                    ? "border-ws-line/60 text-ws-muted hover:border-ws-teal hover:text-ws-ink"
+                    : "border-ws-line text-ws-ink hover:border-ws-teal"
+                )}
+              >
+                <span
+                  className="h-2.5 w-2.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: otherMeta.color }}
+                />
+                {otherMeta.label}
+                {done && <CheckCircle2 className="h-4 w-4 shrink-0" />}
+              </Link>
+            );
+          })}
         </div>
       </PrintSheet>
 
