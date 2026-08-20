@@ -74,11 +74,11 @@ export default async function RecordsPage() {
     <div className="mx-auto max-w-3xl px-4 py-10 md:px-8">
       <header className="mb-8">
         <Link
-          href="/workshop"
+          href="/workshop/guide"
           className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-[#e0f0e8]"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
-          ダッシュボードへ
+          ガイドへ戻る
         </Link>
         <h1 className="mt-3 text-2xl font-bold tracking-tight text-[#e0f0e8]">
           じぶんのワーク記録

@@ -5,6 +5,13 @@ import { PrintSheet } from "@/components/worksheet/PrintSheet";
 import { SheetHeader } from "@/components/worksheet/SheetHeader";
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
   FillBlankScenario,
   type FillTemplate,
 } from "@/components/worksheet/FillBlankScenario";
@@ -77,8 +84,8 @@ const BACKCAST_QUESTIONS: {
 
 /**
  * #10 社会における バックキャスト
- * 左: 宿題の「社会」未来シナリオ表示
- * 右: バックキャスト図解 → 入力画面（3つの問い）
+ * 左: バックキャスト図解（常時表示・固定）
+ * 右: 宿題の「社会」未来シナリオ ⇄ 3つの問い（バックキャストする で切り替え）
  */
 export function BackcastSheet({
   nameTag,
@@ -86,71 +93,132 @@ export function BackcastSheet({
   backcast,
   viewOnly,
   onBackcastChange,
+  onSocietyScenarioChange,
 }: {
   nameTag: ReactNode;
   societyScenario: Record<string, string>;
   backcast: Backcast;
   viewOnly: boolean;
   onBackcastChange: (next: Backcast) => void;
+  onSocietyScenarioChange: (next: Record<string, string>) => void;
 }) {
-  const [mode, setMode] = useState<"chart" | "input">("chart");
+  // 初期表示だけ、既に回答済みなら入力側から始める。以降は完全にボタンで
+  // トグルする単一の状態（バックキャストする ⇄ シナリオに戻る）。
+  const [mode, setMode] = useState<"scenario" | "input">(() =>
+    backcast.issue.trim() || backcast.goal.trim() || backcast.firstStep.trim()
+      ? "input"
+      : "scenario"
+  );
 
-  const hasInput =
-    backcast.issue.trim() || backcast.goal.trim() || backcast.firstStep.trim();
+  // シナリオ修正モーダル。同じ画面内で編集を完結させるため、宿題の編集ページへ
+  // 遷移させず、ここで company/society を読み直して society だけ差し替え保存する
+  // （homeworkのPATCHはcompany/society両方を送る必要があるため、companyも一緒に保持）。
+  const [editOpen, setEditOpen] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editSociety, setEditSociety] = useState<Record<string, string>>({});
+  const [editCompany, setEditCompany] = useState<Record<string, string>>({});
+
+  const showInput = mode === "input";
 
   const set = (key: keyof Backcast, v: string) =>
     onBackcastChange({ ...backcast, [key]: v });
 
+  const openEdit = async () => {
+    setEditOpen(true);
+    setEditLoading(true);
+    const d = await fetch("/api/workshop/me", {
+      credentials: "include",
+      cache: "no-store",
+    })
+      .then((r) => r.json())
+      .catch(() => ({}));
+    const sc = d?.workshopData?.homework?.scenario as
+      | { company?: Record<string, string>; society?: Record<string, string> }
+      | undefined;
+    setEditCompany(sc?.company ?? {});
+    setEditSociety(sc?.society ?? societyScenario);
+    setEditLoading(false);
+  };
+
+  const saveEdit = async () => {
+    setEditSaving(true);
+    try {
+      const res = await fetch("/api/workshop/me/homework", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          scenario: { company: editCompany, society: editSociety },
+        }),
+      });
+      if (res.ok) {
+        onSocietyScenarioChange(editSociety);
+        setEditOpen(false);
+      }
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
   return (
     <PrintSheet>
       <SheetHeader
-        no={10}
-        accent="ポートフォリオ戦略"
-        title="アクションプラン"
+        no={13}
+        accent="未来の社会"
+        title="をつくる第一歩"
         right={nameTag}
       />
 
       <div className="mt-3 grid grid-cols-2 gap-6">
-        {/* ── 左: 宿題の社会シナリオ ── */}
-        <div className="rounded-xl border border-ws-line bg-white p-4">
-          <p className="mb-1 inline-block rounded-full bg-ws-mint px-3 py-1 text-xs font-bold tracking-wide text-ws-teal">
-            宿題：2045年の社会へのマイシナリオ
-          </p>
-          <div className="[&>div]:!mt-2 [&>div]:!space-y-1 [&>div]:!pl-3 [&>div]:!text-[16px] [&>div]:!leading-relaxed">
-            <FillBlankScenario
-              template={SOCIETY_TEMPLATE}
-              values={societyScenario}
-              mode="display"
+        {/* ── 左: バックキャスト図解（常時表示） ── */}
+        <div className="flex flex-col">
+          <div className="flex flex-1 items-center justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/backcast.png"
+              alt="バックキャスト図解"
+              className="h-auto w-full max-w-[400px]"
             />
+          </div>
+          <div className="mt-4 flex justify-center gap-3">
+            <Button
+              onClick={() => setMode(mode === "input" ? "scenario" : "input")}
+              className="h-9 rounded-full px-5 text-sm"
+            >
+              {mode === "input" ? "シナリオに戻る" : "バックキャストする"}
+            </Button>
+            {!viewOnly && (
+              <button
+                type="button"
+                onClick={openEdit}
+                className="no-print inline-flex h-9 items-center justify-center rounded-full border border-ws-line px-5 text-sm font-medium text-ws-muted transition-colors hover:border-ws-teal hover:text-ws-teal"
+              >
+                シナリオ修正する
+              </button>
+            )}
           </div>
         </div>
 
-        {/* ── 右: チャート or 入力 ── */}
+        {/* ── 右: 宿題の社会シナリオ ⇄ 3つの問い ── */}
         <div className="flex flex-col">
-          {mode === "chart" && !hasInput ? (
-            <>
-              {/* バックキャスト図解 */}
-              <div className="flex flex-1 items-center justify-center">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/backcast.png"
-                  alt="バックキャスト図解"
-                  className="h-auto w-full max-w-[400px]"
+          {!showInput ? (
+            <div className="rounded-xl border border-ws-line bg-white p-4">
+              <p className="mb-1 inline-block rounded-full bg-ws-mint px-3 py-1 text-xs font-bold tracking-wide text-ws-teal">
+                宿題：2045年の社会へのマイシナリオ
+              </p>
+              <div className="[&>div]:!mt-2 [&>div]:!space-y-1 [&>div]:!pl-3 [&>div]:!text-[16px] [&>div]:!leading-relaxed">
+                <FillBlankScenario
+                  template={SOCIETY_TEMPLATE}
+                  values={societyScenario}
+                  mode="display"
                 />
               </div>
-              <div className="mt-4 flex justify-center">
-                <Button
-                  onClick={() => setMode("input")}
-                  className="rounded-full px-8 py-3 text-base"
-                >
-                  バックキャストする
-                </Button>
-              </div>
-            </>
+            </div>
           ) : (
             <>
               {/* 3つの問い */}
-              <div className="flex flex-1 flex-col gap-7">
+              <div className="flex flex-1 flex-col gap-3">
                 {BACKCAST_QUESTIONS.map((q) => (
                   <div key={q.key}>
                     <label className="mb-2 flex items-center gap-2 text-base font-bold text-ws-ink">
@@ -170,21 +238,55 @@ export function BackcastSheet({
                   </div>
                 ))}
               </div>
-              {!viewOnly && hasInput && (
-                <div className="mt-3 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => setMode("chart")}
-                    className="rounded-full border border-ws-line px-4 py-1.5 text-sm font-medium text-ws-muted hover:text-ws-ink"
-                  >
-                    ← 図に戻る
-                  </button>
-                </div>
-              )}
             </>
           )}
         </div>
       </div>
+
+      {/* ── シナリオ修正モーダル（宿題の編集ページへ遷移させず、ここで完結させる） ── */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto bg-white text-ws-ink sm:max-w-[722px]">
+          <DialogHeader>
+            <DialogTitle className="text-ws-ink">
+              宿題：2045年の社会へのマイシナリオ
+            </DialogTitle>
+            <DialogDescription>
+              妄想でOK。空欄を埋めて更新しよう。
+            </DialogDescription>
+          </DialogHeader>
+          {editLoading ? (
+            <p className="py-8 text-center text-sm text-ws-muted">
+              読み込み中...
+            </p>
+          ) : (
+            <>
+              <FillBlankScenario
+                template={SOCIETY_TEMPLATE}
+                values={editSociety}
+                onChange={setEditSociety}
+                mode="edit"
+                compact
+              />
+              <div className="mt-4 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditOpen(false)}
+                  className="rounded-full border border-ws-line px-4 py-2 text-sm text-ws-muted hover:text-ws-ink"
+                >
+                  キャンセル
+                </button>
+                <Button
+                  onClick={saveEdit}
+                  disabled={editSaving}
+                  className="rounded-full px-6"
+                >
+                  {editSaving ? "保存中..." : "保存する"}
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </PrintSheet>
   );
 }

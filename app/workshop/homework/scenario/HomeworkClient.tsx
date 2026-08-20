@@ -194,7 +194,7 @@ export function HomeworkClient({
       {(!only || only === "company") && (
         <PrintSheet>
           <SheetHeader
-            no={7}
+            no={8}
             accent="みらい"
             title="シナリオ"
             sub="〜 20xx年のじぶんを妄想する"
@@ -218,7 +218,7 @@ export function HomeworkClient({
       {(!only || only === "society") && (
         <PrintSheet>
           <SheetHeader
-            no={7}
+            no={8}
             accent="みらい"
             title="シナリオ"
             sub="〜 20xx年のじぶんを妄想する"

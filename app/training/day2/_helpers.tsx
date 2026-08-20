@@ -37,7 +37,13 @@ export function MiniPortfolio({
         >
           {/* CommunityPortfolio の mt-6 を相殺してフレーム上端から表示 */}
           <div className="-mt-6">
-            <CommunityPortfolio value={value} readOnly />
+            <CommunityPortfolio
+              value={value}
+              readOnly
+              hideQuadrantLabels
+              titleFontScale={12 / 11 / scale}
+              allowLabelOverflow
+            />
           </div>
         </div>
       </div>
@@ -52,12 +58,14 @@ export function ActionBox({
   onChange,
   ph,
   readOnly = false,
+  rows = 6,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   ph: string;
   readOnly?: boolean;
+  rows?: number;
 }) {
   return (
     <div>
@@ -65,7 +73,7 @@ export function ActionBox({
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        rows={6}
+        rows={rows}
         placeholder={ph}
         readOnly={readOnly}
         className="w-full resize-none rounded-md border border-ws-line px-3 py-2 text-base leading-relaxed text-ws-ink outline-none placeholder:text-ws-muted/50 focus:border-ws-teal"
@@ -90,11 +98,11 @@ export function WcmBox({
     <textarea
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      rows={4}
+      rows={3}
       placeholder="○○○○"
       readOnly={readOnly}
       className={cn(
-        "h-32 w-full resize-none rounded-xl px-3 py-2 text-base leading-relaxed text-ws-ink outline-none placeholder:text-ws-muted/40 focus:border-ws-teal",
+        "h-20 w-full resize-none rounded-xl px-3 py-2 text-base leading-relaxed text-ws-ink outline-none placeholder:text-ws-muted/40 focus:border-ws-teal",
         emph ? "border-2 border-ws-teal" : "border border-ws-line"
       )}
     />

@@ -32,6 +32,7 @@ function Field({
   placeholder,
   rows = 2,
   className,
+  readOnly = false,
 }: {
   label: string;
   value: string;
@@ -39,11 +40,13 @@ function Field({
   placeholder: string;
   rows?: number;
   className?: string;
+  readOnly?: boolean;
 }) {
   return (
     <div className={className}>
       <span className="mb-1 block text-sm font-semibold text-ws-teal">{label}</span>
       <textarea
+        readOnly={readOnly}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
@@ -58,10 +61,12 @@ export function ReportForm({
   nameTag,
   decisionSummary,
   initial,
+  viewOnly = false,
 }: {
   nameTag: React.ReactNode;
   decisionSummary: string | null;
   initial: ReportValues | undefined;
+  viewOnly?: boolean;
 }) {
   const [values, setValues] = useState<ReportValues>({ ...EMPTY_REPORT, ...initial });
   const [uploading, setUploading] = useState(false);
@@ -91,7 +96,7 @@ export function ReportForm({
     return res.ok;
   };
 
-  const { status, saveNow } = useAutosave(values, save);
+  const { status, saveNow } = useAutosave(values, save, { enabled: !viewOnly });
 
   const onPickFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -148,6 +153,7 @@ export function ReportForm({
             onChange={(v) => set({ place: v })}
             placeholder={"（どういう場所・集まり）\n（なぜプチ越境になりそうか）"}
             rows={4}
+            readOnly={viewOnly}
           />
           <Field
             label="ふだんとは違う人たち"
@@ -155,6 +161,7 @@ export function ReportForm({
             onChange={(v) => set({ people: v })}
             placeholder={"どんな人たちが、\nどんな行動をしている？"}
             rows={4}
+            readOnly={viewOnly}
           />
         </div>
 
@@ -162,17 +169,19 @@ export function ReportForm({
           <span className="mb-1 block text-sm font-semibold text-ws-teal">
             どんなプチ越境体験だった？
           </span>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            onChange={onPickFile}
-            className="hidden"
-          />
+          {!viewOnly && (
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={onPickFile}
+              className="hidden"
+            />
+          )}
           <button
             type="button"
-            onClick={() => fileRef.current?.click()}
-            disabled={uploading}
+            onClick={viewOnly ? undefined : () => fileRef.current?.click()}
+            disabled={uploading || viewOnly}
             className={cn(
               "flex h-[280px] w-full items-center justify-center overflow-hidden rounded-lg border transition",
               values.photo
@@ -190,7 +199,11 @@ export function ReportForm({
             ) : (
               <span className="flex flex-col items-center gap-1.5 text-sm">
                 <ImageIcon className="h-6 w-6" />
-                {uploading ? "アップロード中..." : "当日の写真・イベントチラシなど"}
+                {viewOnly
+                  ? "写真なし"
+                  : uploading
+                    ? "アップロード中..."
+                    : "当日の写真・イベントチラシなど"}
               </span>
             )}
           </button>
@@ -203,12 +216,13 @@ export function ReportForm({
           placeholder={"（やってみて率直にどう思った？）\n（意外だった点、共感できた点は？）"}
           rows={3}
           className="md:col-span-2"
+          readOnly={viewOnly}
         />
       </div>
 
-      <HomeworkSaveBar status={status} saveNow={saveNow} />
+      {!viewOnly && <HomeworkSaveBar status={status} saveNow={saveNow} />}
 
-      {cropSrc && (
+      {cropSrc && !viewOnly && (
         <CropModal
           src={cropSrc}
           aspect={PHOTO_ASPECT}

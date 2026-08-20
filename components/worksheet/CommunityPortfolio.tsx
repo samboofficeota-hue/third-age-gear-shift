@@ -117,10 +117,26 @@ export function CommunityPortfolio({
   value,
   onChange,
   readOnly = false,
+  hideQuadrantLabels = false,
+  titleFontScale = 1,
+  allowLabelOverflow = false,
 }: {
   value: PortfolioCircle[];
   onChange?: (next: PortfolioCircle[]) => void;
   readOnly?: boolean;
+  /** 象限ラベル（家庭/仕事/ギフト/学び）を隠す。比較用の縮小表示（MiniPortfolio）向け */
+  hideQuadrantLabels?: boolean;
+  /**
+   * 円タイトルの文字サイズ倍率。外側で `transform: scale(MINI_SCALE)` して縮小表示する
+   * 場合、`1 / MINI_SCALE` を渡すと見た目のフォントサイズを原寸(11px)に戻せる
+   * （縮小されると文字だけ読めなくなるため）。
+   */
+  titleFontScale?: number;
+  /**
+   * 円タイトルを3行で打ち切らず、円の外（上下）へはみ出させて全文表示する。
+   * 縮小表示（比較用ミニ表示）で文字を大きくしたぶん円に収まらなくなるため。
+   */
+  allowLabelOverflow?: boolean;
 }) {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [draft, setDraft] = useState<PortfolioCircle>(NEW_DRAFT);
@@ -167,18 +183,22 @@ export function CommunityPortfolio({
           style={{ width: FRAME_W, height: FRAME_H }}
         >
           {/* 象限ラベル（背景色なし） */}
-          <span className="absolute left-3 top-2 text-xs font-bold text-[#3B82F6]">
-            家庭
-          </span>
-          <span className="absolute right-3 top-2 text-xs font-bold text-[#E5277E]">
-            仕事
-          </span>
-          <span className="absolute bottom-2 left-3 text-xs font-bold text-[#9A6A3C]">
-            ギフト
-          </span>
-          <span className="absolute bottom-2 right-3 text-xs font-bold text-[#22A06B]">
-            学び
-          </span>
+          {!hideQuadrantLabels && (
+            <>
+              <span className="absolute left-3 top-2 text-xs font-bold text-[#3B82F6]">
+                家庭
+              </span>
+              <span className="absolute right-3 top-2 text-xs font-bold text-[#E5277E]">
+                仕事
+              </span>
+              <span className="absolute bottom-2 left-3 text-xs font-bold text-[#9A6A3C]">
+                ギフト
+              </span>
+              <span className="absolute bottom-2 right-3 text-xs font-bold text-[#22A06B]">
+                学び
+              </span>
+            </>
+          )}
 
           {/* 円（バブル配置） */}
           {value.map((c, i) => {
@@ -203,7 +223,15 @@ export function CommunityPortfolio({
                   backgroundColor: t.color,
                 }}
               >
-                <span className="px-1.5 text-[11px] font-medium leading-tight line-clamp-3">
+                <span
+                  className={cn(
+                    "px-1.5 font-medium leading-tight",
+                    allowLabelOverflow
+                      ? "whitespace-normal rounded bg-white/85 text-ws-ink"
+                      : "line-clamp-3"
+                  )}
+                  style={{ fontSize: 11 * titleFontScale }}
+                >
                   {c.title}
                 </span>
               </button>

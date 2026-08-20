@@ -25,7 +25,7 @@ export function SummarySheet({
     <>
       <PrintSheet>
         <SheetHeader
-          no={12}
+          no={15}
           accent="会社における"
           title="課題・目標・行動 設定"
           right={nameTag}
@@ -63,10 +63,10 @@ export function SummarySheet({
       <PrintSheet>
         <div className="flex min-h-[680px] flex-col items-center justify-center gap-5 text-center">
           <p className="text-3xl font-bold text-ws-teal">
-            ワークシートは以上です。
+            じぶん経営 戦略講座は以上となります。
           </p>
           <p className="text-3xl font-bold text-ws-teal">
-            おつかれさまでした。
+            たくさんのワーク、おつかれさまでした。
           </p>
         </div>
       </PrintSheet>

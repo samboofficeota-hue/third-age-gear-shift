@@ -7,7 +7,8 @@ import type { PortfolioCircle } from "@/components/worksheet/CommunityPortfolio"
 export type Portfolio = {
   future?: PortfolioCircle[];
   year?: string;
-  shift?: string;
+  /** シフトポイントは複数ボックス（3〜5個）。旧データは string 単体の場合がある */
+  shift?: string[] | string;
 };
 
 /** No → 合計スコア（1〜10）の自己診断スコア */
@@ -20,11 +21,9 @@ export type ActionTarget = {
   sowhat: string;
 };
 
-export type ActionPlan = {
-  targetA: string;
-  targetB: string;
-  A: ActionTarget;
-  B: ActionTarget;
+/** 対象は1つに集約（旧A/B2枠から変更）。1枚の入力シートで記入する */
+export type ActionPlan = ActionTarget & {
+  target: string;
 };
 
 export const EMPTY_TARGET: ActionTarget = {
@@ -35,10 +34,8 @@ export const EMPTY_TARGET: ActionTarget = {
 };
 
 export const EMPTY_ACTION: ActionPlan = {
-  targetA: "",
-  targetB: "",
-  A: EMPTY_TARGET,
-  B: EMPTY_TARGET,
+  target: "",
+  ...EMPTY_TARGET,
 };
 
 export type WCM = { will: string; can: string; must: string };

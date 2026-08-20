@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Download } from "lucide-react";
 import { SurveyShell } from "@/components/survey/SurveyShell";
 import {
   LikertScale,
@@ -32,7 +33,7 @@ export function PostSurvey() {
   const [answers, setAnswers] = useState<Answers>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -47,19 +48,15 @@ export function PostSurvey() {
 
   const setScale = (key: string, v: number) => {
     setAnswers((a) => ({ ...a, [key]: v }));
-    setSaved(false);
   };
   const setChoice = (key: string, v: string) => {
     setAnswers((a) => pruneReasonAnswers({ ...a, [key]: v }));
-    setSaved(false);
   };
   const setMulti = (key: string, v: string[]) => {
     setAnswers((a) => pruneReasonAnswers({ ...a, [key]: v }));
-    setSaved(false);
   };
   const setText = (key: string, v: string) => {
     setAnswers((a) => ({ ...a, [key]: v }));
-    setSaved(false);
   };
 
   const renderChoice = (q: ChoiceQuestion) => (
@@ -76,7 +73,6 @@ export function PostSurvey() {
 
   const save = async () => {
     setSaving(true);
-    setSaved(false);
     try {
       const res = await fetch("/api/workshop/me/post", {
         method: "PATCH",
@@ -84,7 +80,7 @@ export function PostSurvey() {
         credentials: "include",
         body: JSON.stringify({ surveyImmediate: answers }),
       });
-      if (res.ok) setSaved(true);
+      if (res.ok) setSubmitted(true);
     } finally {
       setSaving(false);
     }
@@ -94,6 +90,33 @@ export function PostSurvey() {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <p className="text-sm text-muted-foreground">読み込み中...</p>
+      </div>
+    );
+  }
+
+  if (submitted) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-6 px-4 text-center">
+        <p className="text-2xl font-bold text-[#e0f0e8]">
+          ご回答ありがとうございました。
+        </p>
+        <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
+          事後アンケートを送信しました。じぶん経営 戦略講座は、これで全プログラム終了です。
+          お疲れさまでした。
+        </p>
+        <Link
+          href="/workshop/records/download"
+          className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-foreground shadow-neon-glow transition hover:bg-neon-dim"
+        >
+          <Download className="h-4 w-4" />
+          ワーク一式をPDFでダウンロード
+        </Link>
+        <Link
+          href="/workshop/guide"
+          className="text-sm text-muted-foreground hover:text-[#e0f0e8]"
+        >
+          ガイドへ戻る
+        </Link>
       </div>
     );
   }
@@ -205,14 +228,13 @@ export function PostSurvey() {
       {/* 保存 */}
       <div className="flex items-center gap-3 pt-2">
         <Button onClick={save} disabled={saving}>
-          {saving ? "保存中..." : "保存する"}
+          {saving ? "送信中..." : "送信する"}
         </Button>
-        {saved && <span className="text-sm text-primary">保存しました ✓</span>}
         <Link
-          href="/workshop"
+          href="/workshop/guide"
           className="ml-auto text-sm text-muted-foreground hover:text-[#e0f0e8]"
         >
-          ダッシュボードへ
+          ガイドへ戻る
         </Link>
       </div>
     </SurveyShell>

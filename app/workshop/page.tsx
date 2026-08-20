@@ -24,49 +24,8 @@ import { BRAND } from "@/lib/brand";
  * .nav-card-title / .nav-card-note / .tag-done）とトークンに従う。
  */
 export default async function WorkshopDashboard() {
-  const state = await getDashboardState();
-  if (!state) redirect("/login?from=/workshop");
-
-  const { sessionId, completedPhases, statuses } = state;
-
-  const postMeta = PHASE_META_BY_ID.post;
-
-  const postAccessible = isPhaseAccessible(postMeta, statuses.post);
-  const preDone = completedPhases.includes("pre");
-  const postDone = completedPhases.includes("post");
-  const isPostMode = postAccessible || postDone;
-
-  if (!isPostMode) redirect("/workshop/guide");
-
-  return (
-    <div className="mx-auto max-w-3xl px-4 py-10 md:px-8">
-      <header className="mb-8">
-        <p className="text-xs font-semibold uppercase tracking-widest text-primary">
-          {BRAND.tagline}
-        </p>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground">
-          {BRAND.name}
-        </h1>
-        <p className="subtitle mt-2">
-          研修お疲れさまでした。事後アンケートと、ご自身のワーク記録の入口です。
-        </p>
-      </header>
-
-      {!sessionId && (
-        <div className="callout mb-6 flex-col gap-1">
-          <p className="text-sm text-foreground">研修セッションが未設定です。</p>
-          <a
-            href={`mailto:${BRAND.contactEmail}`}
-            className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
-          >
-            事務局までお問合せください <ArrowRight className="h-4 w-4" />
-          </a>
-        </div>
-      )}
-
-      <PostModeMenu postAccessible={postAccessible} postDone={postDone} preDone={preDone} />
-    </div>
-  );
+  // このダッシュボードは廃止（/workshop/guide に一本化）。削除はせず、常に案内へ逃がす。
+  redirect("/workshop/guide");
 }
 
 function PostModeMenu({

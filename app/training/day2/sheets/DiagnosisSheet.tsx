@@ -101,7 +101,7 @@ export function DiagnosisSheet({
   return (
     <PrintSheet>
       <SheetHeader
-        no={8}
+        no={10}
         accent="コミュニティ活動力"
         title="〜 自己診断"
         right={nameTag}

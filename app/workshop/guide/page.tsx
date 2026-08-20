@@ -91,7 +91,7 @@ export default async function WorkshopGuidePage() {
           lockedNote: day2Str ? `Day2（${day2Str}）から参加できます` : null,
         };
       case "post":
-        return { label: "事後課題へ進む", href: "/workshop", locked: false };
+        return { label: "事後課題へ進む", href: "/workshop/post", locked: false };
       default:
         return null;
     }

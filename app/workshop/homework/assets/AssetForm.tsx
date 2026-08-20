@@ -26,12 +26,14 @@ function QuestionRow({
   hint,
   value,
   onChange,
+  readOnly = false,
 }: {
   no: number;
   color: string;
   hint: string;
   value: string;
   onChange: (v: string) => void;
+  readOnly?: boolean;
 }) {
   return (
     <div className="flex items-start gap-3">
@@ -43,6 +45,7 @@ function QuestionRow({
       </span>
       <div className="flex-1">
         <textarea
+          readOnly={readOnly}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={`どんな資産？（${hint}）`}
@@ -54,7 +57,13 @@ function QuestionRow({
   );
 }
 
-export function AssetForm({ assetKey }: { assetKey: AssetKey }) {
+export function AssetForm({
+  assetKey,
+  viewOnly = false,
+}: {
+  assetKey: AssetKey;
+  viewOnly?: boolean;
+}) {
   const meta = ASSET_META[assetKey];
   const [allAssets, setAllAssets] = useState<AssetsData>({});
   const [values, setValues] = useState<AssetAnswers>(EMPTY_ANSWERS);
@@ -102,7 +111,9 @@ export function AssetForm({ assetKey }: { assetKey: AssetKey }) {
     return res.ok;
   };
 
-  const { status, saveNow } = useAutosave(values, save, { enabled: !loading });
+  const { status, saveNow } = useAutosave(values, save, {
+    enabled: !loading && !viewOnly,
+  });
 
   if (loading) {
     return (
@@ -158,44 +169,49 @@ export function AssetForm({ assetKey }: { assetKey: AssetKey }) {
               hint={meta.hint}
               value={v}
               onChange={(nv) => setAt(i, nv)}
+              readOnly={viewOnly}
             />
           ))}
         </div>
 
         {/* 他の資産 */}
-        <div className="mt-6 flex items-center gap-3">
-          <p className="shrink-0 text-caption font-semibold text-ws-muted">他の資産</p>
-          {ASSET_KEYS.filter((k) => k !== assetKey).map((k) => {
-            const otherMeta = ASSET_META[k];
-            const done = hasText(allAssets[k]);
-            return (
-              <Link
-                key={k}
-                href={`/workshop/homework/assets/${k}`}
-                className={cn(
-                  "flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-semibold transition-colors",
-                  done
-                    ? "border-ws-line/60 text-ws-muted hover:border-ws-teal hover:text-ws-ink"
-                    : "border-ws-line text-ws-ink hover:border-ws-teal"
-                )}
-              >
-                <span
-                  className="h-2.5 w-2.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: otherMeta.color }}
-                />
-                {otherMeta.label}
-                {done && <CheckCircle2 className="h-4 w-4 shrink-0" />}
-              </Link>
-            );
-          })}
-        </div>
+        {!viewOnly && (
+          <div className="no-print mt-6 flex items-center gap-3">
+            <p className="shrink-0 text-caption font-semibold text-ws-muted">他の資産</p>
+            {ASSET_KEYS.filter((k) => k !== assetKey).map((k) => {
+              const otherMeta = ASSET_META[k];
+              const done = hasText(allAssets[k]);
+              return (
+                <Link
+                  key={k}
+                  href={`/workshop/homework/assets/${k}`}
+                  className={cn(
+                    "flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-semibold transition-colors",
+                    done
+                      ? "border-ws-line/60 text-ws-muted hover:border-ws-teal hover:text-ws-ink"
+                      : "border-ws-line text-ws-ink hover:border-ws-teal"
+                  )}
+                >
+                  <span
+                    className="h-2.5 w-2.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: otherMeta.color }}
+                  />
+                  {otherMeta.label}
+                  {done && <CheckCircle2 className="h-4 w-4 shrink-0" />}
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </PrintSheet>
 
-      <HomeworkSaveBar
-        status={status}
-        saveNow={saveNow}
-        returnHref="/workshop/homework/assets"
-      />
+      {!viewOnly && (
+        <HomeworkSaveBar
+          status={status}
+          saveNow={saveNow}
+          returnHref="/workshop/homework/assets"
+        />
+      )}
     </WorksheetStage>
   );
 }

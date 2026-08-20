@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import type { PortfolioCircle } from "@/components/worksheet/CommunityPortfolio";
 import {
   EMPTY_ACTION,
-  EMPTY_TARGET,
   EMPTY_WCM,
   EMPTY_WCM_META,
   EMPTY_SUMMARY,
@@ -18,6 +17,7 @@ import {
   type Portfolio,
   type Diagnosis,
   type ActionPlan,
+  type ActionTarget,
   type WCM,
   type WcmMeta,
   type Backcast,
@@ -50,7 +50,7 @@ export function Day2Client({
   // Day2 ステート
   const [future, setFuture] = useState<PortfolioCircle[]>([]);
   const [year, setYear] = useState("");
-  const [shift, setShift] = useState("");
+  const [shift, setShift] = useState<string[]>(["", ""]);
   const [diagnosis, setDiagnosis] = useState<Diagnosis>({});
   const [actionPlan, setActionPlan] = useState<ActionPlan>(EMPTY_ACTION);
   const [wcmCurrent, setWcmCurrent] = useState<WCM>(EMPTY_WCM);
@@ -59,8 +59,11 @@ export function Day2Client({
   const [backcast, setBackcast] = useState<Backcast>(EMPTY_BACKCAST);
   const [summary, setSummary] = useState<Summary>(EMPTY_SUMMARY);
 
-  // 宿題の社会シナリオ（読み取り専用で表示）
+  // 宿題のみらいシナリオ（読み取り専用で表示。修正はモーダルで完結）
   const [societyScenario, setSocietyScenario] = useState<
+    Record<string, string>
+  >({});
+  const [companyScenario, setCompanyScenario] = useState<
     Record<string, string>
   >({});
 
@@ -71,14 +74,29 @@ export function Day2Client({
   const [saved, setSaved] = useState(false);
 
   // ステップ系
-  const [step, setStep] = useState<"single" | "compare">("single");
+  const [step, setStep] = useState<"single" | "compare">("compare");
   const [which, setWhich] = useState<"current" | "future">("current");
-  const [apStep, setApStep] = useState<"select" | "entry">("select");
+  // 「現在」ボックスの読み込み表示フラグ。compare ⇄ single の行き来で
+  // PortfolioSheet 内部が再マウントされてもリセットされないよう、ここで保持する
+  const [currentLoaded, setCurrentLoaded] = useState(false);
   const [wcmStep, setWcmStep] = useState<"current" | "both">("current");
 
   // 任意の onChange に「保存マークを倒す」処理を挟むラッパ群
   const dirty = <T,>(setter: (v: T) => void) => (v: T) => {
     setter(v);
+    setSaved(false);
+  };
+
+  const handleShiftItemChange = (i: number, v: string) => {
+    setShift((prev) => {
+      const next = [...prev];
+      next[i] = v;
+      return next;
+    });
+    setSaved(false);
+  };
+  const handleShiftAdd = () => {
+    setShift((prev) => (prev.length >= 4 ? prev : [...prev, ""]));
     setSaved(false);
   };
 
@@ -105,18 +123,33 @@ export function Day2Client({
       const pf = d?.workshopData?.day2?.portfolio as Portfolio | undefined;
       setFuture(pf?.future ?? []);
       setYear(pf?.year ?? "");
-      setShift(pf?.shift ?? "");
+      const rawShift = pf?.shift;
+      setShift(
+        Array.isArray(rawShift) && rawShift.length > 0
+          ? rawShift
+          : typeof rawShift === "string" && rawShift
+            ? [rawShift]
+            : ["", ""]
+      );
       const hwScenario = d?.workshopData?.homework?.scenario as
-        | { society?: Record<string, string> }
+        | { company?: Record<string, string>; society?: Record<string, string> }
         | undefined;
       setSocietyScenario(hwScenario?.society ?? {});
+      setCompanyScenario(hwScenario?.company ?? {});
       setDiagnosis((d?.workshopData?.day2?.diagnosis as Diagnosis) ?? {});
-      const ap = d?.workshopData?.day2?.actionPlan as ActionPlan | undefined;
+      // 旧A/B2枠形式のデータも読める形で吸収する（対象1つ形式へ移行）
+      const apRaw = d?.workshopData?.day2?.actionPlan as
+        | (Partial<ActionPlan> & {
+            targetA?: string;
+            A?: Partial<ActionTarget>;
+          })
+        | undefined;
       setActionPlan({
-        targetA: ap?.targetA ?? "",
-        targetB: ap?.targetB ?? "",
-        A: { ...EMPTY_TARGET, ...(ap?.A ?? {}) },
-        B: { ...EMPTY_TARGET, ...(ap?.B ?? {}) },
+        target: apRaw?.target ?? apRaw?.targetA ?? "",
+        why: apRaw?.why ?? apRaw?.A?.why ?? "",
+        with: apRaw?.with ?? apRaw?.A?.with ?? "",
+        what: apRaw?.what ?? apRaw?.A?.what ?? "",
+        sowhat: apRaw?.sowhat ?? apRaw?.A?.sowhat ?? "",
       });
       const wcm = d?.workshopData?.day2?.wcm as
         | { current?: WCM; future?: WCM; meta?: WcmMeta }
@@ -226,24 +259,23 @@ export function Day2Client({
         viewOnly={viewOnly}
         saved={saved}
         saving={saving}
+        currentLoaded={currentLoaded}
+        onCurrentLoadedChange={setCurrentLoaded}
         onStepChange={setStep}
         onWhichChange={setWhich}
         onCurrentChange={dirty(setCurrent)}
         onFutureChange={dirty(setFuture)}
         onYearChange={dirty(setYear)}
-        onShiftChange={dirty(setShift)}
+        onShiftItemChange={handleShiftItemChange}
+        onShiftAdd={handleShiftAdd}
         onSave={save}
       />
 
       {/* #10 ポートフォリオ戦略 アクションプラン */}
       <ActionPlanSheet
         nameTag={nameTag}
-        apStep={apStep}
         actionPlan={actionPlan}
-        future={future}
-        year={year}
         viewOnly={viewOnly}
-        onApStepChange={setApStep}
         onActionPlanChange={dirty(setActionPlan)}
       />
 
@@ -254,6 +286,7 @@ export function Day2Client({
         backcast={backcast}
         viewOnly={viewOnly}
         onBackcastChange={dirty(setBackcast)}
+        onSocietyScenarioChange={setSocietyScenario}
       />
 
       {/* #11 会社での Will/Can/Must 2.0 → 3.0 */}
@@ -264,6 +297,8 @@ export function Day2Client({
         wcmFuture={wcmFuture}
         wcmMeta={wcmMeta}
         viewOnly={viewOnly}
+        companyScenario={companyScenario}
+        onCompanyScenarioChange={setCompanyScenario}
         onWcmStepChange={setWcmStep}
         onWcmCurrentChange={dirty(setWcmCurrent)}
         onWcmFutureChange={dirty(setWcmFuture)}
