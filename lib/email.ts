@@ -39,23 +39,78 @@ export function isEmailConfigured(): boolean {
   return Boolean(process.env.RESEND_API_KEY);
 }
 
+/** 差出人アドレスからドメイン部分を取り出す（"名前 <a@b.jp>" 形式にも対応） */
+function fromDomain(): string {
+  const match = FROM_EMAIL.match(/<([^>]+)>/);
+  const address = (match ? match[1] : FROM_EMAIL).trim();
+  return address.split("@")[1] ?? "";
+}
+
 /**
- * 管理画面に出す送信設定の要約。APIキーそのものは絶対に返さない。
+ * 差出人ドメインが Resend で認証済みかを実際に問い合わせる。
  *
- * appUrl も返すのは、メール内のリンクが localhost のまま本番送信される事故を
- * 画面側で警告するため（招待リンクが localhost だと受講生は永久に登録できない）。
+ * 「APIキーが入っている」ことと「そのキーで送れる」ことは別物で、
+ * 認証ドメインを持たない別アカウントのキーが入っていても設定画面は正常に見えてしまう。
+ * （実際にそれで本番の初回送信が落ちた。2026-08-21）
+ * 送信ボタンを押す前にここで気づけるようにする。
+ *
+ * 送信専用（sending only）のキーはドメイン一覧を読めないので、その場合は
+ * 「確認できない」= unknown を返し、送信自体は止めない。
  */
-export function emailConfigSummary(): {
+type DomainCheck = { state: "verified" | "unverified" | "unknown"; domain: string };
+
+let domainCache: { value: DomainCheck; expiresAt: number } | null = null;
+const DOMAIN_CACHE_MS = 5 * 60 * 1000;
+
+async function checkSendingDomain(): Promise<DomainCheck> {
+  const domain = fromDomain();
+  if (domainCache && domainCache.expiresAt > Date.now()) return domainCache.value;
+
+  const resend = getResend();
+  let value: DomainCheck = { state: "unknown", domain };
+  if (resend && domain) {
+    try {
+      const result = await resend.domains.list();
+      if (!result.error) {
+        const list = result.data?.data ?? [];
+        const hit = list.find((d) => d.name === domain);
+        value = { state: hit?.status === "verified" ? "verified" : "unverified", domain };
+      }
+    } catch (e) {
+      // 権限不足・ネットワーク断は「確認できない」として扱う（送信は妨げない）
+      console.error("resend domains.list:", e);
+    }
+  }
+
+  domainCache = { value, expiresAt: Date.now() + DOMAIN_CACHE_MS };
+  return value;
+}
+
+export type EmailConfigSummary = {
   configured: boolean;
   from: string;
   replyTo: string;
   appUrl: string;
-} {
+  /** 差出人ドメインの認証状態。unknown は「確認できなかった」 */
+  domainState: DomainCheck["state"];
+  domain: string;
+};
+
+/**
+ * 管理画面に出す送信設定の要約。APIキーそのものは絶対に返さない。
+ *
+ * appUrl を返すのは、メール内のリンクが localhost のまま本番送信される事故を
+ * 画面側で警告するため（招待リンクが localhost だと受講生は永久に登録できない）。
+ */
+export async function emailConfigSummary(): Promise<EmailConfigSummary> {
+  const check = await checkSendingDomain();
   return {
     configured: isEmailConfigured(),
     from: FROM_EMAIL,
     replyTo: REPLY_TO,
     appUrl: process.env.NEXT_PUBLIC_APP_URL ?? "",
+    domainState: check.state,
+    domain: check.domain,
   };
 }
 

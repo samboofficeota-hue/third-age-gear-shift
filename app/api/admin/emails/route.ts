@@ -26,7 +26,7 @@ export async function GET(request: Request) {
   const sessionId = searchParams.get("sessionId");
   const workshopSession = await resolveSession(guard.session, sessionId);
   if (!workshopSession) {
-    return NextResponse.json({ config: emailConfigSummary(), logs: [] });
+    return NextResponse.json({ config: await emailConfigSummary(), logs: [] });
   }
 
   const logs = await prisma.emailLog.findMany({
@@ -47,7 +47,7 @@ export async function GET(request: Request) {
   });
 
   return NextResponse.json({
-    config: emailConfigSummary(),
+    config: await emailConfigSummary(),
     logs: logs.map((l) => ({
       id: l.id,
       to: l.to,

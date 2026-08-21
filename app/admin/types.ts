@@ -127,6 +127,9 @@ export type MailConfig = {
   replyTo: string;
   /** メール内リンクの基点。localhost のままだと受講生がリンクを開けない */
   appUrl: string;
+  /** 差出人ドメインが Resend で認証済みか。unknown は確認できなかった場合 */
+  domainState: "verified" | "unverified" | "unknown";
+  domain: string;
 };
 
 export type EmailLogRow = {

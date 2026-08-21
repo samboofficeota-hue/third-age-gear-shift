@@ -96,6 +96,8 @@ export function MailPanel({
   const [results, setResults] = useState<MailSendResult[]>([]);
 
   const def = TEMPLATES.find((t) => t.key === template)!;
+  // 認証されていないドメインから送るとResendに必ず拒否されるので、押せないようにする
+  const canSend = Boolean(config?.configured) && config?.domainState !== "unverified";
   const matched = useMemo(
     () => participants.filter(def.match),
     [participants, def]
@@ -251,34 +253,51 @@ export function MailPanel({
         </div>
       )}
 
-      {/* 送信設定の状態 */}
-      {config && (
-        <div
-          className={`flex items-start gap-2.5 rounded-xl border px-4 py-3 text-sm ${
-            config.configured
-              ? "border-border bg-accent text-accent-foreground"
-              : "border-destructive/30 bg-destructive/5 text-destructive"
-          }`}
-        >
-          {config.configured ? (
-            <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0" />
-          ) : (
-            <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
-          )}
-          <div className="min-w-0">
-            {config.configured ? (
-              <p>
-                差出人 <span className="font-medium">{config.from}</span> ／ 返信先{" "}
-                <span className="font-medium">{config.replyTo}</span>
-              </p>
-            ) : (
-              <p>
-                RESEND_API_KEY が未設定のため送信できません。プレビューのみ利用できます。
-              </p>
-            )}
-          </div>
-        </div>
-      )}
+      {/* 送信設定の状態。
+          「キーが入っているか」ではなく「実際に送れるか」を出す。
+          キーが入っていても認証ドメインを持たない別アカウントのものだと送信は必ず失敗する。 */}
+      {config &&
+        (() => {
+          const blocked = !config.configured || config.domainState === "unverified";
+          const view = !config.configured
+            ? {
+                tone: "bad" as const,
+                text: "RESEND_API_KEY が未設定のため送信できません。プレビューのみ利用できます。",
+              }
+            : config.domainState === "unverified"
+              ? {
+                  tone: "bad" as const,
+                  text: `このAPIキーでは ${config.domain} が認証されていません。送信するとResendに拒否されます。ドメイン認証済みのアカウントのキーに差し替えてください（Resendのキーは複数あります）。`,
+                }
+              : config.domainState === "unknown"
+                ? {
+                    tone: "warn" as const,
+                    text: `差出人 ${config.from}（${config.domain} の認証状態は確認できませんでした。送信専用キーの場合は正常です）`,
+                  }
+                : {
+                    tone: "good" as const,
+                    text: `差出人 ${config.from} ／ 返信先 ${config.replyTo}（${config.domain} 認証済み・送信可）`,
+                  };
+
+          return (
+            <div
+              className={`flex items-start gap-2.5 rounded-xl border px-4 py-3 text-sm ${
+                view.tone === "good"
+                  ? "border-border bg-accent text-accent-foreground"
+                  : view.tone === "warn"
+                    ? "border-chart-1/40 bg-chart-1/10 text-foreground"
+                    : "border-destructive/30 bg-destructive/5 text-destructive"
+              }`}
+            >
+              {view.tone === "good" ? (
+                <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0" />
+              ) : (
+                <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+              )}
+              <p className="min-w-0">{view.text}</p>
+            </div>
+          );
+        })()}
 
       {/* ① テンプレート */}
       <Card>
@@ -394,7 +413,7 @@ export function MailPanel({
             <Button
               type="button"
               onClick={send}
-              disabled={sending || selected.size === 0 || !config?.configured}
+              disabled={sending || selected.size === 0 || !canSend}
             >
               <Mail className="mr-1.5 h-4 w-4" />
               {sending ? "送信中..." : `${selected.size} 名に送信する`}
@@ -454,7 +473,7 @@ export function MailPanel({
                 size="sm"
                 variant="outline"
                 onClick={sendTest}
-                disabled={testing || !config?.configured}
+                disabled={testing || !canSend}
               >
                 {testing ? "送信中..." : "テスト送信"}
               </Button>

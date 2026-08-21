@@ -27,7 +27,7 @@ export async function POST(request: Request) {
 
   if (!userId) {
     const rendered = renderTemplate(template, sampleContext(template, workshopSession));
-    return NextResponse.json({ ...rendered, sample: true, config: emailConfigSummary() });
+    return NextResponse.json({ ...rendered, sample: true, config: await emailConfigSummary() });
   }
 
   const user = await prisma.user.findFirst({
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
       ...rendered,
       sample: true,
       blockedReason: result.reason,
-      config: emailConfigSummary(),
+      config: await emailConfigSummary(),
     });
   }
 
@@ -58,6 +58,6 @@ export async function POST(request: Request) {
     ...rendered,
     sample: false,
     to: user.email,
-    config: emailConfigSummary(),
+    config: await emailConfigSummary(),
   });
 }
