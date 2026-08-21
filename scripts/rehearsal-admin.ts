@@ -28,21 +28,15 @@ async function main() {
     },
   });
 
-  const facilitator = await prisma.user.findUnique({
-    where: { email: "fac@rehearsal.thirdage.test" },
-  });
-
   const session = await prisma.workshopSession.update({
     where: { code: REHEARSAL_CODE },
     data: {
-      facilitatorId: facilitator?.id ?? null,
       location: "[リハ] 銀座THビル 9F",
       isOnline: false,
     },
   });
 
   console.log(`✅ 事務局: ${admin.email} / PW: ${REHEARSAL_PASSWORD}`);
-  console.log(`   担当講師: ${facilitator?.email ?? "（未設定）"}`);
   console.log(`   会場: ${session.location}`);
 }
 

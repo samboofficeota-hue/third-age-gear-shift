@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireStaff, requireAdmin, sessionScopeFor } from "@/lib/adminAuth";
+import { requireAdmin } from "@/lib/adminAuth";
 
 /** 日付文字列（YYYY-MM-DD）→ Date | null。無効値は undefined（=更新しない） */
 function parseDateInput(v: unknown): Date | null | undefined {
@@ -20,8 +20,6 @@ function sessionDto(s: {
   day2Date: Date | null;
   location: string | null;
   isOnline: boolean;
-  facilitatorId: string | null;
-  facilitator?: { id: string; name: string | null; email: string } | null;
   _count?: { workshopData: number };
 }) {
   return {
@@ -34,24 +32,18 @@ function sessionDto(s: {
     day2Date: s.day2Date,
     location: s.location,
     isOnline: s.isOnline,
-    facilitatorId: s.facilitatorId,
-    facilitatorName: s.facilitator?.name ?? s.facilitator?.email ?? null,
     participantCount: s._count?.workshopData ?? 0,
   };
 }
 
 export async function GET() {
-  const guard = await requireStaff();
+  const guard = await requireAdmin();
   if (!guard.ok) return guard.response;
 
-  // 講師は担当セッションのみ（F-1）。未割り当ての場合は空になる
+  // 権限は2層。admin は全研修を扱えるので絞り込みは無い。
   const sessions = await prisma.workshopSession.findMany({
-    where: sessionScopeFor(guard.session),
     orderBy: { createdAt: "desc" },
-    include: {
-      _count: { select: { workshopData: true } },
-      facilitator: { select: { id: true, name: true, email: true } },
-    },
+    include: { _count: { select: { workshopData: true } } },
   });
 
   return NextResponse.json({ sessions: sessions.map(sessionDto) });
@@ -66,10 +58,6 @@ export async function POST(request: Request) {
   const code = typeof body.code === "string" ? body.code.trim() : "";
   const location = typeof body.location === "string" ? body.location.trim() : "";
   const isOnline = body.isOnline === true;
-  const facilitatorId =
-    typeof body.facilitatorId === "string" && body.facilitatorId
-      ? body.facilitatorId
-      : null;
   const day1Date = parseDateInput(body.day1Date);
   const day2Date = parseDateInput(body.day2Date);
 
@@ -90,13 +78,10 @@ export async function POST(request: Request) {
         code,
         location: location || null,
         isOnline,
-        facilitatorId,
         day1Date: day1Date ?? null,
         day2Date: day2Date ?? null,
       },
-      include: {
-        facilitator: { select: { id: true, name: true, email: true } },
-      },
+      include: { _count: { select: { workshopData: true } } },
     });
     return NextResponse.json({ session: sessionDto(ws) }, { status: 201 });
   } catch (e: unknown) {
@@ -123,12 +108,6 @@ export async function PATCH(request: Request) {
   if (typeof body.name === "string") data.name = body.name.trim() || null;
   if (typeof body.location === "string") data.location = body.location.trim() || null;
   if (typeof body.isOnline === "boolean") data.isOnline = body.isOnline;
-  if ("facilitatorId" in body) {
-    data.facilitatorId =
-      typeof body.facilitatorId === "string" && body.facilitatorId
-        ? body.facilitatorId
-        : null;
-  }
   if ("day1Date" in body) {
     const d = parseDateInput(body.day1Date);
     if (d !== undefined) data.day1Date = d;
@@ -147,8 +126,7 @@ export async function PATCH(request: Request) {
       where: { id },
       data,
       include: {
-        facilitator: { select: { id: true, name: true, email: true } },
-        _count: { select: { workshopData: true } },
+          _count: { select: { workshopData: true } },
       },
     });
     return NextResponse.json({ session: sessionDto(updated) });

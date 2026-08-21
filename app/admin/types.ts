@@ -38,15 +38,7 @@ export type SessionInfo = {
   day2Date: string | null;
   location: string | null;
   isOnline: boolean;
-  facilitatorId: string | null;
-  facilitatorName: string | null;
   participantCount: number;
-};
-
-export type Facilitator = {
-  id: string;
-  name: string | null;
-  email: string;
 };
 
 export type InviteResult = {

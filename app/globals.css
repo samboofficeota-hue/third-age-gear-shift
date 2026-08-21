@@ -324,12 +324,10 @@ body {
     color: hsl(var(--foreground));
   }
 
-  /* 管理画面は情報密度を上げたいので、可変ルート(17/18/20px)を 16px に固定する。
-     参加者画面の「大きめの文字」は本文を読ませるためのもので、一覧表には過大。
-     Tailwind のサイズは rem 基準なので、要素側ではなくルートを下げる必要がある。 */
-  html:has(.admin-theme) {
-    font-size: 16px;
-  }
+  /* 管理画面もルート文字サイズはサイト共通（17/18/20px）に従う。
+     事務局にも同じ世代の読み手がいるため、密度のために小さくしない
+     （DESIGN_GUIDELINES.md「ミドルシニアの可読性を最優先」）。
+     以前ここで 16px に固定していたが、ガイドラインから外れるため撤去した。 */
 
   /* 管理画面の見出しは黒900だと圧が強いので、業務用に落とす */
   .admin-theme h1, .admin-theme h2, .admin-theme h3, .admin-theme h4 {
@@ -351,7 +349,7 @@ body {
 @layer components {
   /* 管理画面の左ナビ1行 */
   .admin-nav-item {
-    @apply flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium
+    @apply flex items-center gap-2.5 rounded-lg px-3 py-2 text-body-sm font-medium
            text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground;
   }
   .admin-nav-item.is-active {
@@ -359,13 +357,13 @@ body {
   }
 
   /* 画面上部の見出しブロック（タイトル＋説明） */
-  .admin-page-title { @apply text-xl font-bold text-foreground; }
-  .admin-page-note  { @apply mt-1 text-sm text-muted-foreground; }
+  .admin-page-title { @apply text-h3 text-foreground; }
+  .admin-page-note  { @apply mt-1 text-body-sm text-muted-foreground; }
 
   /* 数値サマリのタイル */
   .admin-stat {
     @apply rounded-xl border border-border bg-card px-4 py-3;
   }
-  .admin-stat-label { @apply text-xs font-medium text-muted-foreground; }
-  .admin-stat-value { @apply mt-1 text-2xl font-bold tabular-nums text-foreground; }
+  .admin-stat-label { @apply text-caption font-medium text-muted-foreground; }
+  .admin-stat-value { @apply mt-1 text-kpi tabular-nums text-foreground; }
 }

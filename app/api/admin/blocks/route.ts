@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireStaff, resolveSession } from "@/lib/adminAuth";
+import { requireAdmin, resolveSession } from "@/lib/adminAuth";
 import { PHASE_IDS } from "@/lib/phases";
 import type { SessionPayload } from "@/lib/auth";
 
@@ -14,7 +14,7 @@ async function resolveOrBootstrapSession(
   session: SessionPayload,
   sessionId: string | null
 ) {
-  const found = await resolveSession(session, sessionId);
+  const found = await resolveSession(sessionId);
   if (found) return found;
   if (sessionId || session.role !== "admin") return null;
 
@@ -25,7 +25,7 @@ async function resolveOrBootstrapSession(
 }
 
 export async function GET(request: Request) {
-  const guard = await requireStaff();
+  const guard = await requireAdmin();
   if (!guard.ok) return guard.response;
 
   const { searchParams } = new URL(request.url);
@@ -62,7 +62,7 @@ export async function GET(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const guard = await requireStaff();
+  const guard = await requireAdmin();
   if (!guard.ok) return guard.response;
 
   const body = await request.json().catch(() => ({}));

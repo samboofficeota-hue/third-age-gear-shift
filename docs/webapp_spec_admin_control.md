@@ -196,8 +196,8 @@
 - 受講生の入力完了ステータスも管理者画面にリアルタイム反映
 
 ### 権限管理
-- JWT に `role: admin | facilitator | participant` を含める
-- ブロック開放 API は `admin / facilitator` ロールのみ実行可能
+- JWT に `role: admin | participant` を含める（2層）
+- ブロック開放 API は `admin` ロールのみ実行可能
 - 個別モニタリングは `admin` のみ
 
 ### データベース追加テーブル

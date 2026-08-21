@@ -395,7 +395,7 @@ export function MailPanel({
                       <p className="truncate text-xs text-muted-foreground">{p.email}</p>
                     </div>
                     {!isMatched && (
-                      <Badge variant="secondary" className="flex-shrink-0 text-[11px]">
+                      <Badge variant="secondary" className="flex-shrink-0 text-caption">
                         対象外
                       </Badge>
                     )}
@@ -443,7 +443,7 @@ export function MailPanel({
                   </span>
                 </span>
                 {preview.blockedReason && (
-                  <Badge variant="secondary" className="text-[11px]">
+                  <Badge variant="secondary" className="text-caption">
                     この方には送れません：{preview.blockedReason}
                   </Badge>
                 )}
@@ -508,7 +508,7 @@ export function MailPanel({
                   return (
                     <div key={`${r.email}-${i}`} className="px-3 py-2">
                       <div className="flex items-center gap-2">
-                        <Badge className={`px-1.5 py-0 text-[11px] ${badge.className}`}>
+                        <Badge className={`px-1.5 py-0 text-caption ${badge.className}`}>
                           {badge.label}
                         </Badge>
                         <span className="truncate text-sm">{r.name ?? r.email}</span>
@@ -544,7 +544,7 @@ export function MailPanel({
                 <div key={log.id} className="px-3 py-2">
                   <div className="flex items-center gap-2">
                     <Badge
-                      className={`px-1.5 py-0 text-[11px] ${
+                      className={`px-1.5 py-0 text-caption ${
                         log.status === "sent"
                           ? "bg-primary text-primary-foreground"
                           : "bg-destructive text-destructive-foreground"

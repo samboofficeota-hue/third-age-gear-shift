@@ -11,27 +11,15 @@ import { getStorageAdmin, PHOTO_BUCKET } from "@/lib/supabaseStorage";
  *
  * 閲覧できるのは
  *   - 本人
- *   - 事務局（admin）
- *   - その受講生が属するセッションの担当講師（facilitator）
+ *   - 運営（admin）。研修中に受講生のシートを投影するため。
  */
 
 const FILE_PATTERN = /^(profile|excursion)(-original)?\.(png|jpg|webp)$/;
 const ID_PATTERN = /^[A-Za-z0-9_-]+$/;
 
-async function canView(
-  session: SessionPayload,
-  targetUserId: string
-): Promise<boolean> {
+function canView(session: SessionPayload, targetUserId: string): boolean {
   if (session.sub === targetUserId) return true;
-  if (session.role === "admin") return true;
-  if (session.role === "facilitator") {
-    const owned = await prisma.workshopData.findFirst({
-      where: { userId: targetUserId, session: { facilitatorId: session.sub } },
-      select: { id: true },
-    });
-    return !!owned;
-  }
-  return false;
+  return session.role === "admin";
 }
 
 export async function GET(

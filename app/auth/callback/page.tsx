@@ -13,7 +13,7 @@ import { useEffect, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browserClient";
 
 function roleDefaultPath(role: string): string {
-  if (role === "admin" || role === "facilitator") return "/admin";
+  if (role === "admin") return "/admin";
   return "/workshop";
 }
 

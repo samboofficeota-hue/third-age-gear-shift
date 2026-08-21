@@ -21,7 +21,7 @@ const INVITE_LABEL: Record<Participant["inviteStatus"], { label: string; classNa
 function DoneMark({ done }: { done: boolean }) {
   return (
     <span
-      className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold ${
+      className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-caption font-bold ${
         done ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
       }`}
     >
@@ -53,7 +53,7 @@ function AttendanceToggle({
       type="button"
       disabled={disabled}
       onClick={() => onChange(next)}
-      className={`rounded px-2 py-0.5 text-[11px] font-medium transition disabled:opacity-50 ${view.className}`}
+      className={`rounded px-2 py-0.5 text-caption font-medium transition disabled:opacity-50 ${view.className}`}
     >
       {view.label}
     </button>
@@ -61,10 +61,13 @@ function AttendanceToggle({
 }
 
 export function RosterPanel({
+  sessionId,
   participants,
   sessionName,
   onAttendanceChange,
 }: {
+  /** 受講生の画面を開くリンク（/view）に使う */
+  sessionId: string;
   participants: Participant[];
   sessionName: string;
   onAttendanceChange: (
@@ -158,7 +161,7 @@ export function RosterPanel({
                         </p>
                       </td>
                       <td className="px-2 py-2.5 text-center">
-                        <span className={`rounded px-1.5 py-0.5 text-[10px] ${invite.className}`}>
+                        <span className={`rounded px-1.5 py-0.5 text-caption ${invite.className}`}>
                           {invite.label}
                         </span>
                       </td>
@@ -168,7 +171,7 @@ export function RosterPanel({
                       <td className="px-2 py-2.5 text-center">
                         {p.profileSlideDone ? (
                           <Link
-                            href={`/admin/participants/${p.id}`}
+                            href={`/view/${sessionId}/${p.id}/intro`}
                             className="text-xs font-medium text-primary hover:underline"
                           >
                             開く
@@ -192,7 +195,7 @@ export function RosterPanel({
                         />
                       </td>
                       <td className="px-2 py-2.5 text-center">
-                        <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
+                        <Badge variant="secondary" className="px-1.5 py-0 text-caption">
                           {p.completedPhases.length}/5
                         </Badge>
                       </td>

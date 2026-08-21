@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireStaff, requireAdmin } from "@/lib/adminAuth";
+import { requireAdmin } from "@/lib/adminAuth";
 
 /** 会社（Organization）管理 A-5。役職定年・定年は「会社の制度情報」。 */
 
@@ -12,7 +12,7 @@ function parseAge(v: unknown): number | null {
 }
 
 export async function GET() {
-  const guard = await requireStaff();
+  const guard = await requireAdmin();
   if (!guard.ok) return guard.response;
 
   const organizations = await prisma.organization.findMany({

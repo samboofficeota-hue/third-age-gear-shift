@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireStaff, resolveSession } from "@/lib/adminAuth";
+import { requireAdmin, resolveSession } from "@/lib/adminAuth";
 import { emailConfigSummary } from "@/lib/email";
 import { isTemplateKey, renderTemplate } from "@/lib/emailTemplates";
 import { buildContext, sampleContext } from "../_context";
@@ -11,7 +11,7 @@ import { buildContext, sampleContext } from "../_context";
  * 省略するとダミー宛先で文面だけを確認する。送信は行わない。
  */
 export async function POST(request: Request) {
-  const guard = await requireStaff();
+  const guard = await requireAdmin();
   if (!guard.ok) return guard.response;
 
   const body = await request.json().catch(() => ({}));
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "テンプレートを選択してください。" }, { status: 400 });
   }
 
-  const workshopSession = await resolveSession(guard.session, sessionId);
+  const workshopSession = await resolveSession(sessionId);
 
   if (!userId) {
     const rendered = renderTemplate(template, sampleContext(template, workshopSession));

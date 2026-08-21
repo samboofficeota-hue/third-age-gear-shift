@@ -13,10 +13,10 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+// 権限は2層のみ。運営（事務局・講師）はすべて admin、受講する人が participant。
+// 旧 facilitator / coordinator は使われないまま廃止した（2026-08-21）。
 enum UserRole {
   admin
-  facilitator
-  coordinator
   participant
 }
 
@@ -68,7 +68,6 @@ model User {
 
   workshopData              WorkshopData?
   participantBlockOverrides ParticipantBlockOverride[]
-  facilitatedSessions       WorkshopSession[]          @relation("SessionFacilitator")
   emailLogs                 EmailLog[]
 
   @@map("users")
@@ -120,19 +119,16 @@ model WorkshopData {
 
 // 研修セッション（1回の2日間研修＝1セッション想定）
 model WorkshopSession {
-  id            String    @id @default(cuid())
-  name          String? // 例: "2026年2月 研修"
-  code          String    @unique // 研修コード 例: "3rdage0201" / "001"
-  isActive      Boolean   @default(true) @map("is_active")
-  day1Date      DateTime? @map("day1_date") // 研修日 Day1
-  day2Date      DateTime? @map("day2_date") // 研修日 Day2
+  id        String    @id @default(cuid())
+  name      String? // 例: "2026年2月 研修"
+  code      String    @unique // 研修コード 例: "3rdage0201" / "001"
+  isActive  Boolean   @default(true) @map("is_active")
+  day1Date  DateTime? @map("day1_date") // 研修日 Day1
+  day2Date  DateTime? @map("day2_date") // 研修日 Day2
   // 開催情報（S-4）
-  location      String? // 会場名 or オンラインURL
-  isOnline      Boolean   @default(false) @map("is_online")
-  // 担当講師（S-5 / T-4）。講師画面はこの紐付けで担当セッションに絞る
-  facilitatorId String?   @map("facilitator_id")
-  facilitator   User?     @relation("SessionFacilitator", fields: [facilitatorId], references: [id], onDelete: SetNull)
-  createdAt     DateTime  @default(now()) @map("created_at")
+  location  String? // 会場名 or オンラインURL
+  isOnline  Boolean   @default(false) @map("is_online")
+  createdAt DateTime  @default(now()) @map("created_at")
 
   blockStatuses BlockStatus[]
   workshopData  WorkshopData[]

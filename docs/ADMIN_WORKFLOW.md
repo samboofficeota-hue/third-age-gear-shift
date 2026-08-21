@@ -74,14 +74,14 @@ S-1〜S-6      P-1       P-6    P-7    D-1〜3  D-4     A-1〜5  F-1〜4
 | **事務局** | `admin` | 個人ログイン | 全研修を横断して管理 |
 | **企業担当者** | `coordinator`（新設） | **企業ごとの共通ログイン** | 発注企業側の研修責任者・人事。1社に複数名いる場合も同じIDを共有 |
 | **受講生** | `participant` | 個人ログイン | 実際に研修を受ける社員 |
-| **講師** | `facilitator` | 個人ログイン | 当日の研修を進行する |
+| **講師（進行役）** | `admin` | 個人ログイン | 当日の研修を進行する。権限は事務局と同じ |
 
 ### 企業担当者アカウントの設計方針
 
 - 企業ごとに1アカウント（共通ログイン）— 担当者が複数いても同じID・PWを使い回す
 - 企業別の管理ページ（`/company/[orgId]` 相当）を用意し、自社の参加者・進捗・レポートのみ閲覧できる
 - **ユーザーDBは一本化（確定）**: 別テーブルは作らず、既存の `User` テーブルに `coordinator` ロールを追加
-  - `UserRole` enum に `coordinator` を追加（現状: `admin` / `facilitator` / `participant`）
+  - 権限は2層に統一（`admin` / `participant`）。`facilitator` / `coordinator` は廃止（2026-08-21）
   - `Organization` との紐づけは既存の `organizationId` フィールドをそのまま使用
 
 ---
@@ -130,7 +130,7 @@ S-1〜S-6      P-1       P-6    P-7    D-1〜3  D-4     A-1〜5  F-1〜4
 | S-2 | CCメールの内容をシステムに記録 — 日程・場所・人数・要望 | S-1の都度 | AI補助 | 🆕 未定義（メール読み取り→入力補助） | 🆕 CC受信→AI抽出→管理画面に下書き 候補 |
 | S-3 | 会社（Organization）登録 — 会社名・役職定年・定年 | 〜 D1-30 | 事務局 | 🔧 API実装済（`/api/admin/organizations`）・UI未。招待時に会社名から自動作成される（制度情報は別途登録が必要） | なし |
 | S-4 | 研修セッション作成 — 研修コード・D1/D2日程・場所/オンライン区分 | 〜 D1-30 | 事務局 | ✅ /admin セッションタブ | なし |
-| S-5 | 担当講師の割り当て — セッションに facilitator を紐づけ | 〜 D1-30 | 事務局 | ✅ `WorkshopSession.facilitatorId`・セッション編集フォームで割り当て | なし |
+| S-5 | 担当講師の割り当て | 〜 D1-30 | 事務局 | ❌ 廃止（2026-08-21）。2層モデルでは全 admin が全研修を扱うため、割り当て自体が不要になった | なし |
 | S-6 | 企業担当者アカウントの発行 — 企業別の共通ログイン情報を発行 | 〜 D1-30 | 事務局 | 🔧 `coordinator` ロールは追加済（enum）。発行UI・企業管理ページは未 | なし |
 | S-7 | カレンダー招待の発行 — D1/D2 を企業担当者・講師へ | S-4完了後すぐ | 事務局 | 🆕 未定義（ICS or Google Calendar API） | 🆕 S-4完了トリガーで自動発行 候補 |
 | S-8 | オンライン回のMeetリンク登録 | S-4完了後すぐ | 事務局 | 🆕 未定義（Google Meet API or 手動URL） | 🆕 S-4完了時に自動生成 候補 |
@@ -175,7 +175,7 @@ User レコード生成（既存テーブル・roleはparticipant）
 | `WorkshopData` | `completedAt DateTime?` | Day2修了（D-4・事後/フォロー自動化の起点） | ✅ 列のみ。書き込みは未実装 |
 | `WorkshopData` | `followupSentAt DateTime?` | 3ヶ月後リマインド送信済みフラグ | ✅ 列のみ |
 | `WorkshopData` | `postSurveyReminderSentAt DateTime?` | 事後アンケートリマインド送信済みフラグ | ✅ 列のみ |
-| `WorkshopSession` | `facilitatorId String?` | 担当講師の紐づけ | ✅ 講師のスコープ制御に使用中 |
+| `WorkshopSession` | ~~`facilitatorId`~~ | 担当講師の紐づけ | ❌ 2026-08-21 削除（2層モデル化） |
 | `WorkshopSession` | `location String?` | 会場名 or URL | ✅ |
 | `WorkshopSession` | `isOnline Boolean` | オンライン / 対面区分 | ✅ |
 
@@ -303,7 +303,7 @@ User レコード生成（既存テーブル・roleはparticipant）
 |---|---|---|
 | **Resend** | 全メール送信（招待 / 催促 / 激励 / リマインド） | ✅ 導入済（`lib/email.ts` / `lib/emailTemplates.ts`）。`RESEND_API_KEY` と `FROM_EMAIL` は third-age-project と同じ値を使う。送信履歴は `email_logs` |
 | **Vercel Cron** | 催促（D1-7/D1-3）・事後（D2+3）・3ヶ月後（D2+90） | 未設定（`vercel.json` に crons 追記が必要） |
-| **DB フィールド追加** | `completedAt` / `followupSentAt` / `postSurveyReminderSentAt` / `facilitatorId` | スキーマ検討中 |
+| **DB フィールド追加** | `completedAt` / `followupSentAt` / `postSurveyReminderSentAt` | 追加済み |
 | **カレンダー/Meet** | 日程共有（S-5/S-6） | 方式未決 |
 
 ---

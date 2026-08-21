@@ -51,14 +51,15 @@ export async function middleware(request: NextRequest) {
 
   const role = (user?.app_metadata?.role as string | undefined) ?? null;
 
-  // /admin は admin または facilitator のみ
-  if (path.startsWith("/admin")) {
+  // /admin（管理画面）と /view（受講生の画面を管理者が見るビュー）は運営専用。
+  // /view は受講生本人以外のワークが見えるので、/admin と同じ扱いにする。
+  if (path.startsWith("/admin") || path.startsWith("/view")) {
     if (!user) {
       const login = new URL("/login", request.url);
       login.searchParams.set("from", path);
       return NextResponse.redirect(login);
     }
-    if (role !== "admin" && role !== "facilitator") {
+    if (role !== "admin") {
       return NextResponse.redirect(new URL("/", request.url));
     }
     return response;
@@ -78,5 +79,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/workshop/:path*", "/admin/:path*", "/login"],
+  matcher: ["/workshop/:path*", "/admin/:path*", "/view/:path*", "/login"],
 };

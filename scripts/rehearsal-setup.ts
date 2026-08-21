@@ -5,7 +5,7 @@
  * 作るもの:
  * - 研修セッション 1件（code=REHEARSAL, Day1/Day2 日程あり）
  * - 会社 2社（[リハ] プレフィックス）
- * - 講師 1名（role=facilitator）
+ * - 進行役 1名（role=admin。権限は2層）
  * - 参加者 5名（role=participant・会社/部署あり・セッションに紐付け・即ログイン可）
  *
  * すべて即ログイン可（パスワード = rehearsal）。リハ終了後は npm run rehearsal:teardown で完全削除。
@@ -17,7 +17,7 @@ import {
   REHEARSAL_CODE,
   REHEARSAL_PASSWORD,
   REHEARSAL_ORGS,
-  REHEARSAL_FACILITATOR,
+  REHEARSAL_TRAINER,
   REHEARSAL_PARTICIPANTS,
 } from "./rehearsalData";
 
@@ -55,14 +55,14 @@ async function main() {
     },
   });
 
-  // 講師
+  // 当日の進行役（権限は2層なので admin）
   await prisma.user.upsert({
-    where: { email: REHEARSAL_FACILITATOR.email },
-    update: { name: REHEARSAL_FACILITATOR.name, role: "facilitator", passwordHash, activatedAt: new Date() },
+    where: { email: REHEARSAL_TRAINER.email },
+    update: { name: REHEARSAL_TRAINER.name, role: "admin", passwordHash, activatedAt: new Date() },
     create: {
-      email: REHEARSAL_FACILITATOR.email,
-      name: REHEARSAL_FACILITATOR.name,
-      role: "facilitator",
+      email: REHEARSAL_TRAINER.email,
+      name: REHEARSAL_TRAINER.name,
+      role: "admin",
       passwordHash,
       activatedAt: new Date(),
     },
@@ -99,7 +99,7 @@ async function main() {
 
   console.log("✅ リハーサル用データを投入しました。");
   console.log(`   研修コード: ${REHEARSAL_CODE} / 共通パスワード: ${REHEARSAL_PASSWORD}`);
-  console.log(`   講師:   ${REHEARSAL_FACILITATOR.email}`);
+  console.log(`   講師:   ${REHEARSAL_TRAINER.email}`);
   REHEARSAL_PARTICIPANTS.forEach((p) =>
     console.log(`   参加者: ${p.email}  (${p.name}${p.department ? " / " + p.department : ""})`)
   );

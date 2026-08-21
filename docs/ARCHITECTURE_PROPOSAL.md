@@ -14,7 +14,7 @@
 | リアルタイム | WebSocket（Socket.io） | ブロック開放の一斉配信・進捗反映 |
 | AI | Claude API（claude-sonnet-4-6） | 対話・コメント・PDF用サマリー |
 | PDF | puppeteer or react-pdf、A4縦・約10ページ | 経営計画書の出力 |
-| 認証 | JWT、role: admin \| facilitator \| participant | 管理者・ファシリ・受講生の分離 |
+| 認証 | JWT、role: admin \| participant | 運営と受講生の2層 |
 
 ---
 
@@ -106,7 +106,7 @@ third-age-gear-shift/
 │   │   ├── auth/
 │   │   ├── workshop/              # 入力保存・取得
 │   │   ├── michi/                 # Claude 対話
-│   │   ├── blocks/                # ブロック開放 API（admin/facilitator）
+│   │   ├── blocks/                # ブロック開放 API（admin）
 │   │   └── pdf/
 │   ├── layout.tsx
 │   └── page.tsx

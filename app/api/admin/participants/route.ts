@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireStaff, resolveSession } from "@/lib/adminAuth";
+import { requireAdmin, resolveSession } from "@/lib/adminAuth";
 
 /**
  * 受講生名簿（A-1 / F-1）。
@@ -47,13 +47,13 @@ function hasProfileSlide(pre: PreData | null): boolean {
 }
 
 export async function GET(request: Request) {
-  const guard = await requireStaff();
+  const guard = await requireAdmin();
   if (!guard.ok) return guard.response;
 
   const { searchParams } = new URL(request.url);
   const requestedSessionId = searchParams.get("sessionId");
 
-  const workshopSession = await resolveSession(guard.session, requestedSessionId);
+  const workshopSession = await resolveSession(requestedSessionId);
   if (requestedSessionId && !workshopSession) {
     return NextResponse.json(
       { error: "セッションが見つからないか、閲覧権限がありません。" },

@@ -13,6 +13,7 @@ import {
   type FillTemplate,
 } from "@/components/worksheet/FillBlankScenario";
 import { useAutosave } from "@/lib/hooks/useAutosave";
+import { workshopDataEndpoint } from "@/lib/workshopSource";
 
 type Blanks = Record<string, string>;
 type Scenario = { company?: Blanks; society?: Blanks };
@@ -100,7 +101,12 @@ const SOCIETY_TEMPLATE: FillTemplate = [
 export function HomeworkClient({
   viewOnly = false,
   only,
-}: { viewOnly?: boolean; only?: "company" | "society" } = {}) {
+  participantId,
+}: {
+  viewOnly?: boolean;
+  only?: "company" | "society";
+  participantId?: string;
+} = {}) {
   const [company, setCompany] = useState<Blanks>({});
   const [society, setSociety] = useState<Blanks>({});
   const [headerName, setHeaderName] = useState("");
@@ -108,7 +114,7 @@ export function HomeworkClient({
 
   useEffect(() => {
     (async () => {
-      const d = await fetch("/api/workshop/me", { credentials: "include" })
+      const d = await fetch(workshopDataEndpoint(participantId), { credentials: "include" })
         .then((r) => r.json())
         .catch(() => ({}));
       const ps = d?.workshopData?.pre?.profileSlide as
@@ -172,7 +178,10 @@ export function HomeworkClient({
     <WorksheetStage>
       {/* 編集モードは戻りリンクなし（ヘッダーの「宿題トップへ戻る」に一本化）。
           閲覧モード（事後の記録閲覧）のときだけ、記録一覧への戻り導線とバッジ／PDFを出す。 */}
-      {viewOnly && (
+      {/* 受講生が自分の記録を見返すときの案内バー。
+         講師の投影ビュー（participantId あり）では出さない。
+         戻り先が受講生用ページなので、講師が押すと迷子になるため。 */}
+      {viewOnly && !participantId && (
         <div className="no-print flex w-full max-w-[1123px] items-center justify-between gap-3">
           <Link
             href="/workshop/records"

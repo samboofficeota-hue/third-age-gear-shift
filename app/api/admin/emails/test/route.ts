@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const workshopSession = await resolveSession(guard.session, sessionId);
+  const workshopSession = await resolveSession(sessionId);
 
   const result = await sendTemplateEmail({
     template,

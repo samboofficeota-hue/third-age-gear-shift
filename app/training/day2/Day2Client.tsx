@@ -29,6 +29,7 @@ import { ActionPlanSheet } from "./sheets/ActionPlanSheet";
 import { BackcastSheet } from "./sheets/BackcastSheet";
 import { WcmSheet } from "./sheets/WcmSheet";
 import { SummarySheet } from "./sheets/SummarySheet";
+import { workshopDataEndpoint } from "@/lib/workshopSource";
 
 /**
  * Day2 オーケストレーター。
@@ -42,7 +43,8 @@ import { SummarySheet } from "./sheets/SummarySheet";
  */
 export function Day2Client({
   viewOnly = false,
-}: { viewOnly?: boolean } = {}) {
+  participantId,
+}: { viewOnly?: boolean; participantId?: string } = {}) {
   // Day1 由来（現在のポートフォリオ）
   const [current, setCurrent] = useState<PortfolioCircle[]>([]);
   const [day1Bunkai, setDay1Bunkai] = useState<Record<string, unknown>>({});
@@ -102,7 +104,7 @@ export function Day2Client({
 
   useEffect(() => {
     (async () => {
-      const d = await fetch("/api/workshop/me", { credentials: "include" })
+      const d = await fetch(workshopDataEndpoint(participantId), { credentials: "include" })
         .then((r) => r.json())
         .catch(() => ({}));
       const ps = d?.workshopData?.pre?.profileSlide as
@@ -221,7 +223,10 @@ export function Day2Client({
     <WorksheetStage>
       {/* 操作バー：編集モードは戻りリンクなし（ヘッダーの「ガイドに戻る」に一本化）。
           閲覧モード（事後の記録閲覧）のときだけ、記録一覧への戻り導線とバッジ／PDFを出す。 */}
-      {viewOnly && (
+      {/* 受講生が自分の記録を見返すときの案内バー。
+         講師の投影ビュー（participantId あり）では出さない。
+         戻り先が受講生用ページなので、講師が押すと迷子になるため。 */}
+      {viewOnly && !participantId && (
         <div className="no-print flex w-full max-w-[1123px] items-center justify-between gap-3">
           <Link
             href="/workshop/records"

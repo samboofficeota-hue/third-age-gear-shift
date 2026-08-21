@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireAdmin, requireStaff, resolveSession } from "@/lib/adminAuth";
+import { requireAdmin, resolveSession } from "@/lib/adminAuth";
 import { emailConfigSummary, sendTemplateEmails } from "@/lib/email";
 import { isTemplateKey, type TemplateContext } from "@/lib/emailTemplates";
 import { buildContext } from "./_context";
@@ -8,7 +8,7 @@ import { buildContext } from "./_context";
 /**
  * 送信履歴の取得（GET）と、テンプレートメールの一括送信（POST）。
  *
- * GET  … 講師も自分の担当セッションの履歴を見られる（requireStaff）
+ * GET  … 講師も自分の担当セッションの履歴を見られる（requireAdmin）
  * POST … 送信は外向きの操作なので事務局のみ（requireAdmin）
  */
 
@@ -19,12 +19,12 @@ function str(v: unknown): string {
 }
 
 export async function GET(request: Request) {
-  const guard = await requireStaff();
+  const guard = await requireAdmin();
   if (!guard.ok) return guard.response;
 
   const { searchParams } = new URL(request.url);
   const sessionId = searchParams.get("sessionId");
-  const workshopSession = await resolveSession(guard.session, sessionId);
+  const workshopSession = await resolveSession(sessionId);
   if (!workshopSession) {
     return NextResponse.json({ config: await emailConfigSummary(), logs: [] });
   }
@@ -87,7 +87,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const workshopSession = await resolveSession(guard.session, sessionId);
+  const workshopSession = await resolveSession(sessionId);
   if (!workshopSession) {
     return NextResponse.json({ error: "セッションが見つかりません。" }, { status: 404 });
   }

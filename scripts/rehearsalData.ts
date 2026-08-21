@@ -26,7 +26,8 @@ export const REHEARSAL_ORGS = [
   },
 ];
 
-export const REHEARSAL_FACILITATOR = {
+/** 当日の進行役。権限は2層なので運営はすべて admin。 */
+export const REHEARSAL_TRAINER = {
   email: `fac@${REHEARSAL_DOMAIN}`,
   name: "リハ 講師",
 };

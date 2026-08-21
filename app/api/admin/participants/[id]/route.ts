@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireStaff, sessionScopeFor } from "@/lib/adminAuth";
+import { requireAdmin } from "@/lib/adminAuth";
 
-/** 出欠の記録（Day1 / Day2）。講師も当日の現場で操作するので requireStaff。 */
+/** 出欠の記録（Day1 / Day2）。講師も当日の現場で操作するので requireAdmin。 */
 export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const guard = await requireStaff();
+  const guard = await requireAdmin();
   if (!guard.ok) return guard.response;
 
   const body = await request.json().catch(() => ({}));
@@ -25,11 +25,9 @@ export async function PATCH(
   }
 
   // 講師は担当セッションの受講生のみ
-  const scope = sessionScopeFor(guard.session);
   const workshopData = await prisma.workshopData.findFirst({
     where: {
       userId: params.id,
-      ...(Object.keys(scope).length > 0 ? { session: scope } : {}),
     },
     select: { id: true },
   });

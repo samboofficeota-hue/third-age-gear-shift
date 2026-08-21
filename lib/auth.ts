@@ -2,7 +2,8 @@ import { prisma } from "@/lib/db";
 import { getSupabaseServerClient } from "@/lib/supabase/serverClient";
 import { getSupabaseAdminClient } from "@/lib/supabase/adminClient";
 
-export type UserRole = "admin" | "facilitator" | "coordinator" | "participant";
+/** 権限は2層のみ。運営（事務局・講師）は admin、受講する人が participant。 */
+export type UserRole = "admin" | "participant";
 
 export type SessionPayload = {
   sub: string; // userId（public.users.id）

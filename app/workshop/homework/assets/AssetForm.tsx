@@ -18,6 +18,7 @@ import {
   type AssetKey,
   type AssetsData,
 } from "@/lib/homework/assets/meta";
+import { workshopDataEndpoint } from "@/lib/workshopSource";
 
 /** #1〜#3の設問行。プレースホルダーの問いかけ（hint）は3行とも共通。 */
 function QuestionRow({
@@ -60,9 +61,11 @@ function QuestionRow({
 export function AssetForm({
   assetKey,
   viewOnly = false,
+  participantId,
 }: {
   assetKey: AssetKey;
   viewOnly?: boolean;
+  participantId?: string;
 }) {
   const meta = ASSET_META[assetKey];
   const [allAssets, setAllAssets] = useState<AssetsData>({});
@@ -72,7 +75,7 @@ export function AssetForm({
 
   useEffect(() => {
     (async () => {
-      const d = await fetch("/api/workshop/me", { credentials: "include" })
+      const d = await fetch(workshopDataEndpoint(participantId), { credentials: "include" })
         .then((r) => r.json())
         .catch(() => ({}));
       const ps = d?.workshopData?.pre?.profileSlide as

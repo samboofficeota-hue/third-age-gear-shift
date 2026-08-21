@@ -4,7 +4,7 @@
 
 - **ログイン:** メールアドレス + パスワード（研修事務局が事前発行する想定）
 - **セッション:** JWT を httpOnly Cookie（`third_age_session`）で保持、有効 14 日
-- **ロール:** `admin` | `facilitator` | `participant`（JWT の payload に含む）
+- **ロール:** `admin` | `participant` の2層（JWT の payload に含む）。運営（事務局・当日の進行役）はすべて `admin`。
 
 ## 初回ユーザーの作成（シード）
 
@@ -30,7 +30,7 @@ SEED_EMAIL="admin@example.com" SEED_PASSWORD="your-secret" SEED_ROLE="admin" npm
 2. 次の 3 つを追加（値は任意。本番用は強めのパスワード推奨）:
    - `SEED_EMAIL` = ログイン用メール（例: `admin@example.com`）
    - `SEED_PASSWORD` = ログイン用パスワード
-   - `SEED_ROLE` = `admin`（管理画面用）または `facilitator` / `participant`
+   - `SEED_ROLE` = `admin`（管理画面用）または `participant`
 3. **シードを実行**（どちらか一方）:
    - **Railway の Shell**: ダッシュボードの **Shell** を開き、プロジェクト内で:
      ```bash
@@ -130,7 +130,7 @@ Cursor のターミナルで次を順に実行する。
 ## ルート保護
 
 - **/workshop/\*** … ログイン必須。未ログインは `/login?from=...` にリダイレクト。
-- **/admin/\*** … `admin` または `facilitator` のみ。それ以外は `/` へ。
+- **/admin/\*** および **/view/\*** … `admin` のみ。それ以外は `/` へ。
 - **/login** … 認証不要。
 
 ## API

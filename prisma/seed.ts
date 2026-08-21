@@ -13,7 +13,8 @@ config({ path: ".env", override: false });
 
 const prisma = new PrismaClient();
 
-const VALID_ROLES = ["admin", "facilitator", "participant"] as const;
+/** 権限は2層のみ（admin / participant） */
+const VALID_ROLES = ["admin", "participant"] as const;
 type UserRole = (typeof VALID_ROLES)[number];
 
 function normalizeRole(raw: string | undefined): UserRole {
