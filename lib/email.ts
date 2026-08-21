@@ -21,11 +21,40 @@ import {
  * 例外は投げない。1件の失敗で一括送信全体を止めない設計。
  */
 
-const FROM_EMAIL =
-  process.env.FROM_EMAIL || "株式会社COMMUNITY <noreply@communitysociety.co.jp>";
+const DEFAULT_FROM = "株式会社COMMUNITY <noreply@communitysociety.co.jp>";
 
-/** 返信は事務局の問い合わせ窓口へ（noreply に返信させない） */
-const REPLY_TO = BRAND.contactEmail;
+/**
+ * 差出人の表記ゆれを吸収する。
+ *
+ * .env ファイルなら dotenv が引用符を剥がすが、Vercel の環境変数UIは
+ * 貼り付けた引用符をそのまま値に含める。その状態で送ると Resend に
+ * 「Invalid `from` field」で拒否される（2026-08-21 に本番で発生）。
+ * 全角の山括弧（＜＞）も同じ理由で直す。
+ */
+function normalizeFrom(raw: string): string {
+  let v = raw.trim().replace(/＜/g, "<").replace(/＞/g, ">");
+  const quoted =
+    (v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"));
+  if (quoted) v = v.slice(1, -1).trim();
+  return v;
+}
+
+/** "a@b.jp" または "表示名 <a@b.jp>" だけを許す */
+const FROM_PATTERN =
+  /^(?:[^<>]+<\s*[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+\s*>|[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+)$/;
+
+const FROM_EMAIL = normalizeFrom(process.env.FROM_EMAIL ?? "") || DEFAULT_FROM;
+
+/** 差出人の形式が Resend に受け付けられる形か（送信前に画面で止めるため） */
+export function isFromValid(): boolean {
+  return FROM_PATTERN.test(FROM_EMAIL);
+}
+
+/**
+ * 返信は事務局の問い合わせ窓口へ（noreply に返信させない）。
+ * CONTACT_EMAIL は他プロジェクトと共通の変数名。未設定なら BRAND の値を使う。
+ */
+const REPLY_TO = normalizeFrom(process.env.CONTACT_EMAIL ?? "") || BRAND.contactEmail;
 
 let client: Resend | null = null;
 function getResend(): Resend | null {
@@ -89,6 +118,8 @@ async function checkSendingDomain(): Promise<DomainCheck> {
 export type EmailConfigSummary = {
   configured: boolean;
   from: string;
+  /** 差出人の書式が正しいか（引用符ごと貼られていないか等） */
+  fromValid: boolean;
   replyTo: string;
   appUrl: string;
   /** 差出人ドメインの認証状態。unknown は「確認できなかった」 */
@@ -107,6 +138,7 @@ export async function emailConfigSummary(): Promise<EmailConfigSummary> {
   return {
     configured: isEmailConfigured(),
     from: FROM_EMAIL,
+    fromValid: isFromValid(),
     replyTo: REPLY_TO,
     appUrl: process.env.NEXT_PUBLIC_APP_URL ?? "",
     domainState: check.state,

@@ -97,7 +97,10 @@ export function MailPanel({
 
   const def = TEMPLATES.find((t) => t.key === template)!;
   // 認証されていないドメインから送るとResendに必ず拒否されるので、押せないようにする
-  const canSend = Boolean(config?.configured) && config?.domainState !== "unverified";
+  const canSend =
+    Boolean(config?.configured) &&
+    Boolean(config?.fromValid) &&
+    config?.domainState !== "unverified";
   const matched = useMemo(
     () => participants.filter(def.match),
     [participants, def]
@@ -258,12 +261,16 @@ export function MailPanel({
           キーが入っていても認証ドメインを持たない別アカウントのものだと送信は必ず失敗する。 */}
       {config &&
         (() => {
-          const blocked = !config.configured || config.domainState === "unverified";
           const view = !config.configured
             ? {
                 tone: "bad" as const,
                 text: "RESEND_API_KEY が未設定のため送信できません。プレビューのみ利用できます。",
               }
+            : !config.fromValid
+              ? {
+                  tone: "bad" as const,
+                  text: `差出人（FROM_EMAIL）の書式が不正です：${config.from} — 「表示名 <アドレス>」の形にしてください。環境変数の設定画面に引用符ごと貼り付けていないかご確認ください（空欄にすれば既定値が使われます）。`,
+                }
             : config.domainState === "unverified"
               ? {
                   tone: "bad" as const,

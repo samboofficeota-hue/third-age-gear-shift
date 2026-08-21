@@ -124,6 +124,8 @@ export type MailConfig = {
   /** RESEND_API_KEY が設定されているか */
   configured: boolean;
   from: string;
+  /** 差出人の書式が正しいか（引用符ごと貼られていないか等） */
+  fromValid: boolean;
   replyTo: string;
   /** メール内リンクの基点。localhost のままだと受講生がリンクを開けない */
   appUrl: string;
