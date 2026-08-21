@@ -21,7 +21,10 @@ import {
  * 例外は投げない。1件の失敗で一括送信全体を止めない設計。
  */
 
-const DEFAULT_FROM = "株式会社COMMUNITY <noreply@communitysociety.co.jp>";
+const DEFAULT_ADDRESS = "noreply@communitysociety.co.jp";
+
+/** 差出人アドレスだけの値かどうか（表示名が付いていない） */
+const ADDRESS_ONLY = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/;
 
 /**
  * 差出人の表記ゆれを吸収する。
@@ -43,7 +46,24 @@ function normalizeFrom(raw: string): string {
 const FROM_PATTERN =
   /^(?:[^<>]+<\s*[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+\s*>|[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+)$/;
 
-const FROM_EMAIL = normalizeFrom(process.env.FROM_EMAIL ?? "") || DEFAULT_FROM;
+/**
+ * 差出人を組み立てる。
+ *
+ * **FROM_EMAIL にはアドレスだけを入れ、表示名はアプリ側で付ける**——これが
+ * 社内の他プロジェクトの作法（third-age-campus の fromAddress() を参照）。
+ * ドメインは COMMUNITY 共通、表示名はサービスごとに変えたいため。
+ * アドレスだけだと受信箱に「noreply@…」としか出ず、誰からのメールか分からない。
+ *
+ * 「表示名 <アドレス>」の形で入っていればそちらを尊重する（上書きしたい場合の逃げ道）。
+ */
+function buildFrom(): string {
+  const raw = normalizeFrom(process.env.FROM_EMAIL ?? "");
+  if (!raw) return `${BRAND.name} <${DEFAULT_ADDRESS}>`;
+  if (ADDRESS_ONLY.test(raw)) return `${BRAND.name} <${raw}>`;
+  return raw;
+}
+
+const FROM_EMAIL = buildFrom();
 
 /** 差出人の形式が Resend に受け付けられる形か（送信前に画面で止めるため） */
 export function isFromValid(): boolean {
