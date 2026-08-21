@@ -58,8 +58,8 @@ const FROM_PATTERN =
  */
 function buildFrom(): string {
   const raw = normalizeFrom(process.env.FROM_EMAIL ?? "");
-  if (!raw) return `${BRAND.name} <${DEFAULT_ADDRESS}>`;
-  if (ADDRESS_ONLY.test(raw)) return `${BRAND.name} <${raw}>`;
+  if (!raw) return `${BRAND.emailSenderName} <${DEFAULT_ADDRESS}>`;
+  if (ADDRESS_ONLY.test(raw)) return `${BRAND.emailSenderName} <${raw}>`;
   return raw;
 }
 

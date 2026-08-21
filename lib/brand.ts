@@ -12,4 +12,10 @@ export const BRAND = {
   tagline: "セカンドエイジからサードエイジへのシフト戦略をつくろう",
   /** 事務局への問い合わせ先(自学習画面のフッターから起動) */
   contactEmail: "info@communitysociety.co.jp",
+  /**
+   * 送信メールの差出人表示名（受信箱に出る名前）。
+   * 講座名だけだと初めて受け取る人に発信元が伝わらないため、運営会社を併記する。
+   * アドレス側は FROM_EMAIL（noreply@communitysociety.co.jp）。
+   */
+  emailSenderName: "じぶん経営 戦略講座（COMMUNITY）",
 } as const;
