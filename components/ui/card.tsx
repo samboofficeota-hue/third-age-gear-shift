@@ -22,7 +22,7 @@ const Card = React.forwardRef<
       "rounded-xl border-2 border-border bg-card text-card-foreground shadow-neon",
       "transition-all duration-300",
       interactive &&
-        "cursor-pointer hover:-translate-y-1 hover:border-neon hover:shadow-neon-strong",
+        "cursor-pointer hover:-translate-y-1 hover:border-primary hover:shadow-neon-strong",
       className
     )}
     {...props}

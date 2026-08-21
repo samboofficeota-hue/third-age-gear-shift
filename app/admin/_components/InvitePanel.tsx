@@ -10,7 +10,8 @@ import type { InviteResult, InviteSummary, SessionInfo } from "../types";
 
 /**
  * 招待作成（A-3 / T-1）。参加者を事前登録して招待URLを発行する。
- * メール送信（P-1）はまだ実装されていないので、ここで出た招待URLを事務局が確認して送る。
+ * ここでは**メールは送らない**。発行された内容を確認したうえで、
+ * 「メール」タブ（P-1）から招待メールを送るという二段構えにしている。
  */
 
 type Row = { name: string; email: string; department: string; organizationName: string };
@@ -37,8 +38,8 @@ function parsePastedRows(text: string): Row[] {
 
 const RESULT_BADGE: Record<InviteResult["status"], { label: string; className: string }> = {
   created: { label: "新規登録", className: "bg-primary text-primary-foreground" },
-  reissued: { label: "再発行", className: "bg-blue-500 text-white" },
-  skipped: { label: "スキップ", className: "bg-stone-200 text-stone-700" },
+  reissued: { label: "再発行", className: "bg-chart-3 text-white" },
+  skipped: { label: "スキップ", className: "bg-secondary text-secondary-foreground" },
   error: { label: "エラー", className: "bg-destructive text-destructive-foreground" },
 };
 
@@ -46,10 +47,13 @@ export function InvitePanel({
   sessions,
   selectedSessionId,
   onInvited,
+  onGoToMail,
 }: {
   sessions: SessionInfo[];
   selectedSessionId: string;
   onInvited: () => void;
+  /** 登録後に「メール」タブへ送る（招待メール送信はそちらで行う） */
+  onGoToMail: () => void;
 }) {
   const [mode, setMode] = useState<"single" | "bulk">("single");
   const [targetSessionId, setTargetSessionId] = useState(selectedSessionId);
@@ -107,13 +111,13 @@ export function InvitePanel({
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-bold">招待の作成</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="admin-page-title">招待の作成</h1>
+        <p className="admin-page-note">
           参加者を事前登録し、アクティベーション用の招待URLを発行します。
-          <span className="font-medium text-foreground">メールはまだ自動送信されません。</span>
-          発行されたURLを確認してから送付してください。
+          ここでは<span className="font-medium text-foreground">メールは送信されません</span>。
+          内容を確認したあと「メール」タブから招待メールを送ってください。
         </p>
       </div>
 
@@ -251,10 +255,20 @@ export function InvitePanel({
             <CardTitle className="text-sm">登録結果</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
+            {summary.created + summary.reissued > 0 && (
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-accent px-3 py-2.5">
+                <p className="text-sm text-accent-foreground">
+                  {summary.created + summary.reissued} 名の招待URLを発行しました。招待メールを送りましょう。
+                </p>
+                <Button size="sm" onClick={onGoToMail}>
+                  メールタブへ
+                </Button>
+              </div>
+            )}
             <div className="flex flex-wrap gap-3 text-sm">
               <span>依頼 {summary.requested} 件</span>
               <span className="font-medium text-primary">新規 {summary.created}</span>
-              <span className="font-medium text-blue-600">再発行 {summary.reissued}</span>
+              <span className="font-medium text-chart-3">再発行 {summary.reissued}</span>
               <span className="text-muted-foreground">スキップ {summary.skipped}</span>
               {summary.error > 0 && (
                 <span className="font-medium text-destructive">エラー {summary.error}</span>

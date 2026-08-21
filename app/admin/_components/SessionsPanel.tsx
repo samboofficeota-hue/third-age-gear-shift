@@ -263,10 +263,10 @@ export function SessionsPanel({
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-bold">セッション管理</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="admin-page-title">セッション管理</h1>
+        <p className="admin-page-note">
           {canManage
             ? "研修コード・日程・会場・担当講師を管理します。担当講師を割り当てると、その講師は自分の担当セッションだけを見られるようになります。"
             : "あなたが担当する研修セッションです。内容の変更は事務局が行います。"}

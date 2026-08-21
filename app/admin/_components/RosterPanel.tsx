@@ -14,15 +14,15 @@ import { formatTime, type Participant } from "../types";
 
 const INVITE_LABEL: Record<Participant["inviteStatus"], { label: string; className: string }> = {
   activated: { label: "有効化済", className: "bg-primary/10 text-primary" },
-  invited: { label: "招待中", className: "bg-amber-100 text-amber-700" },
-  none: { label: "未招待", className: "bg-stone-100 text-stone-500" },
+  invited: { label: "招待中", className: "bg-chart-1/15 text-chart-1" },
+  none: { label: "未招待", className: "bg-secondary text-muted-foreground" },
 };
 
 function DoneMark({ done }: { done: boolean }) {
   return (
     <span
       className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold ${
-        done ? "bg-primary text-primary-foreground" : "bg-stone-100 text-stone-400"
+        done ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
       }`}
     >
       {done ? "✓" : "—"}
@@ -43,7 +43,7 @@ function AttendanceToggle({
   const next = value === null ? true : value ? false : null;
   const view =
     value === null
-      ? { label: "未記録", className: "bg-stone-100 text-stone-500" }
+      ? { label: "未記録", className: "bg-secondary text-muted-foreground" }
       : value
         ? { label: "出席", className: "bg-primary/15 text-primary" }
         : { label: "欠席", className: "bg-destructive/10 text-destructive" };
@@ -91,10 +91,10 @@ export function RosterPanel({
   const activated = participants.filter((p) => p.inviteStatus === "activated").length;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-4">
+    <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-bold">受講生名簿</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="admin-page-title">受講生名簿</h1>
+        <p className="admin-page-note">
           {sessionName || "セッション未選択"} · {participants.length} 名
         </p>
       </div>

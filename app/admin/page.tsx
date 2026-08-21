@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import Link from "next/link";
+import {
+  CalendarRange,
+  LayoutDashboard,
+  Mail,
+  SlidersHorizontal,
+  UserPlus,
+  Users,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +17,7 @@ import { BLOCK_META } from "./blockMeta";
 import { SessionsPanel } from "./_components/SessionsPanel";
 import { InvitePanel } from "./_components/InvitePanel";
 import { RosterPanel } from "./_components/RosterPanel";
+import { MailPanel } from "./_components/MailPanel";
 import {
   STATUS_DOT,
   STATUS_LABEL,
@@ -22,14 +30,33 @@ import {
   type SessionInfo,
 } from "./types";
 
-type SideTab = "blocks" | "participants" | "sessions" | "invites";
+/**
+ * 管理ダッシュボード。
+ *
+ * 画面の作り
+ * - 左ナビ＝「いまどの仕事をしているか」だけを選ぶ（セクション切替）。
+ * - 扱う研修セッションは左上のセレクトで切り替える（全セクション共通の文脈）。
+ * - 中身はすべて右のメイン領域に出す。
+ *   （旧版は左サイドバーがタブ・セッション・ブロック・受講生一覧を兼ねていて、
+ *     同じ場所の意味が状態ごとに変わっていた。それを解いた。）
+ */
 
-const TAB_LABEL: Record<SideTab, string> = {
-  blocks: "ブロック",
-  participants: "受講生",
-  sessions: "セッション",
-  invites: "招待",
-};
+type Section = "overview" | "blocks" | "participants" | "invites" | "emails" | "sessions";
+
+const NAV: {
+  key: Section;
+  label: string;
+  icon: typeof LayoutDashboard;
+  /** 事務局（admin）だけに見せる */
+  adminOnly?: boolean;
+}[] = [
+  { key: "overview", label: "概要", icon: LayoutDashboard },
+  { key: "blocks", label: "進行（開放）", icon: SlidersHorizontal },
+  { key: "participants", label: "受講生", icon: Users },
+  { key: "invites", label: "招待", icon: UserPlus, adminOnly: true },
+  { key: "emails", label: "メール", icon: Mail, adminOnly: true },
+  { key: "sessions", label: "セッション", icon: CalendarRange },
+];
 
 export default function AdminPage() {
   const [role, setRole] = useState<string | null>(null);
@@ -42,12 +69,10 @@ export default function AdminPage() {
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
   const [selectedBlockId, setSelectedBlockId] = useState<string>("pre");
-  const [sideTab, setSideTab] = useState<SideTab>("blocks");
+  const [section, setSection] = useState<Section>("overview");
 
   const isAdmin = role === "admin";
-  const tabs: SideTab[] = isAdmin
-    ? ["blocks", "participants", "sessions", "invites"]
-    : ["blocks", "participants", "sessions"];
+  const navItems = NAV.filter((item) => !item.adminOnly || isAdmin);
 
   const fetchSessionData = useCallback(async (sessionId: string) => {
     const [bRes, pRes] = await Promise.all([
@@ -99,7 +124,6 @@ export default function AdminPage() {
   const switchSession = useCallback(
     async (sessionId: string) => {
       setSelectedSessionId(sessionId);
-      setSideTab("blocks");
       try {
         await fetchSessionData(sessionId);
       } catch {
@@ -174,261 +198,396 @@ export default function AdminPage() {
   const totalParticipants = participants.length;
   const completionCount = (blockId: string) =>
     participants.filter((p) => p.completedPhases.includes(blockId)).length;
+  const statusOf = (blockId: string): BlockStatus =>
+    blocks.find((b) => b.blockId === blockId)?.status ?? "LOCKED";
+
   const selectedMeta = BLOCK_META.find((m) => m.id === selectedBlockId) ?? BLOCK_META[0];
   const selectedBlock = blocks.find((b) => b.blockId === selectedBlockId);
-  const selectedStatus: BlockStatus = selectedBlock?.status ?? "LOCKED";
+  const selectedStatus = statusOf(selectedBlockId);
   const currentSession = sessions.find((s) => s.id === selectedSessionId);
   const currentSessionLabel = currentSession
     ? `${currentSession.name ?? "（名前なし）"}（${currentSession.code}）`
     : "";
 
+  const activatedCount = participants.filter((p) => p.inviteStatus === "activated").length;
+  const notInvitedCount = participants.filter((p) => p.inviteStatus === "none").length;
+  const preDoneCount = participants.filter((p) => p.preSurveyDone && p.profileSlideDone).length;
+  const completedCount = participants.filter((p) => p.completedAt).length;
+
   if (loading)
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex flex-1 items-center justify-center py-24">
         <p className="text-sm text-muted-foreground">読み込み中...</p>
       </div>
     );
   if (error)
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex flex-1 items-center justify-center py-24">
         <p className="text-sm text-destructive">{error}</p>
       </div>
     );
 
   return (
-    <div className="flex h-[calc(100vh-56px)] overflow-hidden">
-      {/* ===== 左サイドバー ===== */}
-      <aside className="flex w-72 flex-shrink-0 flex-col border-r bg-card">
-        <div className="flex border-b">
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setSideTab(tab)}
-              className={`flex-1 border-b-2 py-3 text-xs font-medium transition-colors ${
-                sideTab === tab
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {TAB_LABEL[tab]}
-              {tab === "participants" && totalParticipants > 0 && (
-                <Badge variant="secondary" className="ml-1 text-[10px]">
-                  {totalParticipants}
-                </Badge>
-              )}
-            </button>
-          ))}
+    <div className="flex flex-1 flex-col lg:flex-row">
+      {/* ===== 左ナビ（モバイルでは上部の横スクロール） ===== */}
+      <aside className="flex flex-shrink-0 flex-col border-b border-border bg-card lg:w-60 lg:border-b-0 lg:border-r">
+        <div className="border-b border-border p-3">
+          <label
+            htmlFor="admin-session"
+            className="text-xs font-medium text-muted-foreground"
+          >
+            管理中の研修
+          </label>
+          {sessions.length === 0 ? (
+            <p className="mt-1.5 text-sm text-muted-foreground">
+              セッションがありません
+            </p>
+          ) : (
+            <>
+              <select
+                id="admin-session"
+                value={selectedSessionId}
+                onChange={(e) => switchSession(e.target.value)}
+                className="mt-1.5 h-9 w-full rounded-md border border-input bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {sessions.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name ?? "（名前なし）"}（{s.code}）
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                受講生 {totalParticipants} 名 ·{" "}
+                {currentSession?.isOnline ? "オンライン" : "対面"}
+              </p>
+            </>
+          )}
         </div>
 
-        {/* 現在のセッション */}
-        {(sideTab === "blocks" || sideTab === "participants") && (
-          <div className="border-b px-4 py-2.5">
-            {currentSession ? (
-              <div className="flex items-center justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="truncate text-xs font-medium">
-                    {currentSession.name ?? "（名前なし）"}
-                  </p>
-                  <p className="font-mono text-[10px] text-muted-foreground">
-                    {currentSession.code}
+        <nav className="flex gap-1 overflow-x-auto p-2 lg:flex-col lg:overflow-visible">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => setSection(item.key)}
+                className={`admin-nav-item flex-shrink-0 lg:w-full ${
+                  section === item.key ? "is-active" : ""
+                }`}
+              >
+                <Icon className="h-4 w-4 flex-shrink-0" />
+                <span className="whitespace-nowrap">{item.label}</span>
+                {item.key === "participants" && totalParticipants > 0 && (
+                  <Badge variant="secondary" className="ml-auto text-[11px]">
+                    {totalParticipants}
+                  </Badge>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+      </aside>
+
+      {/* ===== メイン ===== */}
+      <main className="min-w-0 flex-1 bg-background">
+        <div className="mx-auto max-w-4xl px-4 py-6 md:px-8">
+          {section === "overview" && (
+            <div className="space-y-6">
+              <div>
+                <h1 className="admin-page-title">概要</h1>
+                <p className="admin-page-note">
+                  {currentSessionLabel || "セッションを選択してください"}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                <div className="admin-stat">
+                  <p className="admin-stat-label">受講生</p>
+                  <p className="admin-stat-value">{totalParticipants}</p>
+                </div>
+                <div className="admin-stat">
+                  <p className="admin-stat-label">アカウント有効化</p>
+                  <p className="admin-stat-value">
+                    {activatedCount}
+                    <span className="ml-1 text-sm font-medium text-muted-foreground">
+                      / {totalParticipants}
+                    </span>
                   </p>
                 </div>
-                <span className="flex-shrink-0 text-xs text-muted-foreground">
-                  受講生 {totalParticipants} 名
-                </span>
+                <div className="admin-stat">
+                  <p className="admin-stat-label">事前課題 提出</p>
+                  <p className="admin-stat-value">
+                    {preDoneCount}
+                    <span className="ml-1 text-sm font-medium text-muted-foreground">
+                      / {totalParticipants}
+                    </span>
+                  </p>
+                </div>
+                <div className="admin-stat">
+                  <p className="admin-stat-label">修了</p>
+                  <p className="admin-stat-value">
+                    {completedCount}
+                    <span className="ml-1 text-sm font-medium text-muted-foreground">
+                      / {totalParticipants}
+                    </span>
+                  </p>
+                </div>
               </div>
-            ) : (
-              <p className="text-xs text-muted-foreground">セッションを選択してください</p>
-            )}
-          </div>
-        )}
 
-        {/* ブロック一覧 */}
-        {sideTab === "blocks" && (
-          <nav className="flex-1 overflow-y-auto py-1">
-            {sessions.length === 0 ? (
-              <p className="px-4 py-8 text-center text-xs text-muted-foreground">
-                セッションタブで作成してください
-              </p>
-            ) : (
-              BLOCK_META.map((meta) => {
-                const blockInfo = blocks.find((b) => b.blockId === meta.id);
-                const status: BlockStatus = blockInfo?.status ?? "LOCKED";
-                const isSelected = selectedBlockId === meta.id;
-                const isUpdating = updating === meta.id;
-                const done = completionCount(meta.id);
-                return (
-                  <div
-                    key={meta.id}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setSelectedBlockId(meta.id)}
-                    onKeyDown={(e) => e.key === "Enter" && setSelectedBlockId(meta.id)}
-                    className={`w-full cursor-pointer px-4 py-3 text-left transition-colors ${
-                      isSelected
-                        ? "border-l-2 border-primary bg-accent"
-                        : "border-l-2 border-transparent hover:bg-accent/50"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`mt-0.5 h-2 w-2 flex-shrink-0 rounded-full ${STATUS_DOT[status]}`}
-                      />
-                      <span className="flex-1 text-xs font-medium">
-                        {meta.shortLabel}
-                        <span className="ml-1 font-normal text-muted-foreground">
-                          {meta.step}
-                        </span>
-                      </span>
-                      <Badge
-                        variant={statusBadgeVariant(status)}
-                        className="px-1.5 py-0 text-[10px]"
+              {notInvitedCount > 0 && isAdmin && (
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-accent px-4 py-3">
+                  <p className="text-sm text-accent-foreground">
+                    招待メールが未送信の受講生が {notInvitedCount} 名います。
+                  </p>
+                  <Button size="sm" onClick={() => setSection("emails")}>
+                    メールへ
+                  </Button>
+                </div>
+              )}
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm">ブロックの進行</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 pt-0">
+                  {BLOCK_META.map((meta) => {
+                    const status = statusOf(meta.id);
+                    const done = completionCount(meta.id);
+                    const pct = totalParticipants
+                      ? Math.round((done / totalParticipants) * 100)
+                      : 0;
+                    return (
+                      <button
+                        key={meta.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedBlockId(meta.id);
+                          setSection("blocks");
+                        }}
+                        className="block w-full rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent"
                       >
-                        {STATUS_LABEL[status]}
-                      </Badge>
-                    </div>
-                    {status !== "LOCKED" && (
-                      <p className="mt-1 pl-4 text-[10px] text-muted-foreground">
-                        完了 {done}/{totalParticipants} 名
-                      </p>
-                    )}
-                    {isSelected && (
-                      <div className="mt-2 flex flex-wrap gap-1.5 pl-4">
-                        {status !== "OPEN" && (
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`h-2 w-2 flex-shrink-0 rounded-full ${STATUS_DOT[status]}`}
+                          />
+                          <span className="flex-1 text-sm font-medium">{meta.shortLabel}</span>
+                          <span className="text-xs tabular-nums text-muted-foreground">
+                            {done}/{totalParticipants}
+                          </span>
+                          <Badge
+                            variant={statusBadgeVariant(status)}
+                            className="w-[68px] justify-center px-1.5 py-0 text-[11px]"
+                          >
+                            {STATUS_LABEL[status]}
+                          </Badge>
+                        </div>
+                        <Progress value={pct} className="mt-1.5 h-1" />
+                      </button>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {section === "blocks" && (
+            <div className="space-y-6">
+              <div>
+                <h1 className="admin-page-title">進行（ブロック開放）</h1>
+                <p className="admin-page-note">
+                  受講生が入れる範囲を、研修の進み方に合わせて開け閉めします。
+                </p>
+              </div>
+
+              {sessions.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  「セッション」タブで研修を作成してください。
+                </p>
+              ) : (
+                <>
+                  {/* ブロック選択（横並びのステップ） */}
+                  <div className="flex gap-2 overflow-x-auto pb-1">
+                    {BLOCK_META.map((meta) => {
+                      const status = statusOf(meta.id);
+                      const isSelected = selectedBlockId === meta.id;
+                      return (
+                        <button
+                          key={meta.id}
+                          type="button"
+                          onClick={() => setSelectedBlockId(meta.id)}
+                          className={`min-w-[124px] flex-1 rounded-xl border px-3 py-2.5 text-left transition-colors ${
+                            isSelected
+                              ? "border-primary bg-accent"
+                              : "border-border bg-card hover:bg-accent"
+                          }`}
+                        >
+                          <div className="flex items-center gap-1.5">
+                            <span
+                              className={`h-2 w-2 flex-shrink-0 rounded-full ${STATUS_DOT[status]}`}
+                            />
+                            <span className="text-xs font-bold">{meta.shortLabel}</span>
+                          </div>
+                          <p className="mt-0.5 text-[11px] text-muted-foreground">
+                            {STATUS_LABEL[status]} · {completionCount(meta.id)}/
+                            {totalParticipants}
+                          </p>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* 選択中ブロックの操作 */}
+                  <Card>
+                    <CardContent className="pt-5">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span>{selectedMeta.day}</span>
+                            <span>·</span>
+                            <span>{selectedMeta.step}</span>
+                          </div>
+                          <h2 className="mt-1 text-lg font-bold">{selectedMeta.label}</h2>
+                        </div>
+                        <Badge variant={statusBadgeVariant(selectedStatus)}>
+                          {STATUS_LABEL[selectedStatus]}
+                        </Badge>
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {selectedStatus !== "OPEN" && (
                           <Button
                             size="sm"
-                            variant="default"
-                            disabled={isUpdating}
-                            className="h-6 px-2 text-[10px]"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              updateBlock(meta.id, "OPEN");
-                            }}
+                            disabled={updating === selectedMeta.id}
+                            onClick={() => updateBlock(selectedMeta.id, "OPEN")}
                           >
                             ▶ 開放する
                           </Button>
                         )}
-                        {status === "OPEN" && (
+                        {selectedStatus === "OPEN" && (
                           <Button
                             size="sm"
                             variant="destructive"
-                            disabled={isUpdating}
-                            className="h-6 px-2 text-[10px]"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              updateBlock(meta.id, "CLOSED");
-                            }}
+                            disabled={updating === selectedMeta.id}
+                            onClick={() => updateBlock(selectedMeta.id, "CLOSED")}
                           >
                             ⏸ 停止する
                           </Button>
                         )}
-                        {status !== "LOCKED" && (
+                        {selectedStatus !== "LOCKED" && (
                           <Button
                             size="sm"
                             variant="outline"
-                            disabled={isUpdating}
-                            className="h-6 px-2 text-[10px]"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              updateBlock(meta.id, "LOCKED");
-                            }}
+                            disabled={updating === selectedMeta.id}
+                            onClick={() => updateBlock(selectedMeta.id, "LOCKED")}
                           >
-                            🔒 ロック
+                            🔒 ロックに戻す
                           </Button>
                         )}
                       </div>
-                    )}
-                  </div>
-                );
-              })
-            )}
-          </nav>
-        )}
 
-        {/* 受講生一覧 */}
-        {sideTab === "participants" && (
-          <div className="flex-1 overflow-y-auto py-1">
-            {participants.length === 0 ? (
-              <p className="px-4 py-8 text-center text-xs text-muted-foreground">
-                受講生が登録されていません
-              </p>
-            ) : (
-              participants.map((p) => {
-                const progress = Math.round((p.completedPhases.length / 5) * 100);
-                return (
-                  <Link
-                    key={p.id}
-                    href={`/admin/participants/${p.id}`}
-                    className="block w-full px-4 py-3 text-left transition-colors hover:bg-accent/50"
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                        {(p.name ?? p.email).slice(0, 1).toUpperCase()}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-xs font-medium">{p.name ?? p.email}</p>
-                        <p className="text-[10px] text-muted-foreground">
-                          {p.completedPhases.length}/5 完了
+                      {selectedStatus !== "LOCKED" && totalParticipants > 0 && (
+                        <div className="mt-4 border-t border-border pt-4">
+                          <div className="mb-2 flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">完了した受講生</span>
+                            <span className="font-bold tabular-nums">
+                              {completionCount(selectedMeta.id)} / {totalParticipants} 名
+                            </span>
+                          </div>
+                          <Progress
+                            value={
+                              (completionCount(selectedMeta.id) / totalParticipants) * 100
+                            }
+                            className="h-2"
+                          />
+                          {selectedBlock?.openedAt && (
+                            <p className="mt-2 text-xs text-muted-foreground">
+                              開放日時：{formatTime(selectedBlock.openedAt)}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardContent className="space-y-4 pt-5">
+                      <p className="text-sm leading-relaxed text-muted-foreground">
+                        {selectedMeta.description}
+                      </p>
+
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          受講生が行うこと
                         </p>
+                        <ol className="mt-2 space-y-2">
+                          {selectedMeta.tasks.map((task, i) => (
+                            <li key={i} className="flex items-start gap-3 text-sm">
+                              <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
+                                {i + 1}
+                              </span>
+                              {task}
+                            </li>
+                          ))}
+                        </ol>
                       </div>
-                      <span className="text-xs font-medium text-muted-foreground">
-                        {progress}%
-                      </span>
-                    </div>
-                    <Progress value={progress} className="mt-1.5 h-1" />
-                  </Link>
-                );
-              })
-            )}
-          </div>
-        )}
 
-        {/* セッション一覧（セッション／招待タブ共通） */}
-        {(sideTab === "sessions" || sideTab === "invites") && (
-          <div className="flex-1 overflow-y-auto py-1">
-            {sessions.length === 0 ? (
-              <p className="px-4 py-8 text-center text-xs text-muted-foreground">
-                セッションがありません
-              </p>
-            ) : (
-              sessions.map((s) => {
-                const isManaging = s.id === selectedSessionId;
-                return (
-                  <div
-                    key={s.id}
-                    className={`border-b px-4 py-3 ${isManaging ? "bg-primary/5" : ""}`}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      {isManaging && <Badge className="px-1.5 py-0 text-[9px]">管理中</Badge>}
-                      <p className="truncate text-xs font-bold">{s.name ?? "（名前なし）"}</p>
-                    </div>
-                    <p className="mt-0.5 font-mono text-xs text-muted-foreground">{s.code}</p>
-                    <p className="mt-0.5 text-[10px] text-muted-foreground">
-                      受講生 {s.participantCount} 名 · {s.isOnline ? "オンライン" : "対面"}
-                    </p>
-                    {!isManaging && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="mt-2 h-7 w-full border-primary/30 text-xs text-primary hover:bg-primary/5"
-                        onClick={() => switchSession(s.id)}
-                      >
-                        このセッションを管理する
-                      </Button>
-                    )}
-                  </div>
-                );
-              })
-            )}
-          </div>
-        )}
-      </aside>
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          入力項目
+                        </p>
+                        <ul className="mt-2 space-y-1.5">
+                          {selectedMeta.inputs.map((input, i) => (
+                            <li
+                              key={i}
+                              className="flex items-start gap-2 text-sm text-muted-foreground"
+                            >
+                              <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-border" />
+                              {input}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
 
-      {/* ===== 右パネル ===== */}
-      <main className="flex flex-1 flex-col overflow-hidden bg-stone-50">
-        <div className="flex-1 overflow-y-auto p-6">
-          {sideTab === "sessions" && (
+                      <div className="rounded-lg border border-border bg-accent p-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-accent-foreground">
+                          完了条件・アウトプット
+                        </p>
+                        <p className="mt-1 text-sm">{selectedMeta.output}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </>
+              )}
+            </div>
+          )}
+
+          {section === "participants" && (
+            <RosterPanel
+              participants={participants}
+              sessionName={currentSessionLabel}
+              onAttendanceChange={updateAttendance}
+            />
+          )}
+
+          {section === "invites" && (
+            <InvitePanel
+              sessions={sessions}
+              selectedSessionId={selectedSessionId}
+              onInvited={refreshParticipants}
+              onGoToMail={() => setSection("emails")}
+            />
+          )}
+
+          {section === "emails" && (
+            <MailPanel
+              participants={participants}
+              sessionId={selectedSessionId}
+              sessionName={currentSessionLabel}
+            />
+          )}
+
+          {section === "sessions" && (
             <SessionsPanel
               sessions={sessions}
               facilitators={facilitators}
@@ -440,118 +599,6 @@ export default function AdminPage() {
               }
               onSwitchSession={switchSession}
             />
-          )}
-
-          {sideTab === "invites" && (
-            <InvitePanel
-              sessions={sessions}
-              selectedSessionId={selectedSessionId}
-              onInvited={refreshParticipants}
-            />
-          )}
-
-          {sideTab === "participants" && (
-            <RosterPanel
-              participants={participants}
-              sessionName={currentSessionLabel}
-              onAttendanceChange={updateAttendance}
-            />
-          )}
-
-          {sideTab === "blocks" && (
-            <div className="mx-auto max-w-2xl space-y-4">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>{selectedMeta.day}</span>
-                    <span>·</span>
-                    <span>{selectedMeta.step}</span>
-                  </div>
-                  <h2 className="mt-1 text-xl font-bold">{selectedMeta.label}</h2>
-                </div>
-                <Badge variant={statusBadgeVariant(selectedStatus)} className="mt-1">
-                  {STATUS_LABEL[selectedStatus]}
-                </Badge>
-              </div>
-
-              <Card>
-                <CardContent className="pt-5">
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    {selectedMeta.description}
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    受講生が行うこと
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <ol className="space-y-2">
-                    {selectedMeta.tasks.map((task, i) => (
-                      <li key={i} className="flex items-start gap-3 text-sm">
-                        <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                          {i + 1}
-                        </span>
-                        {task}
-                      </li>
-                    ))}
-                  </ol>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    入力項目
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <ul className="space-y-1.5">
-                    {selectedMeta.inputs.map((input, i) => (
-                      <li
-                        key={i}
-                        className="flex items-start gap-2 text-sm text-muted-foreground"
-                      >
-                        <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-border" />
-                        {input}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-
-              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-primary/70">
-                  完了条件・アウトプット
-                </p>
-                <p className="mt-1 text-sm">{selectedMeta.output}</p>
-              </div>
-
-              {selectedStatus !== "LOCKED" && totalParticipants > 0 && (
-                <Card>
-                  <CardContent className="pt-5">
-                    <div className="mb-2 flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">完了した受講生</span>
-                      <span className="font-bold">
-                        {completionCount(selectedMeta.id)} / {totalParticipants} 名
-                      </span>
-                    </div>
-                    <Progress
-                      value={(completionCount(selectedMeta.id) / totalParticipants) * 100}
-                      className="h-2"
-                    />
-                    {selectedBlock?.openedAt && (
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        開放日時：{formatTime(selectedBlock.openedAt)}
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
-            </div>
           )}
         </div>
       </main>

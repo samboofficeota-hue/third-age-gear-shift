@@ -32,13 +32,26 @@ enum ParticipantOverrideStatus {
   OPEN
 }
 
+// 送信したメールの種類（テンプレートキー）。lib/emailTemplates.ts と1:1で対応させる。
+enum EmailTemplateKey {
+  invite // 招待・アクティベーション（P-1）
+  reminder_pre // 事前課題の催促（P-6）
+  completion // 修了の激励（A-2）
+  followup_3m // 3ヶ月後リマインド＋§F（F-1）
+}
+
+enum EmailStatus {
+  sent
+  failed
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
   // 招待中（事前登録済みで未アクティベーション）は null。本人がパスワードを設定すると埋まる。
   passwordHash String?  @map("password_hash")
-  name         String?  // 表示名（事前登録）例: "太田 義史"
-  department   String?  // 部署名（事前登録）。ワークシートに引き継ぐ。役職なしは null/なし
+  name         String? // 表示名（事前登録）例: "太田 義史"
+  department   String? // 部署名（事前登録）。ワークシートに引き継ぐ。役職なしは null/なし
   role         UserRole @default(participant)
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
@@ -56,20 +69,21 @@ model User {
   workshopData              WorkshopData?
   participantBlockOverrides ParticipantBlockOverride[]
   facilitatedSessions       WorkshopSession[]          @relation("SessionFacilitator")
+  emailLogs                 EmailLog[]
 
   @@map("users")
 }
 
 // 参加者の所属企業（事前登録時に紐づけ）。役職定年・定年は会社の制度情報。
 model Organization {
-  id        String   @id @default(cuid())
-  name      String
+  id                    String   @id @default(cuid())
+  name                  String
   // 会社の制度情報（事前登録）
   hasPositionRetirement Boolean? @map("has_position_retirement") // 役職定年制度の有無
   positionRetirementAge Int?     @map("position_retirement_age") // 役職定年の年齢
-  hasRetirement         Boolean? @map("has_retirement")          // 定年制度の有無
-  retirementAge         Int?     @map("retirement_age")          // 定年の年齢
-  createdAt DateTime   @default(now()) @map("created_at")
+  hasRetirement         Boolean? @map("has_retirement") // 定年制度の有無
+  retirementAge         Int?     @map("retirement_age") // 定年の年齢
+  createdAt             DateTime @default(now()) @map("created_at")
 
   users User[]
 
@@ -78,25 +92,25 @@ model Organization {
 
 // 1ユーザー = 1ワークショップデータ（同一ユーザーの複数回参加は将来 sessionId で分離可能）
 model WorkshopData {
-  id             String           @id @default(cuid())
-  userId         String           @unique @map("user_id")
-  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sessionId      String?          @map("session_id")
-  session        WorkshopSession? @relation(fields: [sessionId], references: [id])
-  profile        Json?    // { name, age_group, role, years_of_service, initial_feeling[] }
-  pre            Json?    // 事前: { survey, profileSlide(じぶん紹介) }
-  day1           Json?    // Day1: { bunkai(じぶん分解), bunseki(じぶん分析) }
-  homework       Json?    // 宿題: { scenarios: [みらいシナリオ...] }
-  day2           Json?    // Day2: { vision, capital, shift }
-  post           Json?    // 事後: { surveyImmediate, survey3mo }
-  completedPhases String[] @map("completed_phases") // ["pre","day1","homework","day2","post"]
-  lastUpdated    DateTime @updatedAt @map("last_updated")
+  id              String           @id @default(cuid())
+  userId          String           @unique @map("user_id")
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId       String?          @map("session_id")
+  session         WorkshopSession? @relation(fields: [sessionId], references: [id])
+  profile         Json? // { name, age_group, role, years_of_service, initial_feeling[] }
+  pre             Json? // 事前: { survey, profileSlide(じぶん紹介) }
+  day1            Json? // Day1: { bunkai(じぶん分解), bunseki(じぶん分析) }
+  homework        Json? // 宿題: { scenarios: [みらいシナリオ...] }
+  day2            Json? // Day2: { vision, capital, shift }
+  post            Json? // 事後: { surveyImmediate, survey3mo }
+  completedPhases String[]         @map("completed_phases") // ["pre","day1","homework","day2","post"]
+  lastUpdated     DateTime         @updatedAt @map("last_updated")
 
   // 出欠（参加者リスト＝DB一本化方針・ADMIN_WORKFLOW.md）
-  attendanceDay1 Boolean? @map("attendance_day1")
-  attendanceDay2 Boolean? @map("attendance_day2")
+  attendanceDay1           Boolean?  @map("attendance_day1")
+  attendanceDay2           Boolean?  @map("attendance_day2")
   // Day2修了（D-4）。事後・フォローの自動化の起点
-  completedAt    DateTime? @map("completed_at")
+  completedAt              DateTime? @map("completed_at")
   // 二重送信防止フラグ（A-3 / F-1）
   postSurveyReminderSentAt DateTime? @map("post_survey_reminder_sent_at")
   followupSentAt           DateTime? @map("followup_sent_at")
@@ -106,36 +120,37 @@ model WorkshopData {
 
 // 研修セッション（1回の2日間研修＝1セッション想定）
 model WorkshopSession {
-  id        String    @id @default(cuid())
-  name      String?   // 例: "2026年2月 研修"
-  code      String    @unique // 研修コード 例: "3rdage0201" / "001"
-  isActive  Boolean   @default(true) @map("is_active")
-  day1Date  DateTime? @map("day1_date") // 研修日 Day1
-  day2Date  DateTime? @map("day2_date") // 研修日 Day2
+  id            String    @id @default(cuid())
+  name          String? // 例: "2026年2月 研修"
+  code          String    @unique // 研修コード 例: "3rdage0201" / "001"
+  isActive      Boolean   @default(true) @map("is_active")
+  day1Date      DateTime? @map("day1_date") // 研修日 Day1
+  day2Date      DateTime? @map("day2_date") // 研修日 Day2
   // 開催情報（S-4）
-  location  String?   // 会場名 or オンラインURL
-  isOnline  Boolean   @default(false) @map("is_online")
+  location      String? // 会場名 or オンラインURL
+  isOnline      Boolean   @default(false) @map("is_online")
   // 担当講師（S-5 / T-4）。講師画面はこの紐付けで担当セッションに絞る
-  facilitatorId String? @map("facilitator_id")
-  facilitator   User?   @relation("SessionFacilitator", fields: [facilitatorId], references: [id], onDelete: SetNull)
-  createdAt DateTime  @default(now()) @map("created_at")
+  facilitatorId String?   @map("facilitator_id")
+  facilitator   User?     @relation("SessionFacilitator", fields: [facilitatorId], references: [id], onDelete: SetNull)
+  createdAt     DateTime  @default(now()) @map("created_at")
 
   blockStatuses BlockStatus[]
   workshopData  WorkshopData[]
+  emailLogs     EmailLog[]
 
   @@map("workshop_sessions")
 }
 
 // ブロック開示状態（管理者が一斉開放する対象）
 model BlockStatus {
-  id          String           @id @default(cuid())
-  sessionId   String           @map("session_id")
-  session     WorkshopSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  blockId     String           @map("block_id") // block_0 〜 block_8
-  status      BlockStatusEnum  @default(LOCKED)
-  openedAt    DateTime?        @map("opened_at")
-  openedBy    String?          @map("opened_by") // 管理者 user id
-  autoCloseAt DateTime?        @map("auto_close_at")
+  id          String          @id @default(cuid())
+  sessionId   String          @map("session_id")
+  session     WorkshopSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  blockId     String          @map("block_id") // block_0 〜 block_8
+  status      BlockStatusEnum @default(LOCKED)
+  openedAt    DateTime?       @map("opened_at")
+  openedBy    String?         @map("opened_by") // 管理者 user id
+  autoCloseAt DateTime?       @map("auto_close_at")
 
   @@unique([sessionId, blockId])
   @@map("block_status")
@@ -143,13 +158,43 @@ model BlockStatus {
 
 // 個別受講生のブロック開放オーバーライド（遅れている人だけ先行開放など）
 model ParticipantBlockOverride {
-  id        String                  @id @default(cuid())
-  userId    String                  @map("user_id")
-  user      User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  blockId   String                  @map("block_id")
+  id        String                    @id @default(cuid())
+  userId    String                    @map("user_id")
+  user      User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blockId   String                    @map("block_id")
   status    ParticipantOverrideStatus
-  updatedAt DateTime                @updatedAt @map("updated_at")
+  updatedAt DateTime                  @updatedAt @map("updated_at")
 
   @@unique([userId, blockId])
   @@map("participant_block_override")
+}
+
+// メール送信履歴（P-1 / P-6 / A-2 / F-1）。
+// 「誰にいつ何を送ったか」を事務局が管理画面から追える一次記録。
+// 失敗も残す（status=failed + error）ので、再送の判断材料になる。
+model EmailLog {
+  id         String           @id @default(cuid())
+  to         String // 送信先メールアドレス（送信時点の値）
+  template   EmailTemplateKey
+  subject    String
+  status     EmailStatus
+  providerId String?          @map("provider_id") // Resend の message id
+  error      String? // 失敗時のメッセージ
+
+  // 宛先ユーザー。退会等で消えても履歴は残す（SetNull）
+  userId String? @map("user_id")
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // どの研修の送信か（履歴をセッションで絞り込む）
+  sessionId String?          @map("session_id")
+  session   WorkshopSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+
+  // 送信操作をした事務局／講師のメール（監査用。自動送信は null）
+  sentBy String? @map("sent_by")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([sessionId, createdAt])
+  @@index([userId])
+  @@map("email_logs")
 }

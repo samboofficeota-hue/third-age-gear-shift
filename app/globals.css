@@ -113,6 +113,10 @@ body {
 
 @layer base {
   :root {
+    /* このサイトは自前でダークを組んでいる。宣言しないと Chrome の自動ダークモードが
+       さらに色を反転させ、白地の画面（管理画面・ワークシート）が黒く潰れる。 */
+    color-scheme: dark;
+
     /* ── Layout ── */
     --background:          228 46% 7%;      /* #0a0e1a ページ背景 */
     --foreground:          150 25% 90%;     /* #e0f0e8 本文テキスト */
@@ -276,4 +280,92 @@ body {
 @page {
   size: A4 landscape;
   margin: 0;
+}
+
+/* ════════════════════════════════════════════════════════════
+   管理画面（/admin）のライトテーマ
+   参加者画面は「ネオン×ダーク」、事務局が長時間ひらく管理画面は白地。
+   ここで shadcn のCSS変数を差し替えることで、Card / Button / Badge /
+   Input などの共通コンポーネントがそのまま白地で正しく描画される。
+   → 管理画面側で bg-stone-50 / text-stone-600 のような個別ハードコードは書かない。
+   アクセントは COMMUNITY のディープティール #0a5f54（送信メールの配色と同じ）。
+   ════════════════════════════════════════════════════════════ */
+@layer base {
+  .admin-theme {
+    color-scheme: light;
+
+    --background:            60 9% 98%;    /* #fafaf9 画面地 */
+    --foreground:            20 6% 15%;    /* #292524 本文 */
+
+    --card:                  0 0% 100%;    /* #ffffff カード */
+    --card-foreground:       20 6% 15%;
+    --popover:               0 0% 100%;
+    --popover-foreground:    20 6% 15%;
+
+    --primary:              173 81% 21%;   /* #0a5f54 COMMUNITY ディープティール */
+    --primary-foreground:     0 0% 100%;
+
+    --secondary:             60 5% 96%;    /* #f5f5f4 面 */
+    --secondary-foreground:  25 5% 35%;
+    --muted:                 60 5% 96%;
+    --muted-foreground:      25 5% 45%;    /* #78716c メタ情報 */
+
+    --accent:               168 30% 95%;   /* #eef7f4 hover/選択の薄面 */
+    --accent-foreground:    173 81% 21%;
+
+    --destructive:            0 72% 42%;   /* 白地でも読める赤 */
+    --destructive-foreground: 0 0% 100%;
+
+    --border:                20 6% 90%;    /* #e7e5e4 罫線 */
+    --input:                 20 6% 90%;
+    --ring:                 173 81% 21%;
+
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+
+  /* 管理画面は情報密度を上げたいので、可変ルート(17/18/20px)を 16px に固定する。
+     参加者画面の「大きめの文字」は本文を読ませるためのもので、一覧表には過大。
+     Tailwind のサイズは rem 基準なので、要素側ではなくルートを下げる必要がある。 */
+  html:has(.admin-theme) {
+    font-size: 16px;
+  }
+
+  /* 管理画面の見出しは黒900だと圧が強いので、業務用に落とす */
+  .admin-theme h1, .admin-theme h2, .admin-theme h3, .admin-theme h4 {
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+}
+
+@layer base {
+  /* ネオンのグロー影は暗い背景の演出。白地の管理画面では中立の影に落とす。
+     （影のクラス自体は共通コンポーネント側に残るので、ここで上書きする） */
+  .admin-theme .shadow-neon,
+  .admin-theme .shadow-neon-glow,
+  .admin-theme .hover\:shadow-neon-strong:hover {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
+  }
+}
+
+@layer components {
+  /* 管理画面の左ナビ1行 */
+  .admin-nav-item {
+    @apply flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium
+           text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground;
+  }
+  .admin-nav-item.is-active {
+    @apply bg-accent text-accent-foreground;
+  }
+
+  /* 画面上部の見出しブロック（タイトル＋説明） */
+  .admin-page-title { @apply text-xl font-bold text-foreground; }
+  .admin-page-note  { @apply mt-1 text-sm text-muted-foreground; }
+
+  /* 数値サマリのタイル */
+  .admin-stat {
+    @apply rounded-xl border border-border bg-card px-4 py-3;
+  }
+  .admin-stat-label { @apply text-xs font-medium text-muted-foreground; }
+  .admin-stat-value { @apply mt-1 text-2xl font-bold tabular-nums text-foreground; }
 }

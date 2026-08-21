@@ -73,8 +73,8 @@ export const STATUS_LABEL: Record<BlockStatus, string> = {
 };
 
 export const STATUS_DOT: Record<BlockStatus, string> = {
-  LOCKED: "bg-stone-300",
-  PREVIEW: "bg-blue-400",
+  LOCKED: "bg-muted-foreground/40",
+  PREVIEW: "bg-chart-3",
   OPEN: "bg-primary",
   CLOSED: "bg-destructive",
 };
@@ -115,3 +115,50 @@ export function toDateInputValue(iso: string | null): string {
   const jst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
   return jst.toISOString().slice(0, 10);
 }
+
+/* ── メール（P-1 / M-1） ───────────────────────────── */
+
+export type EmailTemplateKey = "invite" | "reminder_pre" | "completion" | "followup_3m";
+
+export type MailConfig = {
+  /** RESEND_API_KEY が設定されているか */
+  configured: boolean;
+  from: string;
+  replyTo: string;
+  /** メール内リンクの基点。localhost のままだと受講生がリンクを開けない */
+  appUrl: string;
+};
+
+export type EmailLogRow = {
+  id: string;
+  to: string;
+  name: string | null;
+  userId: string | null;
+  template: EmailTemplateKey;
+  subject: string;
+  status: "sent" | "failed";
+  error: string | null;
+  sentBy: string | null;
+  createdAt: string;
+};
+
+export type MailSendResult = {
+  email: string;
+  name: string | null;
+  status: "sent" | "failed" | "skipped";
+  reason?: string;
+};
+
+export type MailSendSummary = {
+  requested: number;
+  sent: number;
+  failed: number;
+  skipped: number;
+};
+
+export const TEMPLATE_LABEL: Record<EmailTemplateKey, string> = {
+  invite: "招待メール",
+  reminder_pre: "事前課題リマインド",
+  completion: "修了の激励",
+  followup_3m: "3ヶ月後リマインド",
+};

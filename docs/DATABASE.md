@@ -1,9 +1,27 @@
 # データベース設定
 
+> ## ⚠️ `prisma db push` と `prisma migrate dev` を本番DBに使わないこと
+>
+> 本番の Supabase プロジェクトには、**このアプリ以外のテーブルが同居している**
+> （`community_mailing_list` / `events` / `event_registrations` /
+> `marketing_subscribers` / `survey_responses` — サードエイジ・プロジェクト側のデータ）。
+>
+> Prisma はスキーマに書かれていないテーブルを「余分なもの」とみなすため、
+> `db push`・`migrate dev`・`migrate diff` の自動生成SQLは、これらを **DROP TABLE** しようとする。
+> 実際に 2026-08-21 の `migrate diff` は上記5テーブルの削除SQLを出力した。
+>
+> **スキーマ変更の手順（本番DB）**
+> 1. `prisma/schema.prisma` を編集する
+> 2. `prisma/migrations/<timestamp>_<name>/migration.sql` を **手で書く**（追加分だけ）
+> 3. 中身に `DROP` が含まれていないことを目視で確認する
+> 4. `npx prisma migrate deploy` で適用する（未適用のマイグレーションだけを流す）
+>
+> 参考実装：`prisma/migrations/20260821120000_add_email_logs/migration.sql`
+
 ## ローカル開発
 
 1. PostgreSQL を起動し、`.env.local` の `DATABASE_URL` を設定する。
-2. スキーマを反映する:
+2. スキーマを反映する（**ローカルの空DBに限る**。本番DBには上の警告のとおり使わない）:
    ```bash
    npx prisma db push
    ```
