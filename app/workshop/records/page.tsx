@@ -1,66 +1,23 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, ArrowLeft, FileText, Lock } from "lucide-react";
+import { ArrowRight, ArrowLeft, FileText, BarChart3 } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { cn } from "@/lib/utils";
 
 /**
- * 自分のワーク記録 一覧（事後の振り返り入口）。
- * Day1／宿題／Day2 の入力有無と最終更新を表示し、閲覧モードで該当シートを開く。
- * 閲覧は ?mode=view クエリ経由で既存ワークシートを read-only 再利用。
+ * 自分のワーク記録・レポートの入口。2枚の大きめカードのみ：
+ * - ワーク一覧をみる: /workshop/records/download（全ワークをread-only表示＋PDF保存）
+ * - レポートをみる: /workshop/check（事前・事後アンケート比較。AIコメント等は今後拡張予定）
+ * Day1／宿題／Day2 を個別に選ぶ導線は廃止（ワーク一覧側に統合済み）。
  */
-type RecordEntry = {
-  id: "day1" | "homework" | "day2";
-  label: string;
-  description: string;
-  route: string;
-  hasData: boolean;
-};
-
-function isFilled(j: unknown): boolean {
-  if (!j || typeof j !== "object") return false;
-  // 何かしらのキーに値が入っていれば「記入あり」と判定
-  return Object.keys(j as Record<string, unknown>).length > 0;
-}
-
 export default async function RecordsPage() {
   const session = await getSession();
   if (!session) redirect("/login?from=/workshop/records");
 
   const wd = await prisma.workshopData.findUnique({
     where: { userId: session.sub },
-    select: {
-      day1: true,
-      homework: true,
-      day2: true,
-      lastUpdated: true,
-    },
+    select: { lastUpdated: true },
   });
-
-  const entries: RecordEntry[] = [
-    {
-      id: "day1",
-      label: "Day 1：じぶん分解・じぶん分析",
-      description: "分人シェア表／マイ・ポートフォリオ／好き・得意マトリクス／社会との接点",
-      route: "/training/day1?mode=view",
-      hasData: isFilled(wd?.day1),
-    },
-    {
-      id: "homework",
-      label: "宿題：みらいシナリオ",
-      description: "会社編／社会編（穴埋め）",
-      route: "/workshop/homework/scenario?mode=view",
-      hasData: isFilled(wd?.homework),
-    },
-    {
-      id: "day2",
-      label: "Day 2：ビジョン・資本・シフト戦略",
-      description: "マイ・ポートフォリオ 2.0→3.0／Will・Can・Must／アクションプラン",
-      route: "/training/day2?mode=view",
-      hasData: isFilled(wd?.day2),
-    },
-  ];
 
   const lastUpdated = wd?.lastUpdated
     ? new Intl.DateTimeFormat("ja-JP", {
@@ -85,7 +42,6 @@ export default async function RecordsPage() {
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           研修で書いた内容を読み返せます。閲覧モードでの表示です（編集はできません）。
-          印刷ボタンから PDF として保存することもできます。
         </p>
         {lastUpdated && (
           <p className="mt-1 text-xs text-muted-foreground">
@@ -94,59 +50,43 @@ export default async function RecordsPage() {
         )}
       </header>
 
-      <ul className="space-y-3">
-        {entries.map((e) => {
-          const card = (
-            <div
-              className={cn(
-                "flex items-center justify-between gap-4 rounded-xl border p-4 transition-colors",
-                e.hasData
-                  ? "border-[rgba(0,255,136,0.25)] bg-[#141a2a] hover:border-primary"
-                  : "border-[rgba(255,255,255,0.06)] bg-[#0f1420] opacity-60"
-              )}
-            >
-              <div className="flex items-center gap-4">
-                <span
-                  className={cn(
-                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
-                    e.hasData
-                      ? "bg-primary/15 text-primary"
-                      : "bg-[#1a2030] text-muted-foreground"
-                  )}
-                >
-                  <FileText className="h-4 w-4" />
-                </span>
-                <div>
-                  <p className="text-sm font-semibold text-[#e0f0e8]">{e.label}</p>
-                  <p className="text-xs text-muted-foreground">{e.description}</p>
-                  {!e.hasData && (
-                    <p className="mt-1 text-[11px] text-muted-foreground">
-                      （まだ記入がありません）
-                    </p>
-                  )}
-                </div>
-              </div>
-              {e.hasData ? (
-                <ArrowRight className="h-5 w-5 shrink-0 text-primary" />
-              ) : (
-                <Lock className="h-5 w-5 shrink-0 text-muted-foreground" />
-              )}
-            </div>
-          );
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Link
+          href="/workshop/records/download"
+          className="flex flex-col gap-4 rounded-2xl border border-[rgba(0,255,136,0.25)] bg-[#141a2a] p-6 transition-colors hover:border-primary"
+        >
+          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-primary">
+            <FileText className="h-5 w-5" />
+          </span>
+          <div>
+            <p className="text-base font-bold text-[#e0f0e8]">ワーク一覧をみる</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              じぶん紹介〜Day2まで、書いた内容をまとめて読み返せます。PDFで保存も可能です。
+            </p>
+          </div>
+          <span className="mt-auto inline-flex items-center gap-1 text-sm font-semibold text-primary">
+            開く <ArrowRight className="h-4 w-4" />
+          </span>
+        </Link>
 
-          return (
-            <li key={e.id}>
-              {e.hasData ? (
-                <Link href={e.route}>{card}</Link>
-              ) : (
-                <div aria-disabled className="cursor-not-allowed">
-                  {card}
-                </div>
-              )}
-            </li>
-          );
-        })}
-      </ul>
+        <Link
+          href="/workshop/check"
+          className="flex flex-col gap-4 rounded-2xl border border-[rgba(0,255,136,0.25)] bg-[#141a2a] p-6 transition-colors hover:border-primary"
+        >
+          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-primary">
+            <BarChart3 className="h-5 w-5" />
+          </span>
+          <div>
+            <p className="text-base font-bold text-[#e0f0e8]">レポートをみる</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              事前・事後アンケートを見比べて、変化を振り返ります。
+            </p>
+          </div>
+          <span className="mt-auto inline-flex items-center gap-1 text-sm font-semibold text-primary">
+            開く <ArrowRight className="h-4 w-4" />
+          </span>
+        </Link>
+      </div>
     </div>
   );
 }

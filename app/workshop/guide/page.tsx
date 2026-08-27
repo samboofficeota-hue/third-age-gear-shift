@@ -171,7 +171,7 @@ const introNote = !currentPhaseId ? (
           )
         ) : (
           <Button asChild size="lg" variant="outline" className="w-56">
-            <Link href="/workshop">
+            <Link href="/workshop/records">
               じぶんのワーク記録を見る
               <ArrowRight className="h-4 w-4" />
             </Link>

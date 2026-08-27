@@ -13,7 +13,7 @@ import { Day2Client } from "@/app/training/day2/Day2Client";
 import type { ExcursionData } from "@/lib/homework/excursion/types";
 
 /** 「保存」時に候補となるPDFファイル名。拡張子はブラウザ側が付与する。 */
-const PDF_FILENAME = "jibun-stragety-work";
+const PDF_FILENAME = "じぶん経営戦略講座";
 
 function printAsPdf(onDone: () => void) {
   const original = document.title;
