@@ -210,6 +210,9 @@ body {
 
 /* ベースプラン 1100×710px（A4横 1123×794px @96dpi から印刷安全マージンを見込んだサイズ） */
 .print-sheet {
+  /* :root の color-scheme: dark を継承したままだと、背景色を明示していない
+     input/textarea がブラウザのネイティブ描画で黒くなる（.admin-theme と同じ理由）。 */
+  color-scheme: light;
   width: 1100px;
   min-height: 710px;
   box-sizing: border-box;
