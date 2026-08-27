@@ -208,6 +208,12 @@ body {
   min-height: 100vh;
 }
 
+/* 白背景の記入用モーダル（「シナリオ修正する」等、Dialog を bg-white で上書きしている箇所）。
+   .print-sheet と同じ理由：color-scheme を明示しないと中の input/textarea が黒くなる。 */
+.ws-light-modal {
+  color-scheme: light;
+}
+
 /* ベースプラン 1100×710px（A4横 1123×794px @96dpi から印刷安全マージンを見込んだサイズ） */
 .print-sheet {
   /* :root の color-scheme: dark を継承したままだと、背景色を明示していない

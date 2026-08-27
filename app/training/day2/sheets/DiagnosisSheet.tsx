@@ -18,6 +18,7 @@ import {
   CIRCLED,
   SCORE_MAX,
   DIAGNOSIS_SECTIONS,
+  DIAGNOSIS_REFERENCE_AVERAGES,
 } from "../_constants";
 import type { Diagnosis } from "../_types";
 
@@ -89,8 +90,10 @@ export function DiagnosisSheet({
         })
         .filter((x): x is number => x !== null);
       if (vals.length > 0) {
-        const avg = vals.reduce((s, v) => s + v, 0) / vals.length;
-        next[item.no] = Math.round(avg * 10) / 10;
+        // 丸めはここではしない（サードエイジHP版の計算方式と揃える：表示直前の
+        // 5点換算＝toFivePoint で1回だけ丸める。ここで先に丸めると二重丸めになり、
+        // 同じ回答でも表示値がわずかにズレることがある）。
+        next[item.no] = vals.reduce((s, v) => s + v, 0) / vals.length;
       }
     }
     onDiagnosisChange(next);
@@ -133,6 +136,10 @@ export function DiagnosisSheet({
                 label: `${CIRCLED[it.no - 1]} ${it.name}`,
                 value: toFivePoint(Number(diagnosis[it.no] ?? 0)),
               }))}
+              compareValues={DIAGNOSIS_ITEMS.map((it) =>
+                toFivePoint(DIAGNOSIS_REFERENCE_AVERAGES[it.no])
+              )}
+              compareLabel="参考平均"
               max={5}
               step={1}
             />
@@ -236,7 +243,7 @@ export function DiagnosisSheet({
 
       {/* ── 30問モーダル ── */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto bg-ws-teal p-0 [&>button]:text-white [&>button]:hover:text-white/80 sm:max-w-3xl">
+        <DialogContent className="ws-light-modal max-h-[90vh] overflow-y-auto bg-ws-teal p-0 [&>button]:text-white [&>button]:hover:text-white/80 sm:max-w-3xl">
           <DialogHeader className="rounded-t-lg bg-ws-teal px-6 py-5 text-center">
             <div className="flex flex-wrap items-baseline justify-center gap-x-3">
               <DialogTitle className="text-xl font-bold text-white">

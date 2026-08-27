@@ -245,7 +245,7 @@ export function BackcastSheet({
 
       {/* ── シナリオ修正モーダル（宿題の編集ページへ遷移させず、ここで完結させる） ── */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto bg-white text-ws-ink sm:max-w-[722px]">
+        <DialogContent className="ws-light-modal max-h-[90vh] overflow-y-auto bg-white text-ws-ink sm:max-w-[722px]">
           <DialogHeader>
             <DialogTitle className="text-ws-ink">
               宿題：2045年の社会へのマイシナリオ

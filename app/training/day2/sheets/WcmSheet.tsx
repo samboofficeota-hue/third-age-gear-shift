@@ -182,20 +182,9 @@ export function WcmSheet({
           </div>
         ) : (
           <div className="row-span-4 rounded-xl border border-ws-line bg-white p-4">
-            <div className="mb-1 flex items-center justify-between gap-2">
-              <p className="inline-block rounded-full bg-ws-mint px-3 py-1 text-xs font-bold tracking-wide text-ws-teal">
-                宿題：会社編のマイシナリオ
-              </p>
-              {!viewOnly && (
-                <button
-                  type="button"
-                  onClick={openEdit}
-                  className="no-print shrink-0 rounded-full border border-ws-line px-3 py-1 text-xs font-medium text-ws-muted transition-colors hover:border-ws-teal hover:text-ws-teal"
-                >
-                  修正する
-                </button>
-              )}
-            </div>
+            <p className="mb-1 inline-block rounded-full bg-ws-mint px-3 py-1 text-xs font-bold tracking-wide text-ws-teal">
+              宿題：会社編のマイシナリオ
+            </p>
             <div className="[&>div]:!mt-2 [&>div]:!space-y-1 [&>div]:!pl-3 [&>div]:!text-[13px] [&>div]:!leading-snug">
               <FillBlankScenario
                 template={COMPANY_TEMPLATE}
@@ -206,39 +195,36 @@ export function WcmSheet({
           </div>
         )}
         <div />
-        {wcmStep === "both" ? (
-          <div className="text-center">
-            <span className="inline-flex items-center gap-1 rounded bg-[#FCEFA6] px-3 py-1.5 text-sm font-bold text-ws-ink">
-              <input
-                readOnly={viewOnly}
-                value={wcmMeta.futYear}
-                onChange={(e) =>
-                  onWcmMetaChange({ ...wcmMeta, futYear: e.target.value })
-                }
-                placeholder="20xx"
-                className="w-14 rounded border border-ws-ink/20 bg-white px-1 text-center outline-none placeholder:text-ws-muted/50 focus:border-ws-teal"
-              />
-              年・
-              <input
-                readOnly={viewOnly}
-                value={wcmMeta.futAge}
-                onChange={(e) =>
-                  onWcmMetaChange({ ...wcmMeta, futAge: e.target.value })
-                }
-                placeholder="XX"
-                className="w-10 rounded border border-ws-ink/20 bg-white px-1 text-center outline-none placeholder:text-ws-muted/50 focus:border-ws-teal"
-              />
-              歳（将来）
-            </span>
-          </div>
-        ) : (
-          <div />
-        )}
+        {/* 将来（3.0）バッジ：左が「今のWCM」でも「会社編シナリオ」でも常時表示 */}
+        <div className="text-center">
+          <span className="inline-flex items-center gap-1 rounded bg-[#FCEFA6] px-3 py-1.5 text-sm font-bold text-ws-ink">
+            <input
+              readOnly={viewOnly}
+              value={wcmMeta.futYear}
+              onChange={(e) =>
+                onWcmMetaChange({ ...wcmMeta, futYear: e.target.value })
+              }
+              placeholder="20xx"
+              className="w-14 rounded border border-ws-ink/20 bg-white px-1 text-center outline-none placeholder:text-ws-muted/50 focus:border-ws-teal"
+            />
+            年・
+            <input
+              readOnly={viewOnly}
+              value={wcmMeta.futAge}
+              onChange={(e) =>
+                onWcmMetaChange({ ...wcmMeta, futAge: e.target.value })
+              }
+              placeholder="XX"
+              className="w-10 rounded border border-ws-ink/20 bg-white px-1 text-center outline-none placeholder:text-ws-muted/50 focus:border-ws-teal"
+            />
+            歳（将来）
+          </span>
+        </div>
 
         {/* 各行（Will / Can / Must） */}
         {WCM_ROWS.map((row) => {
           const emph = row.key === "must";
-          const showUp = wcmStep === "both" && row.key !== "will";
+          const showUp = row.key !== "will";
           return (
             <Fragment key={row.key}>
               {/* 左（いま）: both ステップでは会社編カードに置き換わるため非表示 */}
@@ -260,64 +246,70 @@ export function WcmSheet({
                 </div>
               )}
 
-              {/* 中央（Must 行に矢印 or 次へボタン） */}
+              {/* 中央（Must 行にだけ、現在→将来の向きを示す矢印） */}
               <div className="pt-6">
-                {row.key === "must" &&
-                  (wcmStep === "current" ? (
-                    <div className="flex h-20 items-center justify-center">
-                      <Button
-                        onClick={() => onWcmStepChange("both")}
-                        className="rounded-full px-3"
-                      >
-                        次へ →
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex h-20 items-center justify-center">
-                      <ArrowRight className="h-8 w-8 text-ws-accent" />
-                    </div>
-                  ))}
+                {row.key === "must" && (
+                  <div className="flex h-20 items-center justify-center">
+                    <ArrowRight className="h-8 w-8 text-ws-accent" />
+                  </div>
+                )}
               </div>
 
-              {/* 右（将来） */}
-              {wcmStep === "both" ? (
-                <div className="relative">
-                  {showUp && (
-                    <div className="absolute -top-[20px] left-1/2 -translate-x-1/2">
-                      <UpTriangle />
-                    </div>
-                  )}
-                  <div className="mb-1.5">
-                    <span
-                      className={cn(
-                        "text-base font-bold",
-                        emph ? "text-ws-accent" : "text-ws-teal"
-                      )}
-                    >
-                      {row.futLabel}
-                    </span>{" "}
-                    <span className="text-xs text-ws-muted">{row.futSub}</span>
+              {/* 右（将来）: 左の表示切り替えとは無関係に常時表示 */}
+              <div className="relative">
+                {showUp && (
+                  <div className="absolute -top-[20px] left-1/2 -translate-x-1/2">
+                    <UpTriangle />
                   </div>
-                  <WcmBox
-                    readOnly={viewOnly}
-                    value={wcmFuture[row.key]}
-                    onChange={(v) =>
-                      onWcmFutureChange({ ...wcmFuture, [row.key]: v })
-                    }
-                    emph={emph}
-                  />
+                )}
+                <div className="mb-1.5">
+                  <span
+                    className={cn(
+                      "text-base font-bold",
+                      emph ? "text-ws-accent" : "text-ws-teal"
+                    )}
+                  >
+                    {row.futLabel}
+                  </span>{" "}
+                  <span className="text-xs text-ws-muted">{row.futSub}</span>
                 </div>
-              ) : (
-                <div />
-              )}
+                <WcmBox
+                  readOnly={viewOnly}
+                  value={wcmFuture[row.key]}
+                  onChange={(v) =>
+                    onWcmFutureChange({ ...wcmFuture, [row.key]: v })
+                  }
+                  emph={emph}
+                />
+              </div>
             </Fragment>
           );
         })}
       </div>
 
+      {/* ── 左側の表示切り替え（今のWCM ⇄ 会社編シナリオ）・シナリオ修正
+             （3.0は左の表示に関係なく常時表示。#13と同じく左下に並べる） ── */}
+      <div className="no-print mt-4 flex justify-start gap-3">
+        <Button
+          onClick={() => onWcmStepChange(wcmStep === "current" ? "both" : "current")}
+          className="h-9 rounded-full px-5 text-sm"
+        >
+          {wcmStep === "current" ? "会社編シナリオを見る →" : "← 2.0にもどる"}
+        </Button>
+        {wcmStep === "both" && !viewOnly && (
+          <button
+            type="button"
+            onClick={openEdit}
+            className="inline-flex h-9 items-center justify-center rounded-full border border-ws-line px-5 text-sm font-medium text-ws-muted transition-colors hover:border-ws-teal hover:text-ws-teal"
+          >
+            シナリオ修正する
+          </button>
+        )}
+      </div>
+
       {/* ── 会社編シナリオ修正モーダル（宿題の編集ページへ遷移させず、ここで完結させる） ── */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto bg-white text-ws-ink sm:max-w-[722px]">
+        <DialogContent className="ws-light-modal max-h-[90vh] overflow-y-auto bg-white text-ws-ink sm:max-w-[722px]">
           <DialogHeader>
             <DialogTitle className="text-ws-ink">
               宿題：会社編のマイシナリオ

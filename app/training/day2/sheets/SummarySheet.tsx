@@ -33,7 +33,7 @@ export function SummarySheet({
         <p className="mt-3 text-sm text-ws-muted">
           本分（Must）から、ありたい姿（Will）・課題・目標・一歩目までを、ひとつながりの文章にしてみましょう。
         </p>
-        <div className="mt-6 space-y-8">
+        <div className="mt-5 space-y-4">
           {SUMMARY_ROWS.map((row) => (
             <div key={row.key} className="flex items-center gap-4">
               <span className="w-16 shrink-0 text-lg font-bold text-ws-teal">
@@ -49,7 +49,7 @@ export function SummarySheet({
                   onSummaryChange({ ...summary, [row.key]: e.target.value })
                 }
                 placeholder={row.ph}
-                className="h-20 flex-1 rounded-lg border-2 border-ws-teal/60 px-3 text-center text-base font-bold text-ws-ink outline-none placeholder:font-normal placeholder:text-ws-muted/50 focus:border-ws-teal"
+                className="h-16 flex-1 rounded-lg border-2 border-ws-teal/60 px-3 text-center text-base font-bold text-ws-ink outline-none placeholder:font-normal placeholder:text-ws-muted/50 focus:border-ws-teal"
               />
               <span className="w-28 shrink-0 text-sm text-ws-ink">
                 {row.suffix}
@@ -61,7 +61,7 @@ export function SummarySheet({
 
       {/* 締めのシート */}
       <PrintSheet>
-        <div className="flex min-h-[680px] flex-col items-center justify-center gap-5 text-center">
+        <div className="flex min-h-[630px] flex-col items-center justify-center gap-5 text-center">
           <p className="text-3xl font-bold text-ws-teal">
             じぶん経営 戦略講座は以上となります。
           </p>
