@@ -43,16 +43,11 @@ export const SECTION_A: ScaleSection = {
   ],
 };
 
-/** §B 自己理解 Will/Can/Must（3問・5段階・事前事後共通） */
-export const SECTION_B: ScaleSection = {
-  id: "B",
-  title: "自己理解 — Will / Can / Must",
-  questions: [
-    { key: "b1", text: "自分の「やりたいこと・わくわくすること」を、自分の言葉で説明できる（Will）" },
-    { key: "b2", text: "自分の「強み・力を発揮できる場面」を、自分の言葉で説明できる（Can）" },
-    { key: "b3", text: "自分が周囲から求められている「役割・期待」を理解している（Must）" },
-  ],
-};
+/**
+ * §B（自己理解 Will/Can/Must）は廃止した（2026-08-27）。
+ * Day2の「コミュニティ活動力診断」が同じ自己理解を10軸で測っており、設問が重複していたため。
+ * 過去の回答に残る b1〜b3 は読み捨てる（削除はしない）。
+ */
 
 /** §C 行動意図・つながり（4問・5段階・事前事後共通） */
 export const SECTION_C: ScaleSection = {
@@ -199,14 +194,13 @@ export function pruneReasonAnswers<T extends Record<string, unknown>>(answers: T
 
 /** 事前アンケートで使う構成 */
 export const PRE_NENDAI = NENDAI;
-export const PRE_SCALE_SECTIONS: ScaleSection[] = [SECTION_A, SECTION_B, SECTION_C];
+export const PRE_SCALE_SECTIONS: ScaleSection[] = [SECTION_A, SECTION_C];
 export const PRE_CHOICE = SECTION_D;
 
 /** 記入例（サンプル）回答 — 太田義史さん（差し替え可）。d1="3" なので図3＋図5が出る。 */
 export const PRE_SAMPLE: Record<string, number | string | string[]> = {
   nendai: "50-54",
   a1: 5, a2: 3, a3: 4, a4: 4, a5: 3, a6: 4,
-  b1: 4, b2: 4, b3: 3,
   c1: 4, c2: 5, c3: 3, c4: 4,
   d1: "3",
   d_koyou: "skill_here",
