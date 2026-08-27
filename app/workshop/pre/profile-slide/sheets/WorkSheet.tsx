@@ -86,7 +86,7 @@ export function WorkSheet({
                     value={data.work?.[key] ?? ""}
                     onChange={(e) => onSetWork(key, e.target.value)}
                     placeholder={q.join("\n")}
-                    className="mt-5 w-full flex-1 resize-none rounded-md border border-transparent bg-transparent text-xl leading-relaxed text-ws-ink outline-none placeholder:text-ws-muted/70 focus:border-ws-teal"
+                    className="mt-5 w-full flex-1 resize-none rounded-md border border-transparent bg-transparent text-base leading-relaxed text-ws-ink outline-none placeholder:text-ws-muted/70 focus:border-ws-teal"
                   />
                 )}
               </div>

@@ -31,6 +31,17 @@ type Props = {
   onFinish: (messages: ChatMessage[], summary: string) => void;
 };
 
+/** AIの応答に含まれる `**強調**` だけを太字として描画する（他のMarkdown記法は扱わない）。 */
+function renderWithBold(content: string) {
+  const parts = content.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={i}>{part.slice(2, -2)}</strong>;
+    }
+    return <span key={i}>{part}</span>;
+  });
+}
+
 export function InterviewChat({ initialMessages, onProgress, onFinish }: Props) {
   const initialState = stateFromMessages(initialMessages);
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
@@ -193,7 +204,7 @@ export function InterviewChat({ initialMessages, onProgress, onFinish }: Props) 
                     : "border-border bg-card text-foreground"
                 }`}
               >
-                {m.content}
+                {renderWithBold(m.content)}
               </div>
             </div>
           ))}

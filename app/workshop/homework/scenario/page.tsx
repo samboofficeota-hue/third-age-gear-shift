@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CheckCircle2 } from "lucide-react";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canAccessPhase } from "@/lib/workshopAccess";
@@ -91,15 +91,19 @@ export default async function HomeworkScenarioPage({
                 key={b.key}
                 href={b.href}
                 className={cn(
-                  "flex flex-col gap-2 rounded-xl border-2 p-4 transition-colors",
+                  "group flex flex-col gap-2 rounded-xl border-2 p-4 shadow-neon transition-all hover:-translate-y-1 hover:shadow-neon-strong",
                   b.done
-                    ? "border-primary/40 bg-primary/10 hover:border-primary"
-                    : "border-border bg-bg-panel hover:border-primary/50"
+                    ? "border-primary/50 bg-primary/10 hover:border-primary"
+                    : "border-primary/30 bg-primary/5 hover:border-primary"
                 )}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-base font-bold text-foreground">{b.label}</span>
-                  {b.done && <CheckCircle2 className="h-5 w-5 shrink-0 text-primary" />}
+                  {b.done ? (
+                    <CheckCircle2 className="h-5 w-5 shrink-0 text-primary" />
+                  ) : (
+                    <ArrowRight className="h-5 w-5 shrink-0 text-primary transition-transform group-hover:translate-x-1" />
+                  )}
                 </div>
                 <p className="text-caption text-muted-foreground">→ {b.outcome}</p>
               </Link>

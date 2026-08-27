@@ -79,15 +79,15 @@ export default function LifePlanPage() {
           </>
         ) : (
           <>
-            <Button onClick={save} disabled={saving}>
-              {saving ? "保存中..." : "保存する"}
-            </Button>
             <Link
               href="/workshop/pre"
-              className="ml-auto text-sm text-muted-foreground hover:text-foreground"
+              className="text-sm text-muted-foreground hover:text-foreground"
             >
               事前課題へ戻る
             </Link>
+            <Button onClick={save} disabled={saving} className="ml-auto">
+              {saving ? "保存中..." : "保存する"}
+            </Button>
           </>
         )}
       </div>

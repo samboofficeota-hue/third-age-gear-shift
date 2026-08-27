@@ -227,15 +227,15 @@ export function PostSurvey() {
 
       {/* 保存 */}
       <div className="flex items-center gap-3 pt-2">
-        <Button onClick={save} disabled={saving}>
-          {saving ? "送信中..." : "送信する"}
-        </Button>
         <Link
           href="/workshop/guide"
-          className="ml-auto text-sm text-muted-foreground hover:text-[#e0f0e8]"
+          className="text-sm text-muted-foreground hover:text-[#e0f0e8]"
         >
           ガイドへ戻る
         </Link>
+        <Button onClick={save} disabled={saving} className="ml-auto">
+          {saving ? "送信中..." : "送信する"}
+        </Button>
       </div>
     </SurveyShell>
   );

@@ -42,7 +42,7 @@ export function HistorySheet({
           const ph = HIST_PH[i] ?? HIST_PH_FALLBACK;
           return (
             <li key={i} className="flex items-stretch gap-4">
-              <div className="w-20 shrink-0 pt-1 text-right">
+              <div className="w-20 shrink-0 pt-0.5 text-right">
                 {isSample ? (
                   <span className="text-base font-bold text-ws-teal">{r.year}</span>
                 ) : (
@@ -55,7 +55,7 @@ export function HistorySheet({
                   />
                 )}
               </div>
-              <div className="flex w-4 shrink-0 flex-col items-center pt-1.5">
+              <div className="flex w-4 shrink-0 flex-col items-center pt-[9px]">
                 <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-ws-teal" />
                 {!isLast && <span className="w-0.5 flex-1 bg-ws-line" />}
               </div>

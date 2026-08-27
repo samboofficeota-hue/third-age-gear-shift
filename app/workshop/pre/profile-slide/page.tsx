@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Area } from "react-easy-crop";
 import Link from "next/link";
-import { ArrowRight, ImageIcon } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { formatHeaderName } from "@/components/worksheet/SheetHeader";
 import { WorksheetStage } from "@/components/worksheet/WorksheetStage";
 import { CropModal } from "@/components/worksheet/CropModal";
@@ -14,19 +14,16 @@ import { RuleSheet } from "./sheets/RuleSheet";
 import { IntroSheet } from "./sheets/IntroSheet";
 import { HistorySheet } from "./sheets/HistorySheet";
 import { WorkSheet } from "./sheets/WorkSheet";
-import { SampleModal } from "./SampleModal";
 
 /**
  * じぶん紹介（事前課題）オーケストレーター。
  * 役割:
  *  - WorkshopData.pre.profileSlide の load / save
  *  - 写真アップロード／クロップ／再調整のフロー（ref と Storage API を持つ）
- *  - 記入例モーダルの開閉
  *  - 各シート（ルール／#1 名前・写真・ポイント／#2 生い立ち／#3 今の会社）に slice を渡す
  */
 export default function ProfileSlidePage() {
   const [data, setData] = useState<Slide>({ points: pad([]) });
-  const [sampleOpen, setSampleOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(3);
   const [histCount, setHistCount] = useState(MIN_HIST_ROWS);
   const [loading, setLoading] = useState(true);
@@ -247,29 +244,18 @@ export default function ProfileSlidePage() {
           </>
         ) : (
           <>
-            <Button onClick={save} disabled={saving}>
-              {saving ? "保存中..." : "保存する"}
-            </Button>
             <Link
               href="/workshop/pre"
-              className="ml-auto text-sm text-muted-foreground hover:text-foreground"
+              className="text-sm text-muted-foreground hover:text-foreground"
             >
               事前課題へ戻る
             </Link>
+            <Button onClick={save} disabled={saving} className="ml-auto">
+              {saving ? "保存中..." : "保存する"}
+            </Button>
           </>
         )}
       </div>
-
-      <button
-        type="button"
-        onClick={() => setSampleOpen(true)}
-        className="no-print fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full border border-primary bg-bg-dark px-4 py-2.5 text-sm font-medium text-primary shadow-neon-glow transition hover:bg-primary/10"
-      >
-        <ImageIcon className="h-4 w-4" />
-        記入例を見る
-      </button>
-
-      {sampleOpen && <SampleModal onClose={() => setSampleOpen(false)} />}
 
       {cropSrc && (
         <CropModal

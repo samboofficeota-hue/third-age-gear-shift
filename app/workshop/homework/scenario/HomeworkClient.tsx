@@ -199,31 +199,7 @@ export function HomeworkClient({
         </div>
       )}
 
-      {/* #1 会社編 */}
-      {(!only || only === "company") && (
-        <PrintSheet>
-          <SheetHeader
-            no={8}
-            accent="みらい"
-            title="シナリオ"
-            sub="〜 20xx年のじぶんを妄想する"
-            right={nameTag}
-          />
-          <div className="mt-3 flex items-center gap-3">
-            <SectionLabel>#1 COMPANY（会社編）</SectionLabel>
-            <p className="text-sm text-ws-muted">{intro}</p>
-          </div>
-          <FillBlankScenario
-            template={COMPANY_TEMPLATE}
-            values={company}
-            onChange={setCompanyDirty}
-            mode={display}
-            compact
-          />
-        </PrintSheet>
-      )}
-
-      {/* #2 社会編 */}
+      {/* #1 社会編 */}
       {(!only || only === "society") && (
         <PrintSheet>
           <SheetHeader
@@ -234,13 +210,37 @@ export function HomeworkClient({
             right={nameTag}
           />
           <div className="mt-3 flex items-center gap-3">
-            <SectionLabel>#2 SOCIETY（社会編）</SectionLabel>
+            <SectionLabel>#1　「社会」編</SectionLabel>
             <p className="text-sm text-ws-muted">{intro}</p>
           </div>
           <FillBlankScenario
             template={SOCIETY_TEMPLATE}
             values={society}
             onChange={setSocietyDirty}
+            mode={display}
+            compact
+          />
+        </PrintSheet>
+      )}
+
+      {/* #2 会社編 */}
+      {(!only || only === "company") && (
+        <PrintSheet>
+          <SheetHeader
+            no={8}
+            accent="みらい"
+            title="シナリオ"
+            sub="〜 20xx年のじぶんを妄想する"
+            right={nameTag}
+          />
+          <div className="mt-3 flex items-center gap-3">
+            <SectionLabel>#2　「会社」編</SectionLabel>
+            <p className="text-sm text-ws-muted">{intro}</p>
+          </div>
+          <FillBlankScenario
+            template={COMPANY_TEMPLATE}
+            values={company}
+            onChange={setCompanyDirty}
             mode={display}
             compact
           />
