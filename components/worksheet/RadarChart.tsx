@@ -7,10 +7,18 @@
 
 export function RadarChart({
   items,
+  valueLabel = "あなた",
+  compareValues,
+  compareLabel = "参考平均",
   max = 12,
   step = 2,
 }: {
   items: { label: string; value: number }[];
+  /** items（本人の値）側の凡例ラベル */
+  valueLabel?: string;
+  /** items と同じ並びの比較用の値（例: 参考平均）。渡すと本人の値の下に重ねて描く */
+  compareValues?: number[];
+  compareLabel?: string;
   max?: number;
   step?: number;
 }) {
@@ -28,13 +36,19 @@ export function RadarChart({
   const steps: number[] = [];
   for (let s = step; s <= max; s += step) steps.push(s);
 
-  const valuePoly = items
-    .map((it, i) => pt(i, (R * Math.max(0, Math.min(it.value, max))) / max))
-    .map((p) => p.join(","))
-    .join(" ");
+  const polyOf = (vals: number[]) =>
+    vals
+      .map((v, i) => pt(i, (R * Math.max(0, Math.min(v, max))) / max))
+      .map((p) => p.join(","))
+      .join(" ");
+
+  const valuePoly = polyOf(items.map((it) => it.value));
+  const comparePoly =
+    compareValues && compareValues.length === N ? polyOf(compareValues) : null;
 
   return (
-    <svg viewBox="0 0 700 660" className="h-auto w-full" role="img" aria-label="自己診断レーダーチャート">
+    <div>
+      <svg viewBox="0 0 700 660" className="h-auto w-full" role="img" aria-label="自己診断レーダーチャート">
       {/* グリッド（同心円） */}
       {steps.map((s) => (
         <circle
@@ -67,7 +81,18 @@ export function RadarChart({
           {s}
         </text>
       ))}
-      {/* 値のポリゴン */}
+      {/* 参考平均（比較用）。本人の値の下に敷く */}
+      {comparePoly && (
+        <polygon
+          points={comparePoly}
+          fill="#9CA3AF"
+          fillOpacity="0.12"
+          stroke="#9CA3AF"
+          strokeWidth="2"
+          strokeDasharray="6 4"
+        />
+      )}
+      {/* 値のポリゴン（あなた） */}
       <polygon points={valuePoly} fill="#2563EB" fillOpacity="0.12" stroke="#2563EB" strokeWidth="3" />
       {items.map((it, i) => {
         const [x, y] = pt(i, (R * Math.max(0, Math.min(it.value, max))) / max);
@@ -91,6 +116,19 @@ export function RadarChart({
           </text>
         );
       })}
-    </svg>
+      </svg>
+      {comparePoly && (
+        <p className="mt-1 flex items-center justify-center gap-4 text-xs text-ws-muted">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#2563EB]" />
+            {valueLabel}
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full border-2 border-dashed border-[#9CA3AF]" />
+            {compareLabel}
+          </span>
+        </p>
+      )}
+    </div>
   );
 }

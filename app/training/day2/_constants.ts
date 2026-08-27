@@ -161,6 +161,25 @@ export const DIAGNOSIS_ITEMS: {
   },
 ];
 
+/**
+ * コミュニティ活動力診断の基準平均（4段階のまま。no=1〜10はDIAGNOSIS_ITEMSと対応）。
+ * サードエイジHP（third-age-project の communityCheck.ts）の referenceAverages と同じ値
+ * （community-skill-questions.xlsx の各設問「平均」を軸ごと・3問平均したもの）。
+ * レーダーチャートで「あなた」に重ねる参考値として使う。表示時は toFivePoint で5点満点へ換算する。
+ */
+export const DIAGNOSIS_REFERENCE_AVERAGES: Record<number, number> = {
+  1: 3.12, // Will理解
+  2: 3.0266666666666664, // Can理解
+  3: 2.8933333333333335, // Must理解
+  4: 2.9466666666666668, // 個性発揮力
+  5: 2.9333333333333336, // 自己開示力
+  6: 2.8533333333333335, // 援助希求力
+  7: 2.8533333333333335, // 距離確保力
+  8: 3.013888888888889, // 傾聴力
+  9: 2.930555555555556, // 他者受容力
+  10: 2.9444444444444446, // 多様性許容力
+};
+
 /** 30問モーダルのセクション定義（communityCheck.ts から移植） */
 export type DiagnosisQuestion = { id: string; text: string };
 export type DiagnosisSection = {
