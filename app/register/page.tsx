@@ -42,18 +42,7 @@ function RegisterForm() {
     setError(null);
     setSending(true);
 
-    const checkRes = await fetch("/api/auth/check-email", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: email.trim() }),
-    });
-    const checkData = await checkRes.json().catch(() => ({}));
-    if (!checkRes.ok || !checkData.registered) {
-      setSending(false);
-      setError("このメールアドレスは登録されていません。事務局までお問い合わせください。");
-      return;
-    }
-
+    // 「登録済みか」をここで確認して出し分けない（理由は app/login/page.tsx と同じ）。
     const callbackUrl = new URL("/auth/callback", window.location.origin);
     callbackUrl.searchParams.set("next", "/workshop");
     const { error } = await getSupabaseBrowserClient().auth.signInWithOtp({
@@ -91,10 +80,12 @@ function RegisterForm() {
             </CardHeader>
             <CardContent className="p-5 pt-0 text-center">
               <p className="text-sm text-secondary-foreground">
-                <span className="font-semibold text-foreground">{email}</span> 宛に、登録用のリンクをお送りしました。メールを開いて、リンクを押してください。
+                <span className="font-semibold text-foreground">{email}</span>{" "}
+                が登録されていれば、登録用のリンクをお送りしています。メールを開いて、リンクを押してください。
               </p>
               <p className="mt-3 text-xs text-muted-foreground">
                 届かないときは、迷惑メールフォルダもご確認ください。リンクには有効期限があります。
+                入力したアドレスに心当たりがない場合や、しばらく待っても届かない場合は、事務局までお問い合わせください。
               </p>
             </CardContent>
             <CardFooter className="flex flex-col gap-1.5 p-5 pt-1">

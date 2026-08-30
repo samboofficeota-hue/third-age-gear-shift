@@ -35,8 +35,9 @@ async function syncAuthMetadata(authUserId: string, data: { role: UserRole; sub:
  * （`app/api/admin/invites/route.ts`）。よってここで新規作成する必要はない。
  *
  * ⚠️ かつてはここで participant を新規作成していたが、それだと招待制のゲートが
- * ブラウザ側（/api/auth/check-email の分岐）にしか無く、公開 anon キーで Supabase の
+ * ブラウザ側の分岐（廃止した /api/auth/check-email）にしか無く、公開 anon キーで Supabase の
  * 認証エンドポイントを直接叩いた第三者が受講者として成立してしまっていた。
+ * いまは **ここが唯一のゲート**なので、この分岐を戻さないこと。
  *
  * なお Supabase の「Allow new users to sign up」は **OFF にできない**。
  * 同じ Supabase プロジェクトを third-age-campus と共用しており、

@@ -46,18 +46,10 @@ function LoginForm() {
     setError(null);
     setSending(true);
 
-    const checkRes = await fetch("/api/auth/check-email", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: email.trim() }),
-    });
-    const checkData = await checkRes.json().catch(() => ({}));
-    if (!checkRes.ok || !checkData.registered) {
-      setSending(false);
-      setError("このメールアドレスは登録されていません。事務局までお問い合わせください。");
-      return;
-    }
-
+    // 「登録済みか」をここで確認して出し分けない。未認証で誰でも叩ける画面なので、
+    // 応答を変えると「そのアドレスがこの研修の受講者か」を外部から確認できてしまう
+    // （本人の雇用状況に関わる情報）。登録の有無にかかわらず同じ画面を出し、
+    // 実際に入れるかどうかは /api/auth/link がサーバー側で判定する。
     const callbackUrl = new URL("/auth/callback", window.location.origin);
     const safeFrom = safeRedirectPath(from);
     if (safeFrom) callbackUrl.searchParams.set("next", safeFrom);
@@ -96,10 +88,12 @@ function LoginForm() {
             </CardHeader>
             <CardContent className="p-5 pt-0 text-center">
               <p className="text-sm text-secondary-foreground">
-                <span className="font-semibold text-foreground">{email}</span> 宛に、ログイン用のリンクをお送りしました。メールを開いて、リンクを押してください。
+                <span className="font-semibold text-foreground">{email}</span>{" "}
+                が登録されていれば、ログイン用のリンクをお送りしています。メールを開いて、リンクを押してください。
               </p>
               <p className="mt-3 text-xs text-muted-foreground">
                 届かないときは、迷惑メールフォルダもご確認ください。リンクには有効期限があります。
+                入力したアドレスに心当たりがない場合や、しばらく待っても届かない場合は、事務局までお問い合わせください。
               </p>
             </CardContent>
             <CardFooter className="flex flex-col gap-1.5 p-5 pt-1">
