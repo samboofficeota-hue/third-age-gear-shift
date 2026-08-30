@@ -66,27 +66,36 @@ Next.js の App Router が外部オリジンを検知して `window.location.rep
 事務局が管理画面（`/admin/sessions/[id]` の受講生タブ）から事前登録する。
 `inviteToken` は `randomBytes(24).toString("base64url")`（192ビットのCSPRNG）で、有効期限は14日。
 
-### ⚠️ 招待制のゲートはブラウザ側にしかない（既知の課題）
+### 招待制はサーバー側で担保する（2026-08-27 修正）
 
-`/login`・`/register` は `/api/auth/check-email` で事前登録済みかを確認してから
-`signInWithOtp` を呼ぶが、**これはクライアント側の分岐にすぎない**。
+**`public.users` に事前登録の無いアドレスは、ログインできない。**
+`lib/auth.ts` の `linkOrCreateUserForAuthId` は該当行が無ければ `null` を返し、
+`/api/auth/link` が Supabase セッションを `signOut()` して 403 を返す。
 
-`NEXT_PUBLIC_SUPABASE_ANON_KEY` はブラウザバンドルに含まれる公開値なので、攻撃者は
-Supabase の認証エンドポイントを直接叩ける。自分のアドレスに届いたリンクを踏むと、
-`lib/auth.ts` の `linkOrCreateUserForAuthId` が「該当行が無ければ新規作成」する分岐で
-`public.users` に行を作り、招待されていない第三者が participant として成立してしまう。
+> かつてはここで participant を**新規作成**していた。その状態だと招待制のゲートが
+> `/api/auth/check-email` を呼ぶブラウザ側の分岐にしか無く、公開 anon キーで Supabase の
+> 認証エンドポイントを直接叩いた第三者が受講者として成立してしまっていた
+> （2026-08-27 のセキュリティレビューで検出、同日修正）。
 
-成立可否は Supabase 側の **Allow new users to sign up** 設定に依存する。無効なら現状は塞がっているが、
-**コード側に歯止めが無い**状態は変わらない。塞ぐなら:
+#### ⚠️ Supabase の「Allow new users to sign up」は OFF にできない
 
-1. `/api/auth/link` で「既存の `public.users` 行が無ければ作らずに 401」に変える
-   （アカウント作成は招待フロー限定にする）
-2. Supabase の公開サインアップを無効化する
-3. クライアントの `signInWithOtp` に `shouldCreateUser: false` を渡す（多層防御。単独では不十分）
+同じ Supabase プロジェクト（`cbmgzmfkmjravysemwux`）を **third-age-campus と共用**しており、
+campus 側は会員登録で `shouldCreateUser: true` を使っている
+（`third-age-campus/src/components/AuthPanel.tsx`）。OFF にすると campus の登録が壊れる。
 
-あわせて `/api/auth/check-email` は、未認証で「そのメールが受講登録されているか」を答える
-**在籍オラクル**になっている。1 を実施するなら、登録済みかどうかで応答を変えず、
-常に「リンクを送りました」と表示する形に寄せるのが望ましい。
+したがって切り分けはこうする。
+
+- `auth.users` が増えるのは**許容する**（姉妹サービスの会員も同じ場所に入る）
+- **この講座に入れるかどうかは `public.users` の有無で決める**
+
+campus の会員がこの講座にログインしようとしても、事務局の招待が無ければ 403 になる。
+
+#### 残る課題: `/api/auth/check-email` の在籍オラクル
+
+未認証で「そのメールが受講登録されているか」を真偽で答えるため、
+任意の人物について「この研修の受講者か」を確認できてしまう（本人の雇用状況に関わる情報）。
+登録済みかどうかで応答を変えず、常に「リンクを送りました」と表示する形に寄せるのが望ましい。
+上記の修正により、未登録者がリンクを踏んでもログインは成立しないので、挙動としては成り立つ。
 
 ## ルート保護
 

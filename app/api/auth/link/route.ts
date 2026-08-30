@@ -19,6 +19,18 @@ export async function POST() {
 
   try {
     const linked = await linkOrCreateUserForAuthId({ authUserId: user.id, email: user.email });
+
+    // 招待制。事前登録の無いアドレスはアカウントを作らず、Supabase セッションも捨てる。
+    // （同じ Supabase プロジェクトを姉妹サービスと共用しているため、auth.users には
+    //   この講座と無関係の会員が居る。ここで受講者かどうかを切り分ける。）
+    if (!linked) {
+      await supabase.auth.signOut();
+      return NextResponse.json(
+        { error: "このメールアドレスは、この講座に登録されていません。事務局までお問い合わせください。" },
+        { status: 403 }
+      );
+    }
+
     return NextResponse.json({
       user: { id: linked.id, email: user.email, role: linked.role },
     });

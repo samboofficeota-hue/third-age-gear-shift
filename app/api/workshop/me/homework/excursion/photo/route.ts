@@ -1,13 +1,8 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { getStorageAdmin, PHOTO_BUCKET } from "@/lib/supabaseStorage";
+import { getStorageAdmin, imageExtFor, PHOTO_BUCKET } from "@/lib/supabaseStorage";
 
 const MAX_BYTES = 5 * 1024 * 1024; // 5MB
-const EXT: Record<string, string> = {
-  "image/png": "png",
-  "image/jpeg": "jpg",
-  "image/webp": "webp",
-};
 
 /**
  * プチ越境体験レポート用の写真アップロード（認証必須・トリミングなし）。
@@ -27,7 +22,7 @@ export async function POST(request: Request) {
   if (file.size > MAX_BYTES) {
     return NextResponse.json({ error: "画像は5MB以内にしてください。" }, { status: 413 });
   }
-  const ext = EXT[file.type];
+  const ext = imageExtFor(file.type);
   if (!ext) {
     return NextResponse.json(
       { error: "PNG / JPEG / WebP の画像をご利用ください。" },

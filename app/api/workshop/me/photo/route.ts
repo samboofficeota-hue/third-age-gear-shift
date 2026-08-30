@@ -1,13 +1,8 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { getStorageAdmin, PHOTO_BUCKET } from "@/lib/supabaseStorage";
+import { getStorageAdmin, imageExtFor, PHOTO_BUCKET } from "@/lib/supabaseStorage";
 
 const MAX_BYTES = 5 * 1024 * 1024; // 5MB
-const EXT: Record<string, string> = {
-  "image/png": "png",
-  "image/jpeg": "jpg",
-  "image/webp": "webp",
-};
 
 type UploadResult = { url: string } | { error: string; status: number };
 
@@ -19,7 +14,7 @@ async function uploadImage(
   if (file.size > MAX_BYTES) {
     return { error: "画像は5MB以内にしてください。", status: 413 };
   }
-  const ext = EXT[file.type];
+  const ext = imageExtFor(file.type);
   if (!ext) {
     return { error: "PNG / JPEG / WebP の画像をご利用ください。", status: 415 };
   }

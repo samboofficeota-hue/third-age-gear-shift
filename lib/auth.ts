@@ -29,7 +29,21 @@ async function syncAuthMetadata(authUserId: string, data: { role: UserRole; sub:
  * Supabase Auth のユーザー（authUserId）と、既存の public.users を紐付ける。
  * - authUserId で既に紐付け済み → そのまま
  * - email で既存行がある（招待済み参加者・事務局など） → authUserId を埋めて紐付け（初回なら activatedAt も）
- * - どちらもない → 新規 participant を作成（自己登録相当）
+ * - どちらもない → **null を返す**（＝この講座の受講者ではない）
+ *
+ * この講座は招待制で、`public.users` の行は事務局の招待時に必ず先に作られる
+ * （`app/api/admin/invites/route.ts`）。よってここで新規作成する必要はない。
+ *
+ * ⚠️ かつてはここで participant を新規作成していたが、それだと招待制のゲートが
+ * ブラウザ側（/api/auth/check-email の分岐）にしか無く、公開 anon キーで Supabase の
+ * 認証エンドポイントを直接叩いた第三者が受講者として成立してしまっていた。
+ *
+ * なお Supabase の「Allow new users to sign up」は **OFF にできない**。
+ * 同じ Supabase プロジェクトを third-age-campus と共用しており、
+ * campus 側は会員登録で `shouldCreateUser: true` を使っているため、
+ * OFF にすると campus の登録が壊れる。auth.users が増えるのは許容し、
+ * この講座に入れるかどうかは public.users の有無で決める、という切り分けにしている。
+ *
  * 最後に role・内部id を app_metadata に同期する。
  */
 export async function linkOrCreateUserForAuthId({
@@ -38,7 +52,7 @@ export async function linkOrCreateUserForAuthId({
 }: {
   authUserId: string;
   email: string;
-}): Promise<{ id: string; role: UserRole }> {
+}): Promise<{ id: string; role: UserRole } | null> {
   const normalizedEmail = email.trim().toLowerCase();
 
   let user = await prisma.user.findUnique({ where: { authUserId } });
@@ -56,15 +70,8 @@ export async function linkOrCreateUserForAuthId({
     }
   }
 
-  if (!user) {
-    user = await prisma.user.create({
-      data: {
-        email: normalizedEmail,
-        authUserId,
-        activatedAt: new Date(),
-      },
-    });
-  }
+  // 事前登録が無い＝招待されていない。アカウントは作らない。
+  if (!user) return null;
 
   const role = user.role as UserRole;
   await syncAuthMetadata(authUserId, { role, sub: user.id });
@@ -91,6 +98,8 @@ export async function getSession(): Promise<SessionPayload | null> {
     return { sub: metaSub, email: user.email, role: metaRole };
   }
 
+  // 事前登録が無ければセッションとして認めない（Supabase Auth に居るだけでは受講者ではない）
   const linked = await linkOrCreateUserForAuthId({ authUserId: user.id, email: user.email });
+  if (!linked) return null;
   return { sub: linked.id, email: user.email, role: linked.role };
 }
