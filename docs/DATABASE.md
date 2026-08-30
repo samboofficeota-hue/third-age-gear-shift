@@ -14,9 +14,33 @@
 > 1. `prisma/schema.prisma` を編集する
 > 2. `prisma/migrations/<timestamp>_<name>/migration.sql` を **手で書く**（追加分だけ）
 > 3. 中身に `DROP` が含まれていないことを目視で確認する
-> 4. `npx prisma migrate deploy` で適用する（未適用のマイグレーションだけを流す）
+> 4. **テーブルを追加したなら `ALTER TABLE <名前> ENABLE ROW LEVEL SECURITY;` を必ず書く**（下記）
+> 5. `npx prisma migrate deploy` で適用する（未適用のマイグレーションだけを流す）
 >
 > 参考実装：`prisma/migrations/20260821120000_add_email_logs/migration.sql`
+
+> ## ⚠️ 新規テーブルには必ず RLS を有効化すること
+>
+> Supabase の PostgREST は `public` スキーマを**そのままWeb APIとして公開**している。
+> RLS が無効なテーブルは `anon` / `authenticated` ロールに全開放され、
+> **ブラウザバンドルに含まれる公開 anon キーだけで誰でも読み書きできる**。
+>
+> ```sql
+> ALTER TABLE public.<新しいテーブル> ENABLE ROW LEVEL SECURITY;
+> ```
+>
+> **ポリシーは作らない。** アプリは Prisma が `postgres` ロールで接続するため RLS を迂回する。
+> 「RLS 有効・ポリシー無し」＝ アプリからは読めるが、外部の anon キーからは一切読めない、が正しい状態。
+>
+> 2026-08-21 に追加した `email_logs` はこの行が抜けており、受講者のメールアドレス・所属研修・
+> 事務局担当者のアドレスが公開状態だった（2026-08-27 のセキュリティレビューで検出、同日修正）。
+>
+> **確認方法**（Supabase MCP、または SQL）:
+> ```sql
+> SELECT relname, relrowsecurity FROM pg_class
+> WHERE relnamespace = 'public'::regnamespace AND relkind = 'r' AND NOT relrowsecurity;
+> ```
+> 1行でも返ったら、そのテーブルは公開状態。
 
 ## ローカル開発
 

@@ -11,22 +11,11 @@
 
 import { useEffect, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browserClient";
+import { safeRedirectPath } from "@/lib/safeRedirect";
 
 function roleDefaultPath(role: string): string {
   if (role === "admin") return "/admin";
   return "/workshop";
-}
-
-/** 同一サイト内の行き先だけ許す（オープンリダイレクト防止） */
-function safeNext(raw: string | null): string | null {
-  if (!raw) return null;
-  try {
-    const url = new URL(raw, window.location.origin);
-    if (url.origin !== window.location.origin) return null;
-    return `${url.pathname}${url.search}${url.hash}`;
-  } catch {
-    return null;
-  }
 }
 
 export default function AuthCallbackPage() {
@@ -37,7 +26,7 @@ export default function AuthCallbackPage() {
 
     void (async () => {
       const url = new URL(window.location.href);
-      const next = safeNext(url.searchParams.get("next"));
+      const next = safeRedirectPath(url.searchParams.get("next"));
 
       const authError =
         url.searchParams.get("error_description") ?? url.searchParams.get("error");

@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
+import { isAdminInDb } from "@/lib/adminAuth";
 import { prisma } from "@/lib/db";
 
 /**
@@ -12,7 +13,9 @@ import { prisma } from "@/lib/db";
 async function requireAdminOrRedirect(to: string) {
   const session = await getSession();
   if (!session) redirect(`/login?from=${to}`);
-  if (session.role !== "admin") redirect("/");
+  // ここは API を介さずサーバー側で直接 Prisma を引く画面なので、
+  // キャッシュされた session.role ではなく DB を正として判定する（lib/adminAuth.ts 参照）。
+  if (!(await isAdminInDb(session.sub))) redirect("/");
   return session;
 }
 

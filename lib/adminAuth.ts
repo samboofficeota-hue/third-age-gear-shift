@@ -16,6 +16,24 @@ type Guard =
   | { ok: true; session: SessionPayload }
   | { ok: false; response: NextResponse };
 
+/**
+ * いま本当に admin かを **DBを正として** 判定する。
+ *
+ * `session.role` は Supabase の app_metadata にキャッシュされた値で、本人が再ログインするまで
+ * 更新されない。離任などで DB の role を落としても、既存セッションは admin のまま通ってしまう。
+ * 権限を戻すタイミングを当人が握ってしまうため、管理系は毎回 DB を引き直す
+ * （呼び出し頻度が低く、1クエリのコストは問題にならない）。
+ *
+ * middleware は Edge 実行で Prisma を呼べないため、ここが実質の最終防衛線になる。
+ */
+export async function isAdminInDb(userId: string): Promise<boolean> {
+  const current = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
+  return current?.role === "admin";
+}
+
 export async function requireAdmin(): Promise<Guard> {
   const session = await getSession();
   if (!session) {
@@ -24,13 +42,15 @@ export async function requireAdmin(): Promise<Guard> {
       response: NextResponse.json({ error: "ログインしてください。" }, { status: 401 }),
     };
   }
-  if (session.role !== "admin") {
+
+  if (!(await isAdminInDb(session.sub))) {
     return {
       ok: false,
       response: NextResponse.json({ error: "権限がありません。" }, { status: 403 }),
     };
   }
-  return { ok: true, session };
+
+  return { ok: true, session: { ...session, role: "admin" } };
 }
 
 /**

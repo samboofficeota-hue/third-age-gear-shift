@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { AuthBrandHeader } from "@/components/AuthBrandHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browserClient";
+import { safeRedirectPath } from "@/lib/safeRedirect";
 
 function roleDefaultPath(role: string): string {
   if (role === "admin") return "/admin";
@@ -34,7 +35,8 @@ function LoginForm() {
       const data = await res.json().catch(() => ({}));
       setCheckingSession(false);
       if (data?.user) {
-        router.replace(from ?? roleDefaultPath(data.user.role));
+        // from は誰でも付けられるので、同一サイト内に限定する（オープンリダイレクト防止）
+        router.replace(safeRedirectPath(from) ?? roleDefaultPath(data.user.role));
       }
     })();
   }, [from, router]);
@@ -57,7 +59,8 @@ function LoginForm() {
     }
 
     const callbackUrl = new URL("/auth/callback", window.location.origin);
-    if (from) callbackUrl.searchParams.set("next", from);
+    const safeFrom = safeRedirectPath(from);
+    if (safeFrom) callbackUrl.searchParams.set("next", safeFrom);
     const { error } = await getSupabaseBrowserClient().auth.signInWithOtp({
       email: email.trim(),
       options: { emailRedirectTo: callbackUrl.toString() },

@@ -1,145 +1,129 @@
 # 認証
 
+> このドキュメントは 2026-08-27 に実装に合わせて全面改訂した。
+> それ以前の版は「メール＋パスワード／自前JWT（`third_age_session` Cookie）／Railway でシード」
+> と書かれていたが、いずれも**現在は使っていない**。Supabase Auth のマジックリンクに移行済み。
+
 ## 概要
 
-- **ログイン:** メールアドレス + パスワード（研修事務局が事前発行する想定）
-- **セッション:** JWT を httpOnly Cookie（`third_age_session`）で保持、有効 14 日
-- **ロール:** `admin` | `participant` の2層（JWT の payload に含む）。運営（事務局・当日の進行役）はすべて `admin`。
+- **ログイン:** パスワードなし。**マジックリンク**（Supabase Auth の `signInWithOtp`）
+- **セッション:** Supabase Auth が管理（`@supabase/ssr` の Cookie）。自前のJWTは持たない
+- **ロール:** `admin` | `participant` の2層。運営（事務局・当日の進行役）はすべて `admin`
+- **アカウント発行:** 招待制。事務局が管理画面から事前登録する
 
-## 初回ユーザーの作成（シード）
+`JWT_SECRET` / `JWT_COOKIE_NAME` は旧方式の名残で、**コードから参照されていない**。
 
-ログイン可能なユーザーは、**シードスクリプト**で 1 件以上作成する。
+## ロールの持ち方（重要）
 
-### ローカル
+role は2か所にある。**DBが正で、`app_metadata` はキャッシュ**という関係を守ること。
 
-```bash
-# デフォルト: participant@example.third-age.local / password123 / participant
-npm run db:seed
+| 置き場所 | 用途 | 更新されるタイミング |
+|---|---|---|
+| `public.users.role`（Prisma） | **正** | 事務局がDBを変更したとき |
+| Supabase `auth.users.app_metadata.role` | 高速判定用のキャッシュ | 本人がログインしたとき（`syncAuthMetadata`） |
 
-# または環境変数で指定
-SEED_EMAIL="admin@example.com" SEED_PASSWORD="your-secret" SEED_ROLE="admin" npm run db:seed
+`app_metadata` は **service role でしか書けない**領域なので、利用者が自分で書き換えることはできない。
+middleware（Edge 実行で Prisma を呼べない）はこのキャッシュを見てページを振り分ける。
+
+ただし**キャッシュは本人が再ログインするまで古いまま**になる。離任などで role を落としても、
+既存セッションは admin のまま通ってしまうため、実データに触る層では必ずDBを引き直す。
+
+- `lib/adminAuth.ts` の `isAdminInDb(userId)` がその判定
+- `requireAdmin()`（`/api/admin/*` の共通ガード）が毎回これを通す
+- `/view` は API を介さずサーバー側で直接 Prisma を引く画面なので、
+  `app/view/[sessionId]/_lib.ts` でも同じ判定を通す
+
+> middleware は**入口の振り分け**であって権限の最終判断ではない。
+> 新しく管理系の画面やAPIを足すときは、必ず `requireAdmin()` か `isAdminInDb()` を通すこと。
+
+## ログインの流れ
+
+```
+/login （メールを入力）
+  ↓ POST /api/auth/check-email     … 事前登録済みかを確認（※後述の注意あり）
+  ↓ supabase.auth.signInWithOtp()  … マジックリンクを送信
+  ↓ （メールのリンクを開く）
+/auth/callback
+  ↓ exchangeCodeForSession()       … Supabase セッションを確立
+  ↓ POST /api/auth/link            … public.users と紐付け、role を app_metadata に同期
+  ↓ next（同一サイト内のみ）または role の既定ページへ
 ```
 
-### Railway（本番）
+### リダイレクト先の扱い
 
-本番の管理画面で使うユーザーは、Railway 上でシードを 1 回実行して作成する。
+`?from=` / `?next=` は誰でも自由に付けられる。検証せずに `router.replace()` へ渡すと、
+Next.js の App Router が外部オリジンを検知して `window.location.replace()` に切り替えるため、
+**正規ドメインのURLから任意の外部サイトへ飛ばせてしまう**（オープンリダイレクト）。
 
-#### 手順
+`lib/safeRedirect.ts` の `safeRedirectPath()` を必ず通す。同一オリジン以外は `null` を返し、
+`//evil.example`（プロトコル相対）や `javascript:` もまとめて弾く。
 
-1. **Railway ダッシュボード**で、該当プロジェクト → **Variables** を開く。
-2. 次の 3 つを追加（値は任意。本番用は強めのパスワード推奨）:
-   - `SEED_EMAIL` = ログイン用メール（例: `admin@example.com`）
-   - `SEED_PASSWORD` = ログイン用パスワード
-   - `SEED_ROLE` = `admin`（管理画面用）または `participant`
-3. **シードを実行**（どちらか一方）:
-   - **Railway の Shell**: ダッシュボードの **Shell** を開き、プロジェクト内で:
-     ```bash
-     npm run db:seed
-     ```
-   - **ローカルから Railway CLI**: プロジェクトで `railway link` 済みなら:
-     ```bash
-     npm run db:seed:railway
-     ```
-     または `railway run npm run db:seed`  
-     **SEED_EMAIL / SEED_PASSWORD / SEED_ROLE** は Railway の Variables のほか、**.env.local に書いてもよい**（`npm run db:seed:railway` 実行時に読み込まれる）。
+> 2026-08-27 まで `/login` の `router.replace(from)` だけがこの検証を通していなかった（同日修正）。
+> 行き先をクエリから受け取る箇所を新設するときは、この関数を通すこと。
 
-#### Cursor から Railway CLI で進める
+## アカウント作成
 
-Cursor のターミナルで次を順に実行する。
+事務局が管理画面（`/admin/sessions/[id]` の受講生タブ）から事前登録する。
+`inviteToken` は `randomBytes(24).toString("base64url")`（192ビットのCSPRNG）で、有効期限は14日。
 
-- **CLI 確認**  
-  `railway --version` で未インストールなら `npm install -g @railway/cli` で導入。
+### ⚠️ 招待制のゲートはブラウザ側にしかない（既知の課題）
 
-- **ログイン**（ブラウザが開く）
+`/login`・`/register` は `/api/auth/check-email` で事前登録済みかを確認してから
+`signInWithOtp` を呼ぶが、**これはクライアント側の分岐にすぎない**。
 
-  ```bash
-  railway login
-  ```
+`NEXT_PUBLIC_SUPABASE_ANON_KEY` はブラウザバンドルに含まれる公開値なので、攻撃者は
+Supabase の認証エンドポイントを直接叩ける。自分のアドレスに届いたリンクを踏むと、
+`lib/auth.ts` の `linkOrCreateUserForAuthId` が「該当行が無ければ新規作成」する分岐で
+`public.users` に行を作り、招待されていない第三者が participant として成立してしまう。
 
-- **プロジェクトをリンク**（一覧から本番用を選択）
+成立可否は Supabase 側の **Allow new users to sign up** 設定に依存する。無効なら現状は塞がっているが、
+**コード側に歯止めが無い**状態は変わらない。塞ぐなら:
 
-  ```bash
-  railway link
-  ```
+1. `/api/auth/link` で「既存の `public.users` 行が無ければ作らずに 401」に変える
+   （アカウント作成は招待フロー限定にする）
+2. Supabase の公開サインアップを無効化する
+3. クライアントの `signInWithOtp` に `shouldCreateUser: false` を渡す（多層防御。単独では不十分）
 
-  リンクしていないと `railway run` で本番の `DATABASE_URL` が渡らず、シードがローカルの `.env.local` の DB を参照して失敗する。必ず先にリンクすること。
-
-- **Variables 設定**  
-  Railway ダッシュボードの **Variables** で `SEED_EMAIL` / `SEED_PASSWORD` / `SEED_ROLE=admin` を追加（手順 1–2 のとおり）。
-
-- **シード実行**
-
-  ```bash
-  npm run db:seed:railway
-  ```
-
-  成功時は `Created user: ... role: admin` と表示される。
-
-上記シード成功後:
-
-1. ログが `Created user: ... role: admin` と出れば成功。本番の `/login` でそのメール・パスワードでログインできる。
-2. 必要なら Variables の `SEED_*` は削除してよい（既存ユーザーは消えません）。
-
-**注意:** 同じメールのユーザーが既にいるときは「User already exists」と表示され、新規作成はスキップされる。
-
-## アカウント作成と回答データの紐付け
-
-参加者アカウントの作成には **2つの経路**がある。どちらでも、回答データ（`WorkshopData`）は
-**ログイン中のユーザーID（`WorkshopData.userId` はユニークFK）** に紐づく。
-全シートの保存は `patchPhaseData()`（`lib/workshopData.ts`）が `getSession().sub`（=userId）で
-該当行を引く/作るため、**ログインした本人のIDに必ず回答が載る**。
-
-### 経路A：招待 → アクティベーション（招待制の正道・推奨）
-
-1. 事務局が参加者を事前登録（`name` / `department` / `organizationId` / `inviteToken` 付き、`passwordHash` は null）。
-2. 参加者が招待リンク `/welcome?token=...` からパスワードを設定（`POST /api/auth/activate`）。
-   - **同じ `user.id` を引き継ぐ**ため、氏名・部署・企業が保持される。
-3. セッション発行 → 以降の回答はこの本人IDに紐づく。
-
-### 経路B：自己登録 → 研修コード参加
-
-1. `/register`（`POST /api/auth/register`）で email＋パスワードのみの**新規User**を作成（氏名・部署・セッションなし）。
-2. `/workshop/join`（`POST /api/workshop/join`）で研修コードを入力 → `WorkshopData.sessionId` にセッションを紐付け。
-3. 氏名等は事前アンケート/プロフィールで `WorkshopData.profile` に記録。
-
-### ⚠️ 運用ルール（データが割れないために）
-
-**同一人物を経路Aと経路Bの両方に載せない。** 参加者ごとに「招待でアクティベーション」**か**
-「自己登録＋コード参加」の**どちらか一方**に統一する。
-
-- 招待済みメールで自己登録 → `409`（既に登録済み）で失敗。
-- 別メールで自己登録 → **別アカウント**となり回答が2つに割れる。
-
-### パスワード忘れ
-
-認証は独自方式（Prisma `User` + bcrypt + jose JWT）で **Supabase Auth は未使用**（Supabaseはストレージのみ）。
-そのため Supabase の自動リセット（`resetPasswordForEmail`）は使えない。
-
-- **現行の対応 = 事務局対応（運用ベース）**：ログイン画面に
-  「パスワードをお忘れの方は、事務局までご連絡ください。」を表示し、事務局が招待トークン再発行等で対応。
-- セルフ復旧（本人がメールのリンクから再設定）を導入する場合は、`resetToken` 追加＋
-  メール送信基盤（Resend 等）＋リセットAPI/画面が別途必要（未実装）。
-
-## 環境変数
-
-| 変数 | 説明 |
-|------|------|
-| `JWT_SECRET` | JWT 署名用。**32 文字以上**のランダム文字列を推奨。 |
-| `JWT_COOKIE_NAME` | Cookie 名（省略時: `third_age_session`） |
+あわせて `/api/auth/check-email` は、未認証で「そのメールが受講登録されているか」を答える
+**在籍オラクル**になっている。1 を実施するなら、登録済みかどうかで応答を変えず、
+常に「リンクを送りました」と表示する形に寄せるのが望ましい。
 
 ## ルート保護
 
-- **/workshop/\*** … ログイン必須。未ログインは `/login?from=...` にリダイレクト。
-- **/admin/\*** および **/view/\*** … `admin` のみ。それ以外は `/` へ。
-- **/login** … 認証不要。
+`middleware.ts` の matcher は `/workshop/*` `/admin/*` `/view/*` `/login`。
+**`/api/*` は middleware を通らない**ので、各ルートが自分で `getSession()` / `requireAdmin()` を呼ぶ。
+
+- **/workshop/\*** … ログイン必須。未ログインは `/login?from=...` へ
+- **/admin/\*** および **/view/\*** … `admin` のみ。それ以外は `/` へ
+- **/login** … 認証不要
+
+セッションの検証には `supabase.auth.getUser()` を使う（`getSession()` はローカル検証のみで偽装可能）。
 
 ## API
 
 | エンドポイント | 説明 |
 |----------------|------|
-| `POST /api/auth/login` | body: `{ email, password }`。成功時は Cookie をセット。 |
-| `POST /api/auth/logout` | Cookie を削除。 |
-| `GET /api/auth/me` | 現在のユーザー（Cookie から）。未ログインは `{ user: null }`。 |
-| `POST /api/auth/register` | 経路B。body: `{ email, password }`。新規Userを作成しCookieをセット。 |
-| `POST /api/auth/activate` | 経路A。body: `{ token, email, password }`。招待トークンで既存Userを有効化。 |
-| `POST /api/workshop/join` | 研修コードで `WorkshopData.sessionId` を紐付け。 |
+| `POST /api/auth/check-email` | 事前登録済みかを返す。未認証で呼べる（上記の注意を参照） |
+| `POST /api/auth/link` | Supabase セッションを `public.users` と紐付け、role を `app_metadata` に同期 |
+| `POST /api/auth/logout` | サインアウト |
+| `GET /api/auth/me` | 現在のユーザー。未ログインは `{ user: null }` |
+| `POST /api/dev-login` | **開発専用**。実行時に `NODE_ENV === "production"` なら 404 |
+
+`/api/workshop/me/*` はすべて `getSession()` の `sub` のみを主語にする。
+**リクエスト由来の userId を受け取ってはいけない**（他人のデータに触れる経路を作らないため）。
+
+## 環境変数
+
+| 変数 | 説明 |
+|------|------|
+| `NEXT_PUBLIC_SUPABASE_URL` | ブラウザに出てよい。CSP の `connect-src` にも使う |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ブラウザに出てよい（**公開値**。これを持つだけでは何もできない前提で設計する） |
+| `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | **秘密**。サーバー専用モジュールからのみ参照する |
+
+`SUPABASE_SERVICE_ROLE_KEY` を参照してよいのは `lib/supabase/adminClient.ts` と
+`lib/supabaseStorage.ts` だけ。`"use client"` 側から辿れるモジュールに import しないこと。
+
+## 関連
+
+- ロールとRLSの関係: [DATABASE.md](DATABASE.md)（公開テーブルは必ず RLS を有効化する）
+- 運用手順: [ADMIN_WORKFLOW.md](ADMIN_WORKFLOW.md)
