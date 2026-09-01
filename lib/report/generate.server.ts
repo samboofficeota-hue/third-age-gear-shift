@@ -19,7 +19,7 @@ import {
  * 対話系（Haiku 4.5）より指示追従の強いモデルを使う。
  * 呼び出し回数が少なくコストへの影響も小さい。
  */
-const MODEL = "claude-opus-5";
+const MODEL = "claude-sonnet-5";
 /** 思考トークンも max_tokens に含まれるため、出力200字でも余裕を持たせる */
 const MAX_TOKENS = 8000;
 
