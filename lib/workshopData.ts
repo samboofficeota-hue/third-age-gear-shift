@@ -8,6 +8,8 @@ import {
   isPhaseAccessible,
   type PhaseId,
 } from "@/lib/phases";
+import { getContentSetForSession } from "@/lib/content/resolve";
+import { isPhaseEnabled } from "@/lib/content";
 
 /**
  * フェーズJSONへの浅いマージPATCHを行う共通ハンドラ。
@@ -38,6 +40,15 @@ export async function patchPhaseData(phaseId: PhaseId, request: Request) {
     wd = await prisma.workshopData.create({
       data: { userId: session.sub, completedPhases: [] },
     });
+  }
+
+  // 研修セットで無効化されたフェーズには書き込ませない。
+  const contentSet = await getContentSetForSession(wd.sessionId);
+  if (!isPhaseEnabled(contentSet, phaseId)) {
+    return NextResponse.json(
+      { error: "この課題は、この研修では実施しません。" },
+      { status: 403 }
+    );
   }
 
   // ゲーティング: gated フェーズは当該セッションで OPEN のときのみ書き込み可

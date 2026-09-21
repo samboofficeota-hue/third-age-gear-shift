@@ -12,6 +12,7 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "db:seed": "npx tsx prisma/seed.ts",
+    "content:check": "npx tsx scripts/check-content-sets.ts",
     "rehearsal:setup": "npx tsx scripts/rehearsal-setup.ts",
     "rehearsal:teardown": "npx tsx scripts/rehearsal-teardown.ts",
     "demo:setup": "npx tsx scripts/demo-setup.ts"

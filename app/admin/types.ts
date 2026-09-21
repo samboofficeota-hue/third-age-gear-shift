@@ -38,6 +38,8 @@ export type SessionInfo = {
   day2Date: string | null;
   location: string | null;
   isOnline: boolean;
+  /** 研修セット（コンテンツ設定）id。lib/content/sets と対応。 */
+  contentSetId: string;
   participantCount: number;
 };
 

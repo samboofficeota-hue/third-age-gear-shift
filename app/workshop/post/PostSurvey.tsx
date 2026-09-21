@@ -12,10 +12,7 @@ import {
 } from "@/components/survey/fields";
 import { Button } from "@/components/ui/button";
 import {
-  POST_SCALE_SECTIONS,
-  POST_CHOICE,
   POST_FREETEXT,
-  SECTION_E,
   SCALE_MIN_LABEL,
   SCALE_MAX_LABEL,
   REASON_TENSHOKU,
@@ -26,11 +23,14 @@ import {
   pruneReasonAnswers,
   type ChoiceQuestion,
 } from "@/lib/surveyContent";
+import { getContentSet } from "@/lib/content";
 
 type Answers = Record<string, number | string | string[]>;
 
 export function PostSurvey() {
   const [answers, setAnswers] = useState<Answers>({});
+  // 研修セットに応じた事後アンケート構成（初期値は default）
+  const [postCfg, setPostCfg] = useState(() => getContentSet(null).survey.post);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -40,6 +40,7 @@ export function PostSurvey() {
       const data = await fetch("/api/workshop/me", { credentials: "include" })
         .then((r) => r.json())
         .catch(() => ({}));
+      setPostCfg(getContentSet(data?.contentSetId).survey.post);
       const post = data?.workshopData?.post as { surveyImmediate?: Answers } | null;
       if (post?.surveyImmediate) setAnswers(post.surveyImmediate);
       setLoading(false);
@@ -135,7 +136,7 @@ export function PostSurvey() {
       }
     >
       {/* §A〜C 5段階 */}
-      {POST_SCALE_SECTIONS.map((section) => (
+      {postCfg.scaleSections.map((section) => (
         <section key={section.id} className="space-y-5">
           <h2 className="text-lg font-bold text-primary">
             §{section.id}　{section.title}
@@ -154,24 +155,26 @@ export function PostSurvey() {
       ))}
 
       {/* §D 単一選択 */}
-      <section className="space-y-5">
-        <h2 className="text-lg font-bold text-primary">
-          §D　{POST_CHOICE.title}
-        </h2>
-        <SingleChoice
-          label={POST_CHOICE.text}
-          options={POST_CHOICE.options}
-          value={
-            typeof answers[POST_CHOICE.key] === "string"
-              ? (answers[POST_CHOICE.key] as string)
-              : null
-          }
-          onChange={(v) => setChoice(POST_CHOICE.key, v)}
-        />
-      </section>
+      {postCfg.choice && (
+        <section className="space-y-5">
+          <h2 className="text-lg font-bold text-primary">
+            §D　{postCfg.choice.title}
+          </h2>
+          <SingleChoice
+            label={postCfg.choice.text}
+            options={postCfg.choice.options}
+            value={
+              typeof answers[postCfg.choice.key] === "string"
+                ? (answers[postCfg.choice.key] as string)
+                : null
+            }
+            onChange={(v) => setChoice(postCfg.choice!.key, v)}
+          />
+        </section>
+      )}
 
       {/* §D の回答に応じた理由（図2〜5） */}
-      {(() => {
+      {postCfg.choice && postCfg.reasonBranches && (() => {
         const f = preReasonFlags(answers);
         return (
           <>
@@ -194,36 +197,40 @@ export function PostSurvey() {
       })()}
 
       {/* §E 研修評価 */}
-      <section className="space-y-5">
-        <h2 className="text-lg font-bold text-primary">
-          §{SECTION_E.id}　{SECTION_E.title}
-        </h2>
-        {SECTION_E.questions.map((q, i) => {
-          const isNps = q.kind === "nps";
-          return (
-            <LikertScale
-              key={q.key}
-              label={`${i + 1}. ${q.text}`}
-              minLabel={q.minLabel ?? SCALE_MIN_LABEL}
-              maxLabel={q.maxLabel ?? SCALE_MAX_LABEL}
-              min={1}
-              max={isNps ? 10 : 5}
-              value={typeof answers[q.key] === "number" ? (answers[q.key] as number) : null}
-              onChange={(v) => setScale(q.key, v)}
-            />
-          );
-        })}
-      </section>
+      {postCfg.evaluation && (
+        <section className="space-y-5">
+          <h2 className="text-lg font-bold text-primary">
+            §{postCfg.evaluation.id}　{postCfg.evaluation.title}
+          </h2>
+          {postCfg.evaluation.questions.map((q, i) => {
+            const isNps = q.kind === "nps";
+            return (
+              <LikertScale
+                key={q.key}
+                label={`${i + 1}. ${q.text}`}
+                minLabel={q.minLabel ?? SCALE_MIN_LABEL}
+                maxLabel={q.maxLabel ?? SCALE_MAX_LABEL}
+                min={1}
+                max={isNps ? 10 : 5}
+                value={typeof answers[q.key] === "number" ? (answers[q.key] as number) : null}
+                onChange={(v) => setScale(q.key, v)}
+              />
+            );
+          })}
+        </section>
+      )}
 
       {/* 自由記述 */}
-      <section className="space-y-5">
-        <SurveyTextArea
-          label={POST_FREETEXT.label}
-          hint={POST_FREETEXT.hint}
-          value={typeof answers[POST_FREETEXT.key] === "string" ? (answers[POST_FREETEXT.key] as string) : ""}
-          onChange={(v) => setText(POST_FREETEXT.key, v)}
-        />
-      </section>
+      {postCfg.freeText && (
+        <section className="space-y-5">
+          <SurveyTextArea
+            label={POST_FREETEXT.label}
+            hint={POST_FREETEXT.hint}
+            value={typeof answers[POST_FREETEXT.key] === "string" ? (answers[POST_FREETEXT.key] as string) : ""}
+            onChange={(v) => setText(POST_FREETEXT.key, v)}
+          />
+        </section>
+      )}
 
       {/* 保存 */}
       <div className="flex items-center gap-3 pt-2">

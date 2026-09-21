@@ -6,6 +6,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toDateInputValue, type SessionInfo } from "../types";
+import { listContentSets, DEFAULT_CONTENT_SET_ID } from "@/lib/content";
+
+const CONTENT_SETS = listContentSets();
 
 /**
  * 研修（セッション）の作成・編集フォーム（S-4 / S-5）。
@@ -20,6 +23,7 @@ type Values = {
   day2Date: string;
   location: string;
   isOnline: boolean;
+  contentSetId: string;
 };
 
 const EMPTY: Values = {
@@ -29,6 +33,7 @@ const EMPTY: Values = {
   day2Date: "",
   location: "",
   isOnline: false,
+  contentSetId: DEFAULT_CONTENT_SET_ID,
 };
 
 function toValues(s: SessionInfo): Values {
@@ -39,6 +44,7 @@ function toValues(s: SessionInfo): Values {
     day2Date: toDateInputValue(s.day2Date),
     location: s.location ?? "",
     isOnline: s.isOnline,
+    contentSetId: s.contentSetId ?? DEFAULT_CONTENT_SET_ID,
   };
 }
 
@@ -76,6 +82,7 @@ export function SessionForm({
             day2Date: values.day2Date || null,
             location: values.location,
             isOnline: values.isOnline,
+            contentSetId: values.contentSetId,
           }
         : {
             name: values.name || undefined,
@@ -84,6 +91,7 @@ export function SessionForm({
             day2Date: values.day2Date || null,
             location: values.location,
             isOnline: values.isOnline,
+            contentSetId: values.contentSetId,
           };
 
       const res = await fetch("/api/admin/sessions", {
@@ -191,6 +199,25 @@ export function SessionForm({
               onChange={(e) => patch({ location: e.target.value })}
               placeholder={values.isOnline ? "Meet / Zoom のURL" : "会場名・住所"}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label>コンテンツセット</Label>
+            <select
+              value={values.contentSetId}
+              onChange={(e) => patch({ contentSetId: e.target.value })}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              {CONTENT_SETS.map((cs) => (
+                <option key={cs.id} value={cs.id}>
+                  {cs.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-muted-foreground">
+              {CONTENT_SETS.find((cs) => cs.id === values.contentSetId)?.description ??
+                "この研修で使うアンケート・フェーズ構成のセットを選びます。"}
+            </p>
           </div>
 
           {error && (
