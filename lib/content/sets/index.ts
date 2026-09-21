@@ -14,6 +14,7 @@
 import type { ContentSet } from "@/lib/content/types";
 import { DEFAULT_CONTENT_SET } from "@/lib/content/sets/default";
 import { KOJIN_WORKSHOP_SET } from "@/lib/content/sets/kojin-workshop";
+import { assertAllContentSetsValid } from "@/lib/content/validate";
 
 /** 既定の研修セット id */
 export const DEFAULT_CONTENT_SET_ID = "default";
@@ -23,6 +24,13 @@ export const CONTENT_SETS: Record<string, ContentSet> = {
   [DEFAULT_CONTENT_SET.id]: DEFAULT_CONTENT_SET,
   [KOJIN_WORKSHOP_SET.id]: KOJIN_WORKSHOP_SET,
 };
+
+// データ契約（共通の設問キー・意味）の検査。
+// コホートを増やすときの設定ミスを早期に検出する。サーバーの非本番でのみ実行し、
+// クライアントバンドルや本番の実行時コストには影響させない（本番は CI / build で担保）。
+if (typeof window === "undefined" && process.env.NODE_ENV !== "production") {
+  assertAllContentSetsValid(CONTENT_SETS);
+}
 
 /**
  * id から研修セットを取得する。未知 / 未指定の id は default にフォールバック。

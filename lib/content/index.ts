@@ -13,6 +13,8 @@ export {
   getContentSet,
   listContentSets,
 } from "@/lib/content/sets";
+export { SURVEY_REGISTRY, isCanonicalKey } from "@/lib/content/registry";
+export { validateContentSet, assertAllContentSetsValid } from "@/lib/content/validate";
 
 /** フェーズが研修セットに含まれる（受講者フローに出す）か */
 export function isPhaseEnabled(set: ContentSet, phaseId: PhaseId): boolean {
