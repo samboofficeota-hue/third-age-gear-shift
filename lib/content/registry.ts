@@ -90,3 +90,20 @@ export const SURVEY_REGISTRY: Record<string, RegistryEntry> = (() => {
 export function isCanonicalKey(key: string): boolean {
   return key in SURVEY_REGISTRY;
 }
+
+/**
+ * 比較の中核キー（コア）。
+ * §A・§C は事前・事後で同一の5段階設問で、回をまたいだ横比較・事前→事後の変化量の
+ * 主指標になる。コホートがこれらを省くと「そのコホートだけ主指標が取れない」ため、
+ * バリデータは（ブロックはしないが）警告する。
+ */
+export const CORE_COMPARABLE_KEYS: string[] = [
+  ...SECTION_A.questions.map((q) => q.key),
+  ...SECTION_C.questions.map((q) => q.key),
+];
+
+/**
+ * 推奨キー。§D（今後の働き方の方向性）は産業雇用安定センター調査と突き合わせる
+ * ベンチマーク指標。必須ではないが、省くと外部比較ができなくなるため警告する。
+ */
+export const RECOMMENDED_KEYS: string[] = [SECTION_D.key];
