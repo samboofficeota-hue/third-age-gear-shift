@@ -7,6 +7,8 @@ import {
   type PhaseId,
   type BlockStatusValue,
 } from "@/lib/phases";
+import { getContentSetForSession } from "@/lib/content/resolve";
+import { isPhaseEnabled } from "@/lib/content";
 
 /**
  * サーバーコンポーネントからフェーズの開放判定を行う（チラ見え防止のゲーティング）。
@@ -26,6 +28,13 @@ export async function canAccessPhase(
   const meta = PHASE_META_BY_ID[phaseId];
   const statuses = await getAllPhaseStatuses(wd?.sessionId);
   const status = statuses[phaseId];
+
+  // 研修セットで無効化されたフェーズは、ゲート状態に関わらずアクセス不可。
+  const contentSet = await getContentSetForSession(wd?.sessionId);
+  if (!isPhaseEnabled(contentSet, phaseId)) {
+    return { ok: false, sessionId: wd?.sessionId ?? null, status };
+  }
+
   return {
     ok: isPhaseAccessible(meta, status),
     sessionId: wd?.sessionId ?? null,
@@ -46,9 +55,13 @@ export async function getDashboardState() {
   });
 
   const statuses = await getAllPhaseStatuses(wd?.sessionId);
+  const contentSet = await getContentSetForSession(wd?.sessionId);
   return {
     sessionId: wd?.sessionId ?? null,
     completedPhases: (wd?.completedPhases ?? []) as PhaseId[],
     statuses,
+    // この研修セットで有効なフェーズ（受講者フローに出す対象）。
+    enabledPhases: contentSet.phases,
+    contentSetId: contentSet.id,
   };
 }

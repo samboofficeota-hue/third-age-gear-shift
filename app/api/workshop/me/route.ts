@@ -41,12 +41,23 @@ export async function GET() {
     });
   }
 
+  // 受講者が属する研修セットのコンテンツ設定id（未紐付けは default）。
+  // クライアントはこの id から getContentSet() で構成を引く。
+  const ws = workshopData.sessionId
+    ? await prisma.workshopSession.findUnique({
+        where: { id: workshopData.sessionId },
+        select: { contentSetId: true },
+      })
+    : null;
+  const contentSetId = ws?.contentSetId ?? "default";
+
   return NextResponse.json({
     account: {
       name: user.name,
       department: user.department,
       organizationName: user.organization?.name ?? null,
     },
+    contentSetId,
     workshopData: {
       id: workshopData.id,
       sessionId: workshopData.sessionId,

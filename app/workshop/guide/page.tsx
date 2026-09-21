@@ -43,8 +43,13 @@ export default async function WorkshopGuidePage() {
   const statuses = state?.statuses;
   const completedPhases = state?.completedPhases ?? [];
 
+  // 研修セットで有効なフェーズだけをフロー・進捗表示の対象にする。
+  const enabledPhases = state?.enabledPhases ?? FORWARD_ORDER;
+  const flowOrder = FORWARD_ORDER.filter((id) => enabledPhases.includes(id));
+  const flowPhases = PHASE_META.filter((p) => enabledPhases.includes(p.id));
+
   let currentPhaseId: PhaseId | null = null;
-  for (const id of FORWARD_ORDER) {
+  for (const id of flowOrder) {
     if (!completedPhases.includes(id)) {
       currentPhaseId = id;
       break;
@@ -129,7 +134,7 @@ const introNote = !currentPhaseId ? (
       </header>
 
       <div className="mt-8 flex items-center justify-center gap-1.5 sm:gap-2">
-        {PHASE_META.map((p, i) => {
+        {flowPhases.map((p, i) => {
           const flowState = completedPhases.includes(p.id)
             ? "done"
             : p.id === currentPhaseId
@@ -138,7 +143,7 @@ const introNote = !currentPhaseId ? (
           return (
             <div key={p.id} className="flex items-center gap-1.5 sm:gap-2">
               <FlowStep label={p.day} state={flowState} />
-              {i < PHASE_META.length - 1 && (
+              {i < flowPhases.length - 1 && (
                 <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
               )}
             </div>

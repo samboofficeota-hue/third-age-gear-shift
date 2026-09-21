@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/adminAuth";
+import { CONTENT_SETS, DEFAULT_CONTENT_SET_ID } from "@/lib/content";
+
+/** 未知の研修セット id を弾く（既定は "default"） */
+function normalizeContentSetId(v: unknown): string | undefined {
+  if (typeof v !== "string") return undefined;
+  return CONTENT_SETS[v] ? v : undefined;
+}
 
 /** 日付文字列（YYYY-MM-DD）→ Date | null。無効値は undefined（=更新しない） */
 function parseDateInput(v: unknown): Date | null | undefined {
@@ -20,6 +27,7 @@ function sessionDto(s: {
   day2Date: Date | null;
   location: string | null;
   isOnline: boolean;
+  contentSetId: string;
   _count?: { workshopData: number };
 }) {
   return {
@@ -32,6 +40,7 @@ function sessionDto(s: {
     day2Date: s.day2Date,
     location: s.location,
     isOnline: s.isOnline,
+    contentSetId: s.contentSetId,
     participantCount: s._count?.workshopData ?? 0,
   };
 }
@@ -60,6 +69,7 @@ export async function POST(request: Request) {
   const isOnline = body.isOnline === true;
   const day1Date = parseDateInput(body.day1Date);
   const day2Date = parseDateInput(body.day2Date);
+  const contentSetId = normalizeContentSetId(body.contentSetId) ?? DEFAULT_CONTENT_SET_ID;
 
   if (!code) {
     return NextResponse.json({ error: "コードを入力してください。" }, { status: 400 });
@@ -80,6 +90,7 @@ export async function POST(request: Request) {
         isOnline,
         day1Date: day1Date ?? null,
         day2Date: day2Date ?? null,
+        contentSetId,
       },
       include: { _count: { select: { workshopData: true } } },
     });
@@ -108,6 +119,10 @@ export async function PATCH(request: Request) {
   if (typeof body.name === "string") data.name = body.name.trim() || null;
   if (typeof body.location === "string") data.location = body.location.trim() || null;
   if (typeof body.isOnline === "boolean") data.isOnline = body.isOnline;
+  if ("contentSetId" in body) {
+    const cs = normalizeContentSetId(body.contentSetId);
+    if (cs) data.contentSetId = cs;
+  }
   if ("day1Date" in body) {
     const d = parseDateInput(body.day1Date);
     if (d !== undefined) data.day1Date = d;

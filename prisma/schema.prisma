@@ -123,6 +123,9 @@ model WorkshopSession {
   name      String? // 例: "2026年2月 研修"
   code      String    @unique // 研修コード 例: "3rdage0201" / "001"
   isActive  Boolean   @default(true) @map("is_active")
+  // 研修セットごとのコンテンツ差し替え設定。lib/content/sets の id と対応。
+  // 既定は "default"（現行の標準構成）。未知の id は default にフォールバックする。
+  contentSetId String @default("default") @map("content_set_id")
   day1Date  DateTime? @map("day1_date") // 研修日 Day1
   day2Date  DateTime? @map("day2_date") // 研修日 Day2
   // 開催情報（S-4）

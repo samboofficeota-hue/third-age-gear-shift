@@ -8,8 +8,6 @@ import { LikertScale, SingleChoice, MultiChoice } from "@/components/survey/fiel
 import { Button } from "@/components/ui/button";
 import {
   PRE_NENDAI,
-  PRE_SCALE_SECTIONS,
-  PRE_CHOICE,
   SCALE_MIN_LABEL,
   SCALE_MAX_LABEL,
   REASON_TENSHOKU,
@@ -20,11 +18,14 @@ import {
   pruneReasonAnswers,
   type ChoiceQuestion,
 } from "@/lib/surveyContent";
+import { getContentSet } from "@/lib/content";
 
 type Answers = Record<string, number | string | string[]>;
 
 export default function PreSurveyPage() {
   const [answers, setAnswers] = useState<Answers>({});
+  // 研修セットに応じた事前アンケート構成（初期値は default）
+  const [preCfg, setPreCfg] = useState(() => getContentSet(null).survey.pre);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -34,6 +35,7 @@ export default function PreSurveyPage() {
       const data = await fetch("/api/workshop/me", { credentials: "include" })
         .then((r) => r.json())
         .catch(() => ({}));
+      setPreCfg(getContentSet(data?.contentSetId).survey.pre);
       const pre = data?.workshopData?.pre as { survey?: Answers } | null;
       if (pre?.survey) setAnswers(pre.survey);
       setLoading(false);
@@ -103,18 +105,20 @@ export default function PreSurveyPage() {
       }
     >
       {/* 年代（属性） */}
-      <section className="space-y-5">
-        <h2 className="text-lg font-bold text-primary">属性</h2>
-        <SingleChoice
-          label={PRE_NENDAI.text}
-          options={PRE_NENDAI.options}
-          value={typeof view[PRE_NENDAI.key] === "string" ? (view[PRE_NENDAI.key] as string) : null}
-          onChange={(v) => setChoice(PRE_NENDAI.key, v)}
-        />
-      </section>
+      {preCfg.nendai && (
+        <section className="space-y-5">
+          <h2 className="text-lg font-bold text-primary">属性</h2>
+          <SingleChoice
+            label={PRE_NENDAI.text}
+            options={PRE_NENDAI.options}
+            value={typeof view[PRE_NENDAI.key] === "string" ? (view[PRE_NENDAI.key] as string) : null}
+            onChange={(v) => setChoice(PRE_NENDAI.key, v)}
+          />
+        </section>
+      )}
 
       {/* §A〜C 5段階 */}
-      {PRE_SCALE_SECTIONS.map((section) => (
+      {preCfg.scaleSections.map((section) => (
         <section key={section.id} className="space-y-5">
           <h2 className="text-lg font-bold text-primary">
             §{section.id}　{section.title}
@@ -133,20 +137,22 @@ export default function PreSurveyPage() {
       ))}
 
       {/* §D 単一選択 */}
-      <section className="space-y-5">
-        <h2 className="text-lg font-bold text-primary">
-          §D　{PRE_CHOICE.title}
-        </h2>
-        <SingleChoice
-          label={PRE_CHOICE.text}
-          options={PRE_CHOICE.options}
-          value={typeof view[PRE_CHOICE.key] === "string" ? (view[PRE_CHOICE.key] as string) : null}
-          onChange={(v) => setChoice(PRE_CHOICE.key, v)}
-        />
-      </section>
+      {preCfg.choice && (
+        <section className="space-y-5">
+          <h2 className="text-lg font-bold text-primary">
+            §D　{preCfg.choice.title}
+          </h2>
+          <SingleChoice
+            label={preCfg.choice.text}
+            options={preCfg.choice.options}
+            value={typeof view[preCfg.choice.key] === "string" ? (view[preCfg.choice.key] as string) : null}
+            onChange={(v) => setChoice(preCfg.choice!.key, v)}
+          />
+        </section>
+      )}
 
       {/* §D の回答に応じた理由（図2〜5） */}
-      {(() => {
+      {preCfg.choice && preCfg.reasonBranches && (() => {
         const f = preReasonFlags(view);
         return (
           <>
