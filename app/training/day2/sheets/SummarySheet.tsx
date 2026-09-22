@@ -5,6 +5,7 @@ import { PrintSheet } from "@/components/worksheet/PrintSheet";
 import { SheetHeader } from "@/components/worksheet/SheetHeader";
 import { SUMMARY_ROWS } from "../_constants";
 import type { Summary } from "../_types";
+import { BRAND } from "@/lib/brand";
 
 /**
  * #12 会社における 課題・目標・行動 設定 ＋ 締めシート
@@ -63,7 +64,7 @@ export function SummarySheet({
       <PrintSheet>
         <div className="flex min-h-[630px] flex-col items-center justify-center gap-5 text-center">
           <p className="text-3xl font-bold text-ws-teal">
-            じぶん経営 戦略講座は以上となります。
+            {BRAND.name}は以上となります。
           </p>
           <p className="text-3xl font-bold text-ws-teal">
             たくさんのワーク、おつかれさまでした。

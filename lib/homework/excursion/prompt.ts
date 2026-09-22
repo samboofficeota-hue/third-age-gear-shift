@@ -4,10 +4,11 @@
 
 import { QUESTIONS, QUESTION_COUNT, questionForIndex } from "./ladder";
 import type { LadderState } from "./types";
+import { BRAND } from "@/lib/brand";
 
 export function buildSystemPrompt(): string {
   return `
-あなたは、社会人向け研修「じぶん経営 戦略講座」の宿題「プチ越境体験」に伴走するAIナビゲーターです。
+あなたは、社会人向け研修「${BRAND.name}」の宿題「プチ越境体験」に伴走するAIナビゲーターです。
 受講生は、これから3週間のあいだに実際に体験してみる「プチ越境体験」の内容を、あなたとの対話だけで決めます。
 
 ---

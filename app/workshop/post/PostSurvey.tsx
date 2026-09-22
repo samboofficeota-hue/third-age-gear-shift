@@ -24,6 +24,7 @@ import {
   type ChoiceQuestion,
 } from "@/lib/surveyContent";
 import { getContentSet } from "@/lib/content";
+import { BRAND } from "@/lib/brand";
 
 type Answers = Record<string, number | string | string[]>;
 
@@ -102,7 +103,7 @@ export function PostSurvey() {
           ご回答ありがとうございました。
         </p>
         <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
-          事後アンケートを送信しました。じぶん経営 戦略講座は、これで全プログラム終了です。
+          事後アンケートを送信しました。{BRAND.name}は、これで全プログラム終了です。
           お疲れさまでした。
         </p>
         <Link
@@ -139,7 +140,7 @@ export function PostSurvey() {
       {postCfg.scaleSections.map((section) => (
         <section key={section.id} className="space-y-5">
           <h2 className="text-lg font-bold text-primary">
-            §{section.id}　{section.title}
+            {section.title}
           </h2>
           {section.questions.map((q, i) => (
             <LikertScale
@@ -158,7 +159,7 @@ export function PostSurvey() {
       {postCfg.choice && (
         <section className="space-y-5">
           <h2 className="text-lg font-bold text-primary">
-            §D　{postCfg.choice.title}
+            {postCfg.choice.title}
           </h2>
           <SingleChoice
             label={postCfg.choice.text}
@@ -200,7 +201,7 @@ export function PostSurvey() {
       {postCfg.evaluation && (
         <section className="space-y-5">
           <h2 className="text-lg font-bold text-primary">
-            §{postCfg.evaluation.id}　{postCfg.evaluation.title}
+            {postCfg.evaluation.title}
           </h2>
           {postCfg.evaluation.questions.map((q, i) => {
             const isNps = q.kind === "nps";

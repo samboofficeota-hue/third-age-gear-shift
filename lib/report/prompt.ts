@@ -11,6 +11,7 @@
  */
 
 import type { ReportAxis } from "./source";
+import { BRAND } from "@/lib/brand";
 
 /** 会社軸・社会軸だけ（方針＝policy は buildPolicySystemPrompt が別に持つ） */
 const AXIS_META: Record<
@@ -40,7 +41,7 @@ const AXIS_META: Record<
  */
 export function buildPolicySystemPrompt(): string {
   return `
-あなたは、ミドルシニア向け研修「じぶん経営 戦略講座」の受講者レポートを書くアナリストです。
+あなたは、ミドルシニア向け研修「${BRAND.name}」の受講者レポートを書くアナリストです。
 受講者が研修中に書き込んだワークシートの記述から、その人自身の「じぶん経営方針」を
 ミッション・ビジョン・バリューの3つに整理します。
 
@@ -86,7 +87,7 @@ export function buildReportSystemPrompt(axis: Exclude<ReportAxis, "policy">): st
   const meta = AXIS_META[axis];
 
   return `
-あなたは、ミドルシニア向け研修「じぶん経営 戦略講座」の受講者レポートを書くアナリストです。
+あなたは、ミドルシニア向け研修「${BRAND.name}」の受講者レポートを書くアナリストです。
 受講者が研修中に書き込んだワークシートの記述を読み、「${meta.title}」についての所見を書きます。
 ここで扱うのは ${meta.scope} です。とくに ${meta.focus} に注目してください。
 

@@ -97,14 +97,7 @@ function LoginForm() {
               </p>
             </CardContent>
             <CardFooter className="flex flex-col gap-1.5 p-5 pt-1">
-              <button
-                type="button"
-                onClick={() => setSent(false)}
-                className="mt-3 text-center text-xs font-medium text-primary hover:underline"
-              >
-                別のメールアドレスで送り直す
-              </button>
-              <Link href="/" className="text-center text-xs text-muted-foreground hover:text-foreground">
+              <Link href="/" className="mt-3 text-center text-xs text-muted-foreground hover:text-foreground">
                 トップへ戻る
               </Link>
             </CardFooter>
@@ -112,7 +105,7 @@ function LoginForm() {
         ) : (
           <>
             <CardHeader className="p-5 pb-2 text-center">
-              <CardTitle className="whitespace-nowrap text-xl">おかえりなさい。続きを始めましょう</CardTitle>
+              <CardTitle className="whitespace-nowrap text-xl">さあログインして、はじめましょう</CardTitle>
             </CardHeader>
 
             <form onSubmit={handleSubmit}>
@@ -143,13 +136,7 @@ function LoginForm() {
                 <Button type="submit" disabled={sending || email.trim() === ""}>
                   {sending ? "送信中..." : "ログイン用のリンクを送る"}
                 </Button>
-                <p className="mt-3 text-center text-xs text-muted-foreground">
-                  アカウントをお持ちでない方は{" "}
-                  <Link href="/register" className="font-medium text-primary hover:underline">
-                    新規登録ページへ
-                  </Link>
-                </p>
-                <Link href="/" className="text-center text-xs text-muted-foreground hover:text-foreground">
+                <Link href="/" className="mt-3 text-center text-xs text-muted-foreground hover:text-foreground">
                   トップへ戻る
                 </Link>
               </CardFooter>

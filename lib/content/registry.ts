@@ -14,6 +14,7 @@
 import {
   SECTION_A,
   SECTION_C,
+  SECTION_G,
   NENDAI,
   SECTION_D,
   REASON_TENSHOKU,
@@ -21,6 +22,7 @@ import {
   CHALLENGE_CHUSHO,
   SUPPORT,
   SECTION_E,
+  EVAL_STRATEGY_SATISFACTION,
   POST_FREETEXT,
   FOLLOWUP_SCALE,
   FOLLOWUP_SOCIETY,
@@ -52,6 +54,8 @@ const ALL_ENTRIES: RegistryEntry[] = [
   // §A / §C 5段階（事前・事後 共通）
   ...scaleEntries(SECTION_A),
   ...scaleEntries(SECTION_C),
+  // §G これからのつながりと挑戦（コホート別・事前事後共通）
+  ...scaleEntries(SECTION_G),
   // 属性・§D・分岐
   choiceEntry(NENDAI, "choice"),
   choiceEntry(SECTION_D, "choice"),
@@ -65,6 +69,7 @@ const ALL_ENTRIES: RegistryEntry[] = [
     kind: q.kind === "nps" ? ("nps" as const) : ("likert" as const),
     text: q.text,
   })),
+  { key: EVAL_STRATEGY_SATISFACTION.key, kind: "likert", text: EVAL_STRATEGY_SATISFACTION.text },
   { key: POST_FREETEXT.key, kind: "text", text: POST_FREETEXT.label },
   // §F フォロー（3ヶ月後・別送）
   ...scaleEntries(FOLLOWUP_SCALE),
