@@ -113,7 +113,7 @@ export function FollowupSurvey() {
       {/* 5段階リッカート */}
       <section className="space-y-5">
         <h2 className="text-lg font-bold text-primary">
-          §{FOLLOWUP_SCALE.id}　{FOLLOWUP_SCALE.title}
+          {FOLLOWUP_SCALE.title}
         </h2>
         {FOLLOWUP_SCALE.questions.map((q, i) => (
           <LikertScale

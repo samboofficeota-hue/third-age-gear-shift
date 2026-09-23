@@ -7,9 +7,9 @@
  */
 export const BRAND = {
   /** プロダクト名（画面タイトル・ヘッダー・metadata） */
-  name: "じぶん経営 戦略講座",
+  name: "じぶん経営戦略 集中講座",
   /** タグライン（サブタイトル・キャッチコピー） */
-  tagline: "セカンドエイジからサードエイジへのシフト戦略をつくろう",
+  tagline: "コミュニティのチカラを活かして ライフ＆キャリアを面白くしていく",
   /** 事務局への問い合わせ先(自学習画面のフッターから起動) */
   contactEmail: "info@communitysociety.co.jp",
   /**
@@ -17,5 +17,5 @@ export const BRAND = {
    * 講座名だけだと初めて受け取る人に発信元が伝わらないため、運営会社を併記する。
    * アドレス側は FROM_EMAIL（noreply@communitysociety.co.jp）。
    */
-  emailSenderName: "じぶん経営 戦略講座（COMMUNITY）",
+  emailSenderName: "じぶん経営戦略 集中講座（COMMUNITY）",
 } as const;

@@ -121,7 +121,7 @@ export default function PreSurveyPage() {
       {preCfg.scaleSections.map((section) => (
         <section key={section.id} className="space-y-5">
           <h2 className="text-lg font-bold text-primary">
-            §{section.id}　{section.title}
+            {section.title}
           </h2>
           {section.questions.map((q, i) => (
             <LikertScale
@@ -140,7 +140,7 @@ export default function PreSurveyPage() {
       {preCfg.choice && (
         <section className="space-y-5">
           <h2 className="text-lg font-bold text-primary">
-            §D　{preCfg.choice.title}
+            {preCfg.choice.title}
           </h2>
           <SingleChoice
             label={preCfg.choice.text}

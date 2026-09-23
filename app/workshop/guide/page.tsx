@@ -1,13 +1,19 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, Check, Lock } from "lucide-react";
+import { ArrowRight, Lock } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Button } from "@/components/ui/button";
-import { PHASE_META, type PhaseId } from "@/lib/phases";
+import {
+  PHASE_META,
+  PHASE_META_BY_ID,
+  isPhaseAccessible,
+  type PhaseId,
+  type BlockStatusValue,
+} from "@/lib/phases";
 import { getDashboardState } from "@/lib/workshopAccess";
-import { cn } from "@/lib/utils";
 import { BRAND } from "@/lib/brand";
+import { PhaseFlow, type FlowStepData } from "./PhaseFlow";
 
 // フェーズの正順。「今ここ」は、この順で最初に completedPhases に無いフェーズ。
 const FORWARD_ORDER: PhaseId[] = ["pre", "day1", "homework", "day2", "post"];
@@ -24,6 +30,17 @@ function formatDateJa(d: Date | null): string | null {
   return new Intl.DateTimeFormat("ja-JP", {
     year: "numeric",
     month: "long",
+    day: "numeric",
+    weekday: "short",
+    timeZone: "Asia/Tokyo",
+  }).format(d);
+}
+
+// フロー図のステップに添える短い日付（例: 10/17(土)）。
+function formatDateShort(d: Date | null): string | null {
+  if (!d) return null;
+  return new Intl.DateTimeFormat("ja-JP", {
+    month: "numeric",
     day: "numeric",
     weekday: "short",
     timeZone: "Asia/Tokyo",
@@ -68,6 +85,37 @@ export default async function WorkshopGuidePage() {
   const canJoinDay2 = !!day2Date && Date.now() >= day2Date.getTime();
   const day1Str = formatDateJa(day1Date);
   const day2Str = formatDateJa(day2Date);
+  const day1Short = formatDateShort(day1Date);
+  const day2Short = formatDateShort(day2Date);
+
+  // フロー図の各箱（クリック可・open/close でゲート）。
+  const steps: FlowStepData[] = flowPhases.map((p) => {
+    const status: BlockStatusValue = statuses?.[p.id] ?? "LOCKED";
+    const accessible = isPhaseAccessible(PHASE_META_BY_ID[p.id], status);
+    const sub = p.id === "day1" ? day1Short : p.id === "day2" ? day2Short : null;
+    const state = completedPhases.includes(p.id)
+      ? ("done" as const)
+      : p.id === currentPhaseId
+        ? ("current" as const)
+        : ("upcoming" as const);
+    const lockedNote =
+      p.id === "homework"
+        ? "「宿題」はまだ開けません。Day 1 の終了後に開きます。"
+        : p.id === "day1" && day1Str
+          ? `「${p.day}」はまだ開けません（予定: ${day1Str}）。`
+          : p.id === "day2" && day2Str
+            ? `「${p.day}」はまだ開けません（予定: ${day2Str}）。`
+            : `「${p.day}」はまだ開けません。`;
+    return {
+      id: p.id,
+      label: p.day,
+      sub,
+      href: p.route,
+      state,
+      accessible,
+      lockedNote,
+    };
+  });
   const homeworkOpen = statuses?.homework === "OPEN";
 
   const primaryAction: PrimaryAction | null = (() => {
@@ -123,9 +171,11 @@ const introNote = !currentPhaseId ? (
         </h1>
         <p className="subtitle mt-2">研修の流れ</p>
         <p className="lead mx-auto mt-3 max-w-xl">
-          これまでの「じぶん」を棚卸して、これからの「じぶん」を描く。
+          じぶんを会社に見立てて、
           <br />
-          サードエイジへ向けた、「じぶん」の経営戦略をつくっていく講座です。
+          じぶんを社長と見立てて、
+          <br />
+          じぶんの経営戦略をつくっていく講座です。
           <br />
           講座の流れは次のようになっています。
           <br />
@@ -133,22 +183,8 @@ const introNote = !currentPhaseId ? (
         </p>
       </header>
 
-      <div className="mt-8 flex items-center justify-center gap-1.5 sm:gap-2">
-        {flowPhases.map((p, i) => {
-          const flowState = completedPhases.includes(p.id)
-            ? "done"
-            : p.id === currentPhaseId
-              ? "current"
-              : "upcoming";
-          return (
-            <div key={p.id} className="flex items-center gap-1.5 sm:gap-2">
-              <FlowStep label={p.day} state={flowState} />
-              {i < flowPhases.length - 1 && (
-                <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-              )}
-            </div>
-          );
-        })}
+      <div className="mt-8">
+        <PhaseFlow steps={steps} />
       </div>
       <p className="mt-3 text-center text-xs text-muted-foreground">
         Day 1〜Day 2 は、約3週間の期間をかけて進みます
@@ -183,46 +219,6 @@ const introNote = !currentPhaseId ? (
           </Button>
         )}
       </div>
-    </div>
-  );
-}
-
-function FlowStep({
-  label,
-  state,
-}: {
-  label: string;
-  state: "done" | "current" | "upcoming";
-}) {
-  return (
-    <div
-      className={cn(
-        "flex h-16 w-16 shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl border text-center sm:h-20 sm:w-20",
-        state === "current"
-          ? "border-primary bg-primary/10 shadow-neon-glow"
-          : state === "done"
-            ? "border-primary/30 bg-card"
-            : "border-border bg-card"
-      )}
-    >
-      {state === "current" && (
-        <span className="text-[10px] font-bold uppercase tracking-wide text-primary">
-          今ここ
-        </span>
-      )}
-      {state === "done" && <Check className="h-3.5 w-3.5 text-primary/70" />}
-      <span
-        className={cn(
-          "text-xs font-bold sm:text-sm",
-          state === "current"
-            ? "text-primary"
-            : state === "done"
-              ? "text-secondary-foreground"
-              : "text-muted-foreground"
-        )}
-      >
-        {label}
-      </span>
     </div>
   );
 }
