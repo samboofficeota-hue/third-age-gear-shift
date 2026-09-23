@@ -64,6 +64,19 @@ export interface ContentSet {
   /** 管理者向けの短い説明 */
   description: string;
   /**
+   * コホート専用ランディング（/c/<code>）などで出す表示用ブランド。
+   * 未指定の項目は全体共通の BRAND（lib/brand.ts）にフォールバックする。
+   * ＝ 既定セットは brand 無しで従来どおり全体共通ブランドで表示される。
+   */
+  brand?: {
+    /** 見出し（プロダクト名）。未指定なら BRAND.name */
+    name?: string;
+    /** サブタイトル。未指定なら BRAND.tagline */
+    tagline?: string;
+    /** 本文（説明）。未指定なら共通の既定文 */
+    lead?: string;
+  };
+  /**
    * 受講者フローに含めるフェーズ。ここに無いフェーズは
    * ガイド・ゲーティング・保存API のいずれからも外れる。
    */

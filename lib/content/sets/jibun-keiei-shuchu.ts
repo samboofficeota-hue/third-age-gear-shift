@@ -41,6 +41,12 @@ export const JIBUN_KEIEI_SHUCHU_SET: ContentSet = {
   label: "じぶん経営戦略 集中講座",
   description:
     "半日×2日＋合間の宿題の集合型研修。§A・§C（比較の中核）は事前・事後で実施し、§D（定年前後の方向性）は外した構成。",
+  // コホート専用ランディング（/c/jibunkeiei-2610）で出す表示。
+  brand: {
+    name: "じぶん経営戦略 集中講座",
+    tagline: "コミュニティのチカラを活かして ライフ＆キャリアを面白くしていく",
+    lead: "じぶんを会社に見立てて、じぶんを社長と見立てて、じぶんの経営戦略をつくっていく講座です。",
+  },
   // 半日×2日＋宿題 = 標準の5フェーズ
   phases: ["pre", "day1", "homework", "day2", "post"],
   survey: {
