@@ -142,6 +142,7 @@ export function RosterPanel({
                   <th className="px-2 py-2 text-center font-medium">アンケート</th>
                   <th className="px-2 py-2 text-center font-medium">じぶん紹介</th>
                   <th className="px-2 py-2 text-center font-medium">Day1</th>
+                  <th className="px-2 py-2 text-center font-medium">宿題</th>
                   <th className="px-2 py-2 text-center font-medium">Day2</th>
                   <th className="px-2 py-2 text-center font-medium">進捗</th>
                   <th className="px-4 py-2 text-right font-medium">最終更新</th>
@@ -186,6 +187,9 @@ export function RosterPanel({
                           disabled={saving}
                           onChange={(v) => handleAttendance(p.id, { attendanceDay1: v })}
                         />
+                      </td>
+                      <td className="px-2 py-2.5 text-center">
+                        <DoneMark done={!!p.homeworkSubmittedAt} />
                       </td>
                       <td className="px-2 py-2.5 text-center">
                         <AttendanceToggle

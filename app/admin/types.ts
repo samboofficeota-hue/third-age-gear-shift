@@ -26,6 +26,8 @@ export type Participant = {
   attendanceDay1: boolean | null;
   attendanceDay2: boolean | null;
   completedAt: string | null;
+  /** 宿題の「提出する」を押した時刻（homework.submittedAt） */
+  homeworkSubmittedAt: string | null;
 };
 
 export type SessionInfo = {

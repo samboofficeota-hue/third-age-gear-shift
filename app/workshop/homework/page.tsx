@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CheckCircle2, Compass, MapPin, Send, Sparkles, Wallet } from "lucide-react";
+import { SubmitHomeworkButton } from "./SubmitHomeworkButton";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canAccessPhase } from "@/lib/workshopAccess";
@@ -36,6 +37,7 @@ export default async function HomeworkGatePage() {
         scenario?: unknown;
         excursion?: { decision?: unknown; report?: unknown };
         assets?: AssetsData;
+        submittedAt?: string;
       }
     | null;
   const scenarioDone = isFilled(homeworkData?.scenario);
@@ -86,6 +88,16 @@ export default async function HomeworkGatePage() {
   // 下部ボタンは「次の1つに進む」ではなく、3つ全部そろったときだけ押せる「提出する」。
   const nextTask = tasks.find((t) => t.href && !t.done);
   const allDone = excursionDone && scenarioDone && assetsDone;
+  const submittedAt = homeworkData?.submittedAt ? new Date(homeworkData.submittedAt) : null;
+  const submittedLabel = submittedAt
+    ? new Intl.DateTimeFormat("ja-JP", {
+        month: "numeric",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "Asia/Tokyo",
+      }).format(submittedAt)
+    : null;
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10 md:px-6">
@@ -95,7 +107,9 @@ export default async function HomeworkGatePage() {
           {name ? `${name}さん、次に向けて、宿題をがんばりましょう` : "次に向けて、宿題をがんばりましょう"}
         </p>
         <div className="mt-2 space-y-1.5 text-sm leading-relaxed text-secondary-foreground">
-          <p>早速ですが、Day2までに、やってほしい宿題が3つあります。</p>
+          <p>
+            早速ですが、Day2までに、やってほしい宿題が3つあります（プチ越境体験は「AIとの対話」→「実施レポート」の2ステップです）。
+          </p>
           <p>これらをもとに、Day 2 で経営戦略として作成していく大事な内容となります。</p>
         </div>
 
@@ -143,17 +157,17 @@ export default async function HomeworkGatePage() {
 
         <div className="mt-4 flex flex-col items-center gap-1.5">
           {allDone ? (
-            <Button asChild>
-              <Link href="/workshop/guide">
-                宿題を提出する
-                <Send className="h-4 w-4" />
-              </Link>
-            </Button>
+            <SubmitHomeworkButton submitted={!!submittedAt} />
           ) : (
             <Button disabled>
               宿題を提出する
               <Send className="h-4 w-4" />
             </Button>
+          )}
+          {submittedLabel && (
+            <p className="text-caption text-muted-foreground">
+              {submittedLabel} に提出済みです。Day2 までは書き直せます。
+            </p>
           )}
           {!allDone && (
             <p className="text-caption text-muted-foreground">

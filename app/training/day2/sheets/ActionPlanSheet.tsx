@@ -33,7 +33,7 @@ export function ActionPlanSheet({
         right={nameTag}
       />
       <p className="mt-3 text-sm text-ws-muted">
-        未来のマイポートフォリオの中から1つのコミュニティを選んで、具体的な「一歩目」づくりを考えてみよう
+        未来のマイポートフォリオの中から1つのコミュニティを選んで、具体的な「一歩目」づくりを考えてみよう。
       </p>
       <div className="mt-5 flex items-center gap-3">
         <span className="shrink-0 text-base font-bold text-ws-ink">

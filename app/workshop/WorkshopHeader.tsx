@@ -10,10 +10,10 @@ export function WorkshopHeader() {
   const pathname = usePathname() ?? "";
 
   // 宿題の入力パート（扉のサブページ）は「宿題トップへ戻る」に統一。
-  // 事前課題のサブページは、これまでどおり「ガイドに戻る」。
+  // 事前課題のサブページと宿題の扉は「ガイドに戻る」（扉に戻り道が無かったため）。
   const backLink = pathname.startsWith("/workshop/homework/")
     ? { href: "/workshop/homework", label: "宿題トップへ戻る" }
-    : pathname.startsWith("/workshop/pre")
+    : pathname.startsWith("/workshop/pre") || pathname === "/workshop/homework"
       ? { href: "/workshop/guide", label: "ガイドに戻る" }
       : null;
 

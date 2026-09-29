@@ -5,6 +5,18 @@ import { getDashboardState } from "@/lib/workshopAccess";
 import { PHASE_META, PHASE_META_BY_ID, isPhaseAccessible } from "@/lib/phases";
 import { cn } from "@/lib/utils";
 import { BRAND } from "@/lib/brand";
+import { prisma } from "@/lib/db";
+
+// カードに添える短い日付（例: 10/17(土)）。ガイドのフロー図と同じ表記。
+function formatDateShort(d: Date | null): string | null {
+  if (!d) return null;
+  return new Intl.DateTimeFormat("ja-JP", {
+    month: "numeric",
+    day: "numeric",
+    weekday: "short",
+    timeZone: "Asia/Tokyo",
+  }).format(d);
+}
 
 /**
  * 研修本番（Program B）ダッシュボード。白基調。
@@ -22,13 +34,21 @@ export default async function TrainingDashboard() {
   const preMeta = PHASE_META_BY_ID.pre;
   const preAccessible = isPhaseAccessible(preMeta, statuses.pre);
 
+  const wsSession = sessionId
+    ? await prisma.workshopSession.findUnique({
+        where: { id: sessionId },
+        select: { day1Date: true, day2Date: true },
+      })
+    : null;
+  const dateById: Record<string, string | null> = {
+    day1: formatDateShort(wsSession?.day1Date ?? null),
+    day2: formatDateShort(wsSession?.day2Date ?? null),
+  };
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-4 md:px-8">
       <header className="mb-4">
-        <p className="text-xs font-semibold uppercase tracking-widest text-ws-teal">
-          研修当日用
-        </p>
-        <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-ws-ink">
+        <h1 className="text-2xl font-bold tracking-tight text-ws-ink">
           講座全体ガイド
         </h1>
         <p className="mt-1.5 text-sm text-ws-muted">
@@ -94,7 +114,14 @@ export default async function TrainingDashboard() {
                   {accessible ? <Check className="h-4 w-4" /> : i + 1}
                 </span>
                 <div>
-                  <p className="text-sm font-semibold text-ws-ink">{p.label}</p>
+                  <p className="text-sm font-semibold text-ws-ink">
+                    {p.label}
+                    {dateById[p.id] && (
+                      <span className="ml-2 text-xs font-medium text-ws-teal">
+                        {dateById[p.id]}
+                      </span>
+                    )}
+                  </p>
                   <p className="text-xs text-ws-muted">{p.description}</p>
                 </div>
               </div>
