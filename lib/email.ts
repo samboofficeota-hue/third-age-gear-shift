@@ -76,6 +76,16 @@ export function isFromValid(): boolean {
  */
 const REPLY_TO = normalizeFrom(process.env.CONTACT_EMAIL ?? "") || BRAND.contactEmail;
 
+/**
+ * 送ったメールの控えを事務局にも届ける CC（カンマ区切りで複数可）。未設定なら CC なし。
+ * 例: CC_EMAIL=info@communitysociety.co.jp,ota@communitysociety.co.jp
+ */
+const CC = normalizeFrom(process.env.CC_EMAIL ?? "")
+  .split(",")
+  .map((v) => normalizeFrom(v))
+  .filter(Boolean);
+const ccField = () => (CC.length ? { cc: CC } : {});
+
 let client: Resend | null = null;
 function getResend(): Resend | null {
   if (!process.env.RESEND_API_KEY) return null;
@@ -185,6 +195,7 @@ export async function sendEmail(params: {
     const result = await resend.emails.send({
       from: FROM_EMAIL,
       to: params.to,
+      ...ccField(),
       replyTo: REPLY_TO,
       subject: params.subject,
       html: params.html,
@@ -288,6 +299,7 @@ export async function sendTemplateEmails(
       payload.push({
         from: FROM_EMAIL,
         to: items[i].to,
+        ...ccField(),
         replyTo: REPLY_TO,
         subject: rendered[i].subject,
         html: rendered[i].html,

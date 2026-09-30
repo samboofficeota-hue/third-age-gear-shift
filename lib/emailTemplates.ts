@@ -32,8 +32,13 @@ export type TemplateContext = {
   /** 表示用に整形済みの日付文字列（例: "2026年9月3日(水)"）。未定は null */
   day1Date: string | null;
   day2Date: string | null;
+  /** 開催時刻（例: "13:30〜17:00"）。未設定は null */
+  timeRange: string | null;
   location: string | null;
   isOnline: boolean;
+  /** 会場住所（対面のみ）と、その Google マップのリンク */
+  venueAddress: string | null;
+  mapUrl: string | null;
   /** 招待リンクの有効日数 */
   expiresInDays: number;
 };
@@ -60,8 +65,8 @@ export const TEMPLATE_META: Record<TemplateKey, TemplateMeta> = {
   invite: {
     key: "invite",
     label: "招待メール",
-    purpose: "アカウントを有効化して事前課題に入ってもらう",
-    linkLabel: "招待URL（/welcome?token=…）",
+    purpose: "受講ページ（コホート専用URL）を案内し、ログインして事前課題に入ってもらう",
+    linkLabel: "受講ページ（/c/<研修コード>）",
     timing: "P-1 / Day1の2週間前",
   },
   reminder_pre: {
@@ -108,21 +113,35 @@ export function escapeHtml(v: string): string {
     .replace(/"/g, "&quot;");
 }
 
+function withTime(date: string, ctx: TemplateContext): string {
+  return ctx.timeRange ? `${date} ${ctx.timeRange}` : date;
+}
+
 /** 開催日程の情報テーブル。未定の項目は行ごと出さない（「未定」を並べない）。 */
 function scheduleTable(ctx: TemplateContext): string {
+  // 値は HTML（エスケープ済み）で持つ。会場だけ住所と地図リンクを添える
   const rows: [string, string][] = [];
-  if (ctx.sessionName) rows.push(["研修", ctx.sessionName]);
-  if (ctx.day1Date) rows.push(["Day1", ctx.day1Date]);
-  if (ctx.day2Date) rows.push(["Day2", ctx.day2Date]);
-  if (ctx.location) rows.push([ctx.isOnline ? "オンライン" : "会場", ctx.location]);
+  if (ctx.sessionName) rows.push(["研修", escapeHtml(ctx.sessionName)]);
+  if (ctx.day1Date) rows.push(["Day1", escapeHtml(withTime(ctx.day1Date, ctx))]);
+  if (ctx.day2Date) rows.push(["Day2", escapeHtml(withTime(ctx.day2Date, ctx))]);
+  if (ctx.location) {
+    let venue = escapeHtml(ctx.location);
+    if (ctx.venueAddress) {
+      venue += `<br><span style="font-size:13px;color:${MUTED};">${escapeHtml(ctx.venueAddress)}</span>`;
+    }
+    if (ctx.mapUrl) {
+      venue += `<br><a href="${escapeHtml(ctx.mapUrl)}" style="font-size:13px;color:${ACCENT};">Google マップで見る</a>`;
+    }
+    rows.push([ctx.isOnline ? "オンライン" : "会場", venue]);
+  }
   if (rows.length === 0) return "";
 
   const body = rows
     .map(
       ([label, value]) => `
         <tr>
-          <td style="padding:10px 14px;background:${TABLE_LABEL};font-weight:bold;width:110px;border:1px solid #ddd;font-size:14px;">${escapeHtml(label)}</td>
-          <td style="padding:10px 14px;border:1px solid #ddd;font-size:14px;">${escapeHtml(value)}</td>
+          <td style="padding:10px 14px;background:${TABLE_LABEL};font-weight:bold;width:110px;border:1px solid #ddd;font-size:14px;vertical-align:top;">${escapeHtml(label)}</td>
+          <td style="padding:10px 14px;border:1px solid #ddd;font-size:14px;line-height:1.7;">${value}</td>
         </tr>`
     )
     .join("");
@@ -133,9 +152,11 @@ function scheduleTable(ctx: TemplateContext): string {
 function scheduleText(ctx: TemplateContext): string {
   const lines: string[] = [];
   if (ctx.sessionName) lines.push(`研修：${ctx.sessionName}`);
-  if (ctx.day1Date) lines.push(`Day1：${ctx.day1Date}`);
-  if (ctx.day2Date) lines.push(`Day2：${ctx.day2Date}`);
+  if (ctx.day1Date) lines.push(`Day1：${withTime(ctx.day1Date, ctx)}`);
+  if (ctx.day2Date) lines.push(`Day2：${withTime(ctx.day2Date, ctx)}`);
   if (ctx.location) lines.push(`${ctx.isOnline ? "オンライン" : "会場"}：${ctx.location}`);
+  if (ctx.venueAddress) lines.push(`住所：${ctx.venueAddress}`);
+  if (ctx.mapUrl) lines.push(`地図：${ctx.mapUrl}`);
   return lines.length ? lines.join("\n") + "\n\n" : "";
 }
 
@@ -160,7 +181,7 @@ function layout(opts: {
       <h1 style="margin:0;font-size:20px;">${escapeHtml(opts.title)}</h1>
       ${opts.showBrandLine === false ? "" : `<p style="margin:8px 0 0;font-size:13px;opacity:.9;">${escapeHtml(BRAND.name)}</p>`}
     </div>
-    <div style="border:1px solid ${LINE};border-top:none;border-radius:0 0 14px 14px;padding:24px;">
+    <div style="background:#ffffff;border:1px solid ${LINE};border-top:none;border-radius:0 0 14px 14px;padding:24px;">
       ${opts.bodyHtml}
       <p style="margin:22px 0 0;">
         <a href="${url}" style="display:inline-block;background:${ACCENT};color:#fff;text-decoration:none;border-radius:999px;padding:12px 28px;font-weight:bold;font-size:14px;">${escapeHtml(opts.buttonLabel)}</a>
@@ -186,6 +207,11 @@ function textFooter(actionUrl: string): string {
   return `\n${actionUrl}\n\n----\n${BRAND.name}\n${BRAND.tagline}\nお問い合わせ：${BRAND.contactEmail}\nプライバシーポリシー：${PRIVACY_URL}\n`;
 }
 
+/** 宛名。本文より大きく太く、最初に目に入るようにする */
+function greeting(name: string): string {
+  return `<p style="margin:0 0 18px;font-size:20px;font-weight:bold;color:${INK};">${escapeHtml(name)} 様</p>`;
+}
+
 function p(text: string): string {
   return `<p style="margin:0 0 16px;font-size:15px;">${text}</p>`;
 }
@@ -199,25 +225,48 @@ function callout(text: string): string {
 
 /* ── 各テンプレート ─────────────────────────────────── */
 
+/** 事前課題のお願い（招待メール）。見出し＋3点の箇条書き */
+const PRE_TASKS = ["事前アンケート", "じぶん紹介シート", "ライフラインチャート"];
+const PRE_TASKS_LEAD = [
+  "受講サイトにログインしていただき、次の3点の記入をお願いいたします。",
+  "研修前日までに完了させてください。（完了後も、前日までは修正可能です）",
+];
+const PRE_TASKS_TEXT = `⭐︎事前課題のお願い⭐︎
+${PRE_TASKS_LEAD.join("\n")}
+${PRE_TASKS.map((t) => `・${t}`).join("\n")}`;
+
+function preTasksBlock(): string {
+  const items = PRE_TASKS.map(
+    (t) => `<li style="margin:0 0 4px;font-size:15px;font-weight:bold;">${escapeHtml(t)}</li>`
+  ).join("");
+  return `<div style="margin:0 0 16px;">
+        <p style="margin:0 0 8px;font-size:16px;font-weight:bold;color:${ACCENT};">⭐︎事前課題のお願い⭐︎</p>
+        <p style="margin:0 0 8px;font-size:15px;">${PRE_TASKS_LEAD.map(escapeHtml).join("<br>")}</p>
+        <ul style="margin:0;padding-left:1.4em;">${items}</ul>
+      </div>`;
+}
+
 function invite(ctx: TemplateContext): RenderedEmail {
-  const subject = `【${BRAND.name}】受講のご案内とアカウント登録のお願い`;
+  const subject = `【${BRAND.name}】受講のご案内と事前課題のお願い`;
+  // ボタン・末尾のURLとも、コホート専用の受講ページ（/c/<研修コード>）へ。
+  // そこからログイン画面でメールアドレスを入れると、ログイン用のリンクが届く（パスワード不要）。
+  const loginNote =
+    "受講ページでログインを押し、お申込みのメールアドレスを入力すると、ログイン用のリンクがメールで届きます（パスワードは不要です）。";
   const html = layout({
     eyebrow: "INVITATION",
     // 帯は2行（INVITATION ／ 講座名＋受講のご案内）。講座名は開催回の名前を優先する
     title: `${ctx.sessionName ?? BRAND.name} 受講のご案内`,
     showBrandLine: false,
-    buttonLabel: "アカウントを登録する",
+    buttonLabel: "受講ページへ",
     buttonUrl: ctx.actionUrl,
-    note: `この登録リンクの有効期限は、発行から${ctx.expiresInDays}日間です。`,
+    note: loginNote,
     bodyHtml:
-      p(`${escapeHtml(ctx.name)} 様`) +
+      greeting(ctx.name) +
       p(
         `このたびは「${escapeHtml(BRAND.name)}」にご参加いただきありがとうございます。<br>${escapeHtml(BRAND.tagline)}——そのための2日間です。`
       ) +
       scheduleTable(ctx) +
-      p(
-        "研修当日までに、<strong>事前アンケート</strong>・<strong>じぶん紹介シート</strong>・<strong>ライフラインチャート</strong>の3つのご記入をお願いしています。下のボタンからアカウントを登録すると、そのまま事前課題に進めます。"
-      ) +
+      preTasksBlock() +
       callout(
         "ご入力にはPC（またはタブレット）をおすすめします。スマートフォンでも回答できますが、じぶん紹介シートは画面が広いほうが書きやすくなっています。"
       ),
@@ -227,9 +276,10 @@ function invite(ctx: TemplateContext): RenderedEmail {
 このたびは「${BRAND.name}」にご参加いただきありがとうございます。
 ${BRAND.tagline}——そのための2日間です。
 
-${scheduleText(ctx)}研修当日までに、事前アンケート・じぶん紹介シート・ライフラインチャートの3つのご記入をお願いしています。
-次のURLからアカウントを登録すると、そのまま事前課題に進めます。
-（この登録リンクの有効期限は、発行から${ctx.expiresInDays}日間です）
+${scheduleText(ctx)}${PRE_TASKS_TEXT}
+
+次のURLから受講ページへお進みください。
+${loginNote}
 
 ご入力にはPC（またはタブレット）をおすすめします。
 ${textFooter(ctx.actionUrl)}`;
@@ -244,7 +294,7 @@ function reminderPre(ctx: TemplateContext): RenderedEmail {
     buttonLabel: "事前課題を開く",
     buttonUrl: ctx.actionUrl,
     bodyHtml:
-      p(`${escapeHtml(ctx.name)} 様`) +
+      greeting(ctx.name) +
       p(
         "研修日が近づいてまいりました。事前課題（事前アンケート・じぶん紹介シート・ライフラインチャート）が、まだご提出になっていないようです。"
       ) +
@@ -275,7 +325,7 @@ function completion(ctx: TemplateContext): RenderedEmail {
     buttonLabel: "書いたものを見返す",
     buttonUrl: ctx.actionUrl,
     bodyHtml:
-      p(`${escapeHtml(ctx.name)} 様`) +
+      greeting(ctx.name) +
       p(
         "2日間の研修、おつかれさまでした。じぶんを分解し、分析し、みらいのシナリオを描くところまで走り切っていただきました。"
       ) +
@@ -307,7 +357,7 @@ function followup3m(ctx: TemplateContext): RenderedEmail {
     buttonLabel: "3ヶ月後のふりかえりに答える",
     buttonUrl: ctx.actionUrl,
     bodyHtml:
-      p(`${escapeHtml(ctx.name)} 様`) +
+      greeting(ctx.name) +
       p(
         "研修から3ヶ月が経ちました。あのとき書いた「みらいのシナリオ」は、その後どうなっているでしょうか。"
       ) +

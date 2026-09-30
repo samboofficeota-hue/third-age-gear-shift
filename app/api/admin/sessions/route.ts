@@ -17,6 +17,15 @@ function parseDateInput(v: unknown): Date | null | undefined {
   return Number.isNaN(d.getTime()) ? undefined : d;
 }
 
+/** 時刻（"H:MM" / "HH:MM"）→ "HH:MM" | null。無効値は undefined（=更新しない） */
+function parseTimeInput(v: unknown): string | null | undefined {
+  if (v === null || v === "") return null;
+  if (typeof v !== "string") return undefined;
+  const m = v.trim().match(/^(\d{1,2}):(\d{2})$/);
+  if (!m || Number(m[1]) > 23 || Number(m[2]) > 59) return undefined;
+  return `${m[1].padStart(2, "0")}:${m[2]}`;
+}
+
 function sessionDto(s: {
   id: string;
   name: string | null;
@@ -27,6 +36,9 @@ function sessionDto(s: {
   day2Date: Date | null;
   location: string | null;
   isOnline: boolean;
+  startTime: string | null;
+  endTime: string | null;
+  venueAddress: string | null;
   contentSetId: string;
   _count?: { workshopData: number };
 }) {
@@ -40,6 +52,9 @@ function sessionDto(s: {
     day2Date: s.day2Date,
     location: s.location,
     isOnline: s.isOnline,
+    startTime: s.startTime,
+    endTime: s.endTime,
+    venueAddress: s.venueAddress,
     contentSetId: s.contentSetId,
     participantCount: s._count?.workshopData ?? 0,
   };
@@ -70,6 +85,7 @@ export async function POST(request: Request) {
   const day1Date = parseDateInput(body.day1Date);
   const day2Date = parseDateInput(body.day2Date);
   const contentSetId = normalizeContentSetId(body.contentSetId) ?? DEFAULT_CONTENT_SET_ID;
+  const venueAddress = typeof body.venueAddress === "string" ? body.venueAddress.trim() : "";
 
   if (!code) {
     return NextResponse.json({ error: "コードを入力してください。" }, { status: 400 });
@@ -90,6 +106,9 @@ export async function POST(request: Request) {
         isOnline,
         day1Date: day1Date ?? null,
         day2Date: day2Date ?? null,
+        startTime: parseTimeInput(body.startTime) ?? null,
+        endTime: parseTimeInput(body.endTime) ?? null,
+        venueAddress: venueAddress || null,
         contentSetId,
       },
       include: { _count: { select: { workshopData: true } } },
@@ -119,6 +138,13 @@ export async function PATCH(request: Request) {
   if (typeof body.name === "string") data.name = body.name.trim() || null;
   if (typeof body.location === "string") data.location = body.location.trim() || null;
   if (typeof body.isOnline === "boolean") data.isOnline = body.isOnline;
+  if (typeof body.venueAddress === "string") data.venueAddress = body.venueAddress.trim() || null;
+  for (const key of ["startTime", "endTime"] as const) {
+    if (key in body) {
+      const t = parseTimeInput(body[key]);
+      if (t !== undefined) data[key] = t;
+    }
+  }
   if ("contentSetId" in body) {
     const cs = normalizeContentSetId(body.contentSetId);
     if (cs) data.contentSetId = cs;

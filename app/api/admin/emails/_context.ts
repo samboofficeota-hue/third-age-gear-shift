@@ -1,4 +1,4 @@
-import { buildInviteUrl, INVITE_TTL_DAYS } from "@/lib/invite";
+import { INVITE_TTL_DAYS } from "@/lib/invite";
 import type { TemplateContext, TemplateKey } from "@/lib/emailTemplates";
 
 /**
@@ -6,9 +6,12 @@ import type { TemplateContext, TemplateKey } from "@/lib/emailTemplates";
  * 「このテンプレートはこのリンクに飛ばす」という対応をここ1箇所に閉じ込める。
  */
 
-/** テンプレートごとの遷移先。invite だけは宛先ごとのトークンURLなので null。 */
+/**
+ * テンプレートごとの遷移先。invite はコホート専用の入口（/c/<研修コード>）なので null（研修コードから作る）。
+ * 入口からログイン画面へ進み、登録済みのメールアドレスでマジックリンクを受け取って入る。
+ */
 const ACTION_PATH: Record<TemplateKey, string | null> = {
-  invite: null, // buildInviteUrl(token)
+  invite: null, // appUrl(`/c/${code}`)
   reminder_pre: "/login",
   completion: "/workshop",
   followup_3m: "/workshop/followup",
@@ -40,6 +43,10 @@ export type ContextUser = {
 
 export type ContextSession = {
   name: string | null;
+  code: string;
+  startTime: string | null;
+  endTime: string | null;
+  venueAddress: string | null;
   day1Date: Date | null;
   day2Date: Date | null;
   location: string | null;
@@ -62,10 +69,10 @@ export function buildContext(
     if (user.activatedAt) {
       return { ok: false, reason: "すでにアカウント有効化済みです" };
     }
-    if (!user.inviteToken) {
-      return { ok: false, reason: "招待トークンがありません（招待タブで発行してください）" };
+    if (!session) {
+      return { ok: false, reason: "研修が見つかりません" };
     }
-    actionUrl = buildInviteUrl(user.inviteToken);
+    actionUrl = cohortUrl(session.code);
   } else {
     // 招待以外は本人がログインして開く画面。未有効化の人には届いても入れない
     if (!user.activatedAt) {
@@ -76,16 +83,37 @@ export function buildContext(
 
   return {
     ok: true,
-    context: {
-      name: user.name?.trim() || "ご参加者",
-      actionUrl,
-      sessionName: session?.name ?? null,
-      day1Date: formatJpDate(session?.day1Date),
-      day2Date: formatJpDate(session?.day2Date),
-      location: session?.location ?? null,
-      isOnline: session?.isOnline ?? false,
-      expiresInDays: INVITE_TTL_DAYS,
-    },
+    context: { name: user.name?.trim() || "ご参加者", actionUrl, ...sessionContext(session) },
+  };
+}
+
+/** コホート専用の入口 URL（/c/<研修コード>） */
+function cohortUrl(code: string): string {
+  return appUrl(`/c/${encodeURIComponent(code)}`);
+}
+
+/** 開催時刻の表示（例: "13:30〜17:00"）。両方未設定なら null */
+function formatTimeRange(start: string | null, end: string | null): string | null {
+  if (!start && !end) return null;
+  return `${start ?? ""}〜${end ?? ""}`;
+}
+
+/** 研修（開催回）から、メールの日程・会場の表示に使う値を作る */
+function sessionContext(session: ContextSession | null) {
+  const address = !session?.isOnline ? session?.venueAddress?.trim() || null : null;
+  return {
+    sessionName: session?.name ?? null,
+    day1Date: formatJpDate(session?.day1Date),
+    day2Date: formatJpDate(session?.day2Date),
+    timeRange: formatTimeRange(session?.startTime ?? null, session?.endTime ?? null),
+    location: session?.location ?? null,
+    isOnline: session?.isOnline ?? false,
+    venueAddress: address,
+    // 地図の検索には「（田町駅 徒歩8分）」などの補足を含めない
+    mapUrl: address
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address.replace(/[（(].*$/, "").trim())}`
+      : null,
+    expiresInDays: INVITE_TTL_DAYS,
   };
 }
 
@@ -98,13 +126,8 @@ export function sampleContext(
     name: "山田 太郎",
     actionUrl:
       template === "invite"
-        ? appUrl("/welcome?token=SAMPLE-TOKEN")
+        ? cohortUrl(session?.code ?? "SAMPLE")
         : appUrl(ACTION_PATH[template]!),
-    sessionName: session?.name ?? null,
-    day1Date: formatJpDate(session?.day1Date),
-    day2Date: formatJpDate(session?.day2Date),
-    location: session?.location ?? null,
-    isOnline: session?.isOnline ?? false,
-    expiresInDays: INVITE_TTL_DAYS,
+    ...sessionContext(session),
   };
 }

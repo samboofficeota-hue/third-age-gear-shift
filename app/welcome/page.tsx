@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ClipboardList, LineChart, UserCircle } from "lucide-react";
 import { prisma } from "@/lib/db";
-import { INVITE_TTL_DAYS, isInviteExpired } from "@/lib/invite";
+import { isInviteExpired } from "@/lib/invite";
 import { ActivateForm } from "./ActivateForm";
 import { BRAND } from "@/lib/brand";
 import { BrandMark } from "@/components/BrandMark";
@@ -46,7 +46,7 @@ export default async function WelcomePage({
       })
     : null;
 
-  const expired = !!user && !user.activatedAt && isInviteExpired(user.invitedAt);
+  const expired = !!user && !user.activatedAt && isInviteExpired(user.invitedAt, user.workshopData?.session?.day2Date);
 
   if (!user || user.activatedAt || expired) {
     return (
@@ -55,7 +55,7 @@ export default async function WelcomePage({
         <div className="w-full rounded-2xl border border-border bg-card p-6 text-center">
           <p className="text-sm text-foreground">
             {expired
-              ? `この招待リンクは有効期限（${INVITE_TTL_DAYS}日）が切れています。お手数ですが事務局までご連絡ください。`
+              ? "この招待リンクは有効期限が切れています。ログイン画面から、ご登録のメールアドレスでログインしてください。"
               : "この招待リンクは無効か、すでに使用されています。"}
           </p>
           <Link
