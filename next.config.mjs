@@ -63,6 +63,11 @@ const securityHeaders = [
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  experimental: {
+    // ログイン後の画面（記入状況で表示が変わる動的ページ）をブラウザ内キャッシュで使い回さない。
+    // 既定の30秒だと、保存してから一覧へ戻ったとき「記入済み」が付かない古い表示が出る。
+    staleTimes: { dynamic: 0 },
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

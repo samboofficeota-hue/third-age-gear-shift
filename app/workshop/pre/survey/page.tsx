@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { SurveyShell } from "@/components/survey/SurveyShell";
 import { LikertScale, SingleChoice, MultiChoice } from "@/components/survey/fields";
@@ -29,6 +30,8 @@ export default function PreSurveyPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     (async () => {
@@ -69,9 +72,11 @@ export default function PreSurveyPage() {
     </section>
   );
 
+  // 保存できたら事前課題トップへ戻す（次の課題へそのまま進めるように）。
   const save = async () => {
     setSaving(true);
     setSaved(false);
+    setSaveError(null);
     try {
       const res = await fetch("/api/workshop/me/pre", {
         method: "PATCH",
@@ -79,10 +84,18 @@ export default function PreSurveyPage() {
         credentials: "include",
         body: JSON.stringify({ survey: answers }),
       });
-      if (res.ok) setSaved(true);
-    } finally {
-      setSaving(false);
+      if (res.ok) {
+        setSaved(true);
+        router.push("/workshop/pre");
+        router.refresh();
+        return;
+      }
+      const body = await res.json().catch(() => ({}));
+      setSaveError(body.error ?? "保存できませんでした。時間をおいてもう一度お試しください。");
+    } catch {
+      setSaveError("保存できませんでした。通信状況をご確認ください。");
     }
+    setSaving(false);
   };
 
   if (loading) {
@@ -200,6 +213,7 @@ export default function PreSurveyPage() {
           </>
         )}
       </div>
+      {saveError && <p className="text-right text-sm text-destructive">{saveError}</p>}
     </SurveyShell>
   );
 }

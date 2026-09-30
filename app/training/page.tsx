@@ -68,7 +68,7 @@ export default async function TrainingDashboard() {
         </div>
       )}
 
-      {/* 事前課題（事前アンケート・自己紹介スライド・ライフラインチャート）＝Program B内の読み取り専用ビュー */}
+      {/* 事前課題（事前アンケート・じぶん紹介シート・ライフラインチャート）＝Program B内の読み取り専用ビュー */}
       <Link
         href="/training/intro"
         className="mb-2 flex items-center gap-3 rounded-xl border border-ws-line bg-white p-2.5 transition-colors hover:border-ws-teal"

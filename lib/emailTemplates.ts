@@ -144,6 +144,8 @@ function layout(opts: {
   /** ヘッダー帯の英字ラベル（例: "INVITATION"） */
   eyebrow: string;
   title: string;
+  /** 帯の3行目（講座名）を出すか。見出しに講座名を含めるテンプレートは false */
+  showBrandLine?: boolean;
   bodyHtml: string;
   buttonLabel: string;
   buttonUrl: string;
@@ -156,7 +158,7 @@ function layout(opts: {
     <div style="background:${ACCENT};color:#fff;padding:28px 24px;border-radius:14px 14px 0 0;">
       <p style="margin:0 0 6px;font-size:12px;letter-spacing:.15em;opacity:.85;">${escapeHtml(opts.eyebrow)}</p>
       <h1 style="margin:0;font-size:20px;">${escapeHtml(opts.title)}</h1>
-      <p style="margin:8px 0 0;font-size:13px;opacity:.9;">${escapeHtml(BRAND.name)}</p>
+      ${opts.showBrandLine === false ? "" : `<p style="margin:8px 0 0;font-size:13px;opacity:.9;">${escapeHtml(BRAND.name)}</p>`}
     </div>
     <div style="border:1px solid ${LINE};border-top:none;border-radius:0 0 14px 14px;padding:24px;">
       ${opts.bodyHtml}
@@ -201,7 +203,9 @@ function invite(ctx: TemplateContext): RenderedEmail {
   const subject = `【${BRAND.name}】受講のご案内とアカウント登録のお願い`;
   const html = layout({
     eyebrow: "INVITATION",
-    title: "受講のご案内",
+    // 帯は2行（INVITATION ／ 講座名＋受講のご案内）。講座名は開催回の名前を優先する
+    title: `${ctx.sessionName ?? BRAND.name} 受講のご案内`,
+    showBrandLine: false,
     buttonLabel: "アカウントを登録する",
     buttonUrl: ctx.actionUrl,
     note: `この登録リンクの有効期限は、発行から${ctx.expiresInDays}日間です。`,
@@ -212,7 +216,7 @@ function invite(ctx: TemplateContext): RenderedEmail {
       ) +
       scheduleTable(ctx) +
       p(
-        "研修当日までに、<strong>事前アンケート</strong>と<strong>じぶん紹介シート</strong>のご記入をお願いしています。下のボタンからアカウントを登録すると、そのまま事前課題に進めます。"
+        "研修当日までに、<strong>事前アンケート</strong>・<strong>じぶん紹介シート</strong>・<strong>ライフラインチャート</strong>の3つのご記入をお願いしています。下のボタンからアカウントを登録すると、そのまま事前課題に進めます。"
       ) +
       callout(
         "ご入力にはPC（またはタブレット）をおすすめします。スマートフォンでも回答できますが、じぶん紹介シートは画面が広いほうが書きやすくなっています。"
@@ -223,7 +227,7 @@ function invite(ctx: TemplateContext): RenderedEmail {
 このたびは「${BRAND.name}」にご参加いただきありがとうございます。
 ${BRAND.tagline}——そのための2日間です。
 
-${scheduleText(ctx)}研修当日までに、事前アンケートとじぶん紹介シートのご記入をお願いしています。
+${scheduleText(ctx)}研修当日までに、事前アンケート・じぶん紹介シート・ライフラインチャートの3つのご記入をお願いしています。
 次のURLからアカウントを登録すると、そのまま事前課題に進めます。
 （この登録リンクの有効期限は、発行から${ctx.expiresInDays}日間です）
 
@@ -242,7 +246,7 @@ function reminderPre(ctx: TemplateContext): RenderedEmail {
     bodyHtml:
       p(`${escapeHtml(ctx.name)} 様`) +
       p(
-        "研修日が近づいてまいりました。事前アンケートとじぶん紹介シートが、まだご提出になっていないようです。"
+        "研修日が近づいてまいりました。事前課題（事前アンケート・じぶん紹介シート・ライフラインチャート）が、まだご提出になっていないようです。"
       ) +
       scheduleTable(ctx) +
       p(
@@ -253,7 +257,7 @@ function reminderPre(ctx: TemplateContext): RenderedEmail {
   const text = `${ctx.name} 様
 
 研修日が近づいてまいりました。
-事前アンケートとじぶん紹介シートが、まだご提出になっていないようです。
+事前課題（事前アンケート・じぶん紹介シート・ライフラインチャート）が、まだご提出になっていないようです。
 
 ${scheduleText(ctx)}じぶん紹介シートはDay1の冒頭で発表していただくものです。
 当日の時間を「書く時間」ではなく「話す時間」に使えるよう、前日までのご記入にご協力ください。

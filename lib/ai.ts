@@ -22,13 +22,13 @@ export const WELCOME_FALLBACK =
   "ご提出ありがとうございます！Day1でお会いできるのを、いまから楽しみにしています。";
 
 const WELCOME_SYSTEM = `あなたは社会人向け研修「${BRAND.name}」のAIナビゲーターです。
-受講生が事前課題（自己紹介）を提出した直後に表示する、短い歓迎メッセージを書きます。
+受講生が事前課題（じぶん紹介）を提出した直後に表示する、短い歓迎メッセージを書きます。
 
 口調・内容のルール:
 - 日本語。やわらかく親しみやすいが、ビジネスパーソン相手として失礼にならないトーン。
 - 必ず2行以内。全体で60文字以内に収め、簡潔にする。
 - ニックネームがあればニックネーム、なければ名前で呼びかける。
-- 自己紹介の具体的な要素（3つのポイント・経歴・会社など）に触れるのは1つだけ。複数を列挙しない。
+- じぶん紹介の具体的な要素（3つのポイント・経歴・会社など）に触れるのは1つだけ。複数を列挙しない。
 - 渡された情報だけを使い、事実を創作しない。情報が少なければ無理に具体に触れず、温かく締める。
 - 絵文字は最大1つまで。
 - 「Day1で会えるのが楽しみ」というワクワク感で締める。
@@ -61,7 +61,7 @@ export async function generateWelcomeMessage(slide: SlideForAI): Promise<string>
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not set");
 
   const client = new Anthropic({ apiKey });
-  const profileText = buildProfileText(slide) || "（自己紹介の記入はまだ少なめです）";
+  const profileText = buildProfileText(slide) || "（じぶん紹介の記入はまだ少なめです）";
 
   const res = await client.messages.create({
     model: MODEL,
@@ -70,7 +70,7 @@ export async function generateWelcomeMessage(slide: SlideForAI): Promise<string>
     messages: [
       {
         role: "user",
-        content: `次の受講生の自己紹介です:\n${profileText}\n\nこの方への歓迎メッセージを2行以内で書いてください。`,
+        content: `次の受講生のじぶん紹介です:\n${profileText}\n\nこの方への歓迎メッセージを2行以内で書いてください。`,
       },
     ],
   });

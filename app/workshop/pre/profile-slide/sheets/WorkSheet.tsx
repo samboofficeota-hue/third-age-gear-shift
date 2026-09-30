@@ -61,7 +61,7 @@ export function WorkSheet({
           })}
         </div>
 
-        {/* 3 つの問い（3 カラム）。入力は1つのテキストボックス、表示は箇条書き。 */}
+        {/* 3 つの問い（3 カラム）。入力は1つのテキストボックス（6行ほど見える高さ）、表示は箇条書き。 */}
         <div className="mt-8 grid flex-1 grid-cols-3 divide-x divide-ws-line">
           {WORK_QUESTIONS.map(({ key, title, q }) => {
             const sampleLines = (view.work?.[key] ?? "")
@@ -86,7 +86,7 @@ export function WorkSheet({
                     value={data.work?.[key] ?? ""}
                     onChange={(e) => onSetWork(key, e.target.value)}
                     placeholder={q.join("\n")}
-                    className="mt-5 w-full flex-1 resize-none rounded-md border border-transparent bg-transparent text-base leading-relaxed text-ws-ink outline-none placeholder:text-ws-muted/70 focus:border-ws-teal"
+                    className="mt-4 h-[11rem] w-full resize-none rounded-md border border-ws-line px-3 py-2 text-base leading-relaxed text-ws-ink outline-none placeholder:text-ws-muted/70 focus:border-ws-teal"
                   />
                 )}
               </div>

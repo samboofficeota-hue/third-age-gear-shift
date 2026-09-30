@@ -6,7 +6,7 @@
 export type LifeCurvePoint = {
   /** 年齢（0〜70。チャート横軸の範囲と一致。未入力は null） */
   age: number | null;
-  /** トピック（チャート上のプロットに表示。20字以内・2行想定） */
+  /** トピック（チャート上のプロットに表示。16字以内・1行8字×2行のカード） */
   title: string;
   /** 点数（-10〜+10、0 が普通） */
   score: number;
@@ -27,7 +27,7 @@ export const SCORE_MIN = -10;
 export const SCORE_MAX = 10;
 export const SCORE_STEP = 1;
 
-export const TITLE_MAX_LENGTH = 20;
+export const TITLE_MAX_LENGTH = 16;
 
 /** チャートの横軸（年齢）は 0〜70 歳で固定表示する */
 export const AGE_MIN = 0;
