@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ClipboardList, UserCircle } from "lucide-react";
+import { ClipboardList, LineChart, UserCircle } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { INVITE_TTL_DAYS, isInviteExpired } from "@/lib/invite";
 import { ActivateForm } from "./ActivateForm";
@@ -50,7 +50,7 @@ export default async function WelcomePage({
 
   if (!user || user.activatedAt || expired) {
     return (
-      <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-4">
+      <div className="mx-auto flex min-h-screen max-w-xl flex-col items-center justify-center px-4 md:px-6">
         <WelcomeBrandHeader />
         <div className="w-full rounded-2xl border border-border bg-card p-6 text-center">
           <p className="text-sm text-foreground">
@@ -75,18 +75,19 @@ export default async function WelcomePage({
   const day2 = fmtDate(session?.day2Date);
 
   return (
-    <div className="mx-auto max-w-md px-4 py-10">
+    <div className="mx-auto max-w-xl px-4 py-10 md:px-6">
       <WelcomeBrandHeader />
       <div className="rounded-2xl border border-border bg-card p-6 sm:p-8">
         <p className="text-lg font-bold text-foreground">
           こんにちは、{user.name ?? "ご参加者"}さん。
         </p>
         <div className="mt-3 space-y-3 text-sm leading-relaxed text-secondary-foreground">
+          <p>「{BRAND.name}」にご参加いただき、ありがとうございます。</p>
           <p>
-            この度は「{BRAND.name}」にご参加をいただけるとのこと。
-            誠にありがとうございます。
+            講座当日の前に、ご準備いただきたいことがあります。
+            <br />
+            次の3つへの記入をお願いいたします。
           </p>
-          <p>ご参加に先立って、次の2つへの記入をお願いいたします。</p>
         </div>
 
         <ol className="mt-5 space-y-2">
@@ -97,7 +98,12 @@ export default async function WelcomePage({
           </li>
           <li className="flex items-center gap-3 rounded-lg border border-border bg-bg-panel px-4 py-3">
             <UserCircle className="h-5 w-5 shrink-0 text-primary" />
-            <span className="text-sm font-medium text-foreground">自己紹介シート</span>
+            <span className="text-sm font-medium text-foreground">じぶん紹介シート</span>
+            <span className="ml-auto text-caption text-muted-foreground">Day1で使用</span>
+          </li>
+          <li className="flex items-center gap-3 rounded-lg border border-border bg-bg-panel px-4 py-3">
+            <LineChart className="h-5 w-5 shrink-0 text-primary" />
+            <span className="text-sm font-medium text-foreground">ライフラインチャート</span>
             <span className="ml-auto text-caption text-muted-foreground">Day1で使用</span>
           </li>
         </ol>

@@ -16,7 +16,7 @@ type ProfileSlide = {
 
 /**
  * 事前課題の提出完了「ありがとう」ページ。
- * 提出された自己紹介（写真・ニックネーム・3つのポイント）を添えて、
+ * 提出されたじぶん紹介（写真・ニックネーム・3つのポイント）を添えて、
  * パーソナルにお礼 → 研修当日（Day1）を楽しみに、のメッセージ。
  */
 export default async function PreDonePage() {
@@ -25,6 +25,7 @@ export default async function PreDonePage() {
   let slide: ProfileSlide | undefined;
   let aiWelcome: string | null = null;
   let day1Str: string | null = null;
+  let day2Str: string | null = null;
 
   if (session) {
     const user = await prisma.user.findUnique({
@@ -34,7 +35,7 @@ export default async function PreDonePage() {
         workshopData: {
           select: {
             pre: true,
-            session: { select: { day1Date: true } },
+            session: { select: { day1Date: true, day2Date: true } },
           },
         },
       },
@@ -46,16 +47,18 @@ export default async function PreDonePage() {
     aiWelcome = pre?.aiWelcome?.trim() ? pre.aiWelcome : null;
     name = (user?.name ?? slide?.name ?? "").trim();
 
-    const day1 = user?.workshopData?.session?.day1Date;
-    if (day1) {
-      day1Str = new Intl.DateTimeFormat("ja-JP", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        weekday: "short",
-        timeZone: "Asia/Tokyo",
-      }).format(day1);
-    }
+    const fmt = (d: Date | null | undefined) =>
+      d
+        ? new Intl.DateTimeFormat("ja-JP", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            weekday: "short",
+            timeZone: "Asia/Tokyo",
+          }).format(d)
+        : null;
+    day1Str = fmt(user?.workshopData?.session?.day1Date);
+    day2Str = fmt(user?.workshopData?.session?.day2Date);
   }
 
   const nickname = slide?.nickname?.trim() ?? "";
@@ -84,12 +87,12 @@ export default async function PreDonePage() {
           </div>
 
           <p className="mt-1.5 whitespace-nowrap text-sm leading-relaxed text-secondary-foreground">
-            すてきな自己紹介を受け取りました。自己紹介シートは Day1 で発表いただきます。当日まで修正可能です。
+            すてきなじぶん紹介を受け取りました。じぶん紹介シートは Day1 で発表いただきます。当日まで修正可能です。
           </p>
         </div>
 
         <div className={cn("mt-8 gap-4", hasProfile ? "grid md:grid-cols-2 md:items-start" : "mx-auto max-w-md")}>
-          {/* 左カラム：提出された自己紹介プレビュー */}
+          {/* 左カラム：提出されたじぶん紹介プレビュー */}
           {hasProfile && (
             <div className="rounded-xl border border-border bg-bg-panel p-4 text-left">
               <div className="flex items-center gap-4">
@@ -149,16 +152,17 @@ export default async function PreDonePage() {
             </div>
           )}
 
-          {/* 右カラム：AIナビゲーターのメッセージ＋Day1案内 */}
+          {/* 右カラム：AIナビゲーターのメッセージ＋研修日（Day1・Day2）案内 */}
           <div className="flex flex-col gap-3">
             <NavigatorMessage initial={aiWelcome} />
 
-            {day1Str && (
-              <div className="inline-flex items-center gap-2 self-start rounded-lg border border-border bg-bg-panel px-4 py-2">
-                <CalendarDays className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium text-foreground">
-                  Day1：{day1Str}
-                </span>
+            {(day1Str || day2Str) && (
+              <div className="inline-flex items-start gap-2 self-start rounded-lg border border-border bg-bg-panel px-4 py-2">
+                <CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <div className="space-y-0.5 text-sm font-medium text-foreground">
+                  {day1Str && <p>Day1：{day1Str}</p>}
+                  {day2Str && <p>Day2：{day2Str}</p>}
+                </div>
               </div>
             )}
           </div>

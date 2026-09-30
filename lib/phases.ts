@@ -37,7 +37,7 @@ export const PHASE_META: PhaseMeta[] = [
     program: "A",
     gated: false,
     route: "/workshop/pre",
-    description: "事前アンケート、じぶん紹介の準備（自己紹介、ライフラインチャート）",
+    description: "事前アンケート、じぶん紹介の準備（じぶん紹介シート、ライフラインチャート）",
   },
   {
     id: "day1",

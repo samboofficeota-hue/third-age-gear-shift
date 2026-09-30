@@ -77,7 +77,7 @@ function LoginForm() {
     <div className="flex min-h-screen flex-col items-center bg-transparent px-4 pt-10">
       <AuthBrandHeader className="mb-8" />
 
-      <Card className="w-full max-w-md shadow-lg">
+      <Card className="w-full max-w-[33rem] shadow-lg">
         {sent ? (
           <>
             <CardHeader className="items-center p-5 pb-2 text-center">

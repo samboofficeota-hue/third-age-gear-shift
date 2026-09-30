@@ -8,6 +8,9 @@
  * - 進行役 1名（role=admin。権限は2層）
  * - 参加者 5名（role=participant・会社/部署あり・セッションに紐付け・即ログイン可）
  *
+ * 研修セットは REHEARSAL_CONTENT_SET で指定できる（例: REHEARSAL_CONTENT_SET=jibun-keiei-shuchu）。
+ * 未指定なら default。
+ *
  * すべて即ログイン可（パスワード = rehearsal）。リハ終了後は npm run rehearsal:teardown で完全削除。
  */
 import { config } from "dotenv";
@@ -30,6 +33,7 @@ const DAY = 24 * 60 * 60 * 1000;
 async function main() {
   const now = Date.now();
   const passwordHash = await bcrypt.hash(REHEARSAL_PASSWORD, 10);
+  const contentSetId = process.env.REHEARSAL_CONTENT_SET || "default";
 
   // 会社（Organization は name に unique が無いので findFirst→create）
   const orgIds: string[] = [];
@@ -46,12 +50,14 @@ async function main() {
       day1Date: new Date(now + 14 * DAY),
       day2Date: new Date(now + 21 * DAY),
       isActive: true,
+      contentSetId,
     },
     create: {
       code: REHEARSAL_CODE,
       name: "リハーサル研修",
       day1Date: new Date(now + 14 * DAY),
       day2Date: new Date(now + 21 * DAY),
+      contentSetId,
     },
   });
 
@@ -98,7 +104,7 @@ async function main() {
   }
 
   console.log("✅ リハーサル用データを投入しました。");
-  console.log(`   研修コード: ${REHEARSAL_CODE} / 共通パスワード: ${REHEARSAL_PASSWORD}`);
+  console.log(`   研修コード: ${REHEARSAL_CODE}（研修セット: ${contentSetId}） / 共通パスワード: ${REHEARSAL_PASSWORD}`);
   console.log(`   講師:   ${REHEARSAL_TRAINER.email}`);
   REHEARSAL_PARTICIPANTS.forEach((p) =>
     console.log(`   参加者: ${p.email}  (${p.name}${p.department ? " / " + p.department : ""})`)

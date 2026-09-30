@@ -1,31 +1,52 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useMemo } from "react";
 import {
   AGE_MAX,
   AGE_MIN,
   SCORE_MAX,
   SCORE_MIN,
+  TITLE_MAX_LENGTH,
   type PlottedPoint,
 } from "@/app/workshop/pre/life-plan/_types";
 
+// トピックは2行に折り返す（入力上限16字 → 1行8字）。入力上限を変えるとカード幅も追従する
+const LINE_LEN = Math.ceil(TITLE_MAX_LENGTH / 2);
+const LINE_HEIGHT = 15;
+const FONT_SIZE = 13;
+
+/**
+ * トピックは全部同じ大きさの「2行組みのカード」で表示する（1行のトピックでも2行分の高さ）。
+ * 大きさが揃っているので、段（row）＝カードの高さ＋すき間 で機械的にずらせる。
+ */
+const CARD_PAD_X = 6;
+const CARD_PAD_Y = 5;
+const CARD_W = LINE_LEN * FONT_SIZE + CARD_PAD_X * 2; // 116
+const CARD_H = LINE_HEIGHT * 2 + CARD_PAD_Y * 2; // 40
+const CARD_GAP = 10; // 点 → カードの距離（最初の段）
+const ROW_GAP = 4; // 段と段のすき間
+const ROW_HEIGHT = CARD_H + ROW_GAP;
+
 const W = 1000;
-const H = 510;
 const PAD_L = 40;
 const PAD_R = 24;
-const PAD_T = 44;
+/** +10 の上に、カード1段ぶんの余白（+10 の点のカードも点の上に置ける） */
+const PAD_T = CARD_GAP + CARD_H + ROW_GAP; // 54
 const PAD_B = 44;
+/** グラフ本体（+10〜-10）の高さ。上余白を足しても本体の大きさは変えない */
+const innerH = 422;
+const H = PAD_T + innerH + PAD_B; // 520
 const innerW = W - PAD_L - PAD_R;
-const innerH = H - PAD_T - PAD_B;
-
-const TITLE_GAP = 14; // 点 → トピックの距離（最初の段）
-const LINE_LEN = 10; // トピックは1行10字まで（最大20字・2行）
-const LINE_HEIGHT = 15;
-
-/** ラベル同士の最小間隔（水平方向） */
-const LABEL_GAP = 8;
-/** 段（row）を1つ増やすごとに、軸から離す距離 */
-const ROW_HEIGHT = 34;
+/** カード同士の最小間隔 */
+const LABEL_GAP = 4;
+const MAX_ROW = 8;
+/** 点（●）の当たり判定の半径（描画 r=6 ＋ 白ふち） */
+const DOT_R = 8;
+/** カードを置いてよい範囲。上下＝SVGの上端〜グラフ下端、左右＝SVGの幅 */
+const BOUND_TOP = 0;
+const BOUND_BOTTOM = H - PAD_B;
+const BOUND_LEFT = 0;
+const BOUND_RIGHT = W;
 
 /**
  * 横軸（年齢）は 0-10歳・10-20歳・60-70歳が空欄になりやすいため、
@@ -55,13 +76,15 @@ const x = (age: number) => {
 };
 const y = (score: number) => PAD_T + ((SCORE_MAX - score) / (SCORE_MAX - SCORE_MIN)) * innerH;
 
-/** トピックは最大20字・1行10字で2行に折り返す */
+/** トピックは最大16字・1行8字で2行に折り返す */
 function splitTitle(title: string): [string, string] {
   if (title.length <= LINE_LEN) return [title, ""];
   return [title.slice(0, LINE_LEN), title.slice(LINE_LEN, LINE_LEN * 2)];
 }
 
 type Box = { left: number; right: number; top: number; bottom: number };
+type Side = "above" | "below";
+type Placement = { side: Side; row: number };
 
 function boxesOverlap(a: Box, b: Box, gap: number): boolean {
   return (
@@ -72,55 +95,59 @@ function boxesOverlap(a: Box, b: Box, gap: number): boolean {
   );
 }
 
-const MAX_ROW = 8;
+/** カードの中心X。点の真上（真下）が基本で、左右の端では範囲内へ寄せる */
+function cardCenterX(p: PlottedPoint): number {
+  const half = CARD_W / 2;
+  return Math.min(Math.max(x(p.age), BOUND_LEFT + half), BOUND_RIGHT - half);
+}
+
+/** 側（上/下）と段から、カードの矩形を計算する */
+function cardBox(p: PlottedPoint, { side, row }: Placement): Box {
+  const gap = CARD_GAP + row * ROW_HEIGHT;
+  const cx = cardCenterX(p);
+  const cy = y(p.score);
+  const top = side === "above" ? cy - gap - CARD_H : cy + gap;
+  return { left: cx - CARD_W / 2, right: cx + CARD_W / 2, top, bottom: top + CARD_H };
+}
 
 /**
- * 同じ上下象限（above/below）内で、年齢順に並んだラベルの重なりを
- * 実測（getBBox）してから解消する（衝突回避）。
- * ラベルの x 位置は常にその点の年齢のまま動かさず、既に置いたラベルと
- * 実際の矩形が重なる場合だけ、段（row）を1つ外側にずらす（軸からの距離を増やす）。
- * 点数（score）が点ごとに違うため、rowが同じでも絶対Y座標は点によって異なる。
- * そのため「同じrow同士」ではなく、実際の矩形同士で判定する。
- *
- * 実測bboxは「前回すでに適用した段ズレ」を含んだ状態で返ってくる（Reactの
- * useLayoutEffectは同じpropsでも複数回走りうる＝StrictModeや親の再レンダリング）。
- * 前回のrowから逆算してズレを差し引き、常に「段0（自然な位置）」を基準に測り直す。
+ * カードの置き場所を決める（段の考え方で衝突回避）。
+ * 年齢順に1つずつ、次の順で試し、最初に「範囲内」かつ「既に置いたカード・点と重ならない」位置を採用する。
+ *   1. 本来の側（点数0以上=上／マイナス=下）で、点に近い段から外側へ
+ *   2. それでも無ければ逆側で、点に近い段から外側へ
+ * どこにも置けなければ、範囲内に収まる最も近い位置（重なりは許容）、それも無ければ本来の側の段0。
  */
-function assignRows(
-  group: PlottedPoint[],
-  els: Map<number, SVGTextElement>,
-  above: boolean,
-  prevRows: Map<number, number>
-): Map<number, number> {
-  const result = new Map<number, number>();
+function assignPlacements(points: PlottedPoint[]): Map<number, Placement> {
+  const result = new Map<number, Placement>();
+  const dots: Box[] = points.map((p) => ({
+    left: x(p.age) - DOT_R,
+    right: x(p.age) + DOT_R,
+    top: y(p.score) - DOT_R,
+    bottom: y(p.score) + DOT_R,
+  }));
   const placed: Box[] = [];
+  const inBounds = (b: Box) =>
+    b.top >= BOUND_TOP && b.bottom <= BOUND_BOTTOM && b.left >= BOUND_LEFT && b.right <= BOUND_RIGHT;
+  const hits = (b: Box) =>
+    placed.some((pb) => boxesOverlap(b, pb, LABEL_GAP)) || dots.some((d) => boxesOverlap(b, d, 2));
 
-  for (const p of group) {
-    const el = els.get(p.index);
-    const rawBbox = el?.getBBox();
-    if (!rawBbox) {
-      result.set(p.index, 0);
-      continue;
+  for (const p of points) {
+    if (!p.title.trim()) continue;
+    const preferred: Side = p.score >= 0 ? "above" : "below";
+    const opposite: Side = preferred === "above" ? "below" : "above";
+    const candidates: Placement[] = [];
+    for (const side of [preferred, opposite]) {
+      for (let row = 0; row < MAX_ROW; row++) candidates.push({ side, row });
     }
-    const prevRow = prevRows.get(p.index) ?? 0;
-    const prevDelta = above ? -prevRow * ROW_HEIGHT : prevRow * ROW_HEIGHT;
-    const naturalY = rawBbox.y - prevDelta;
+    const chosen =
+      candidates.find((c) => {
+        const b = cardBox(p, c);
+        return inBounds(b) && !hits(b);
+      }) ??
+      candidates.find((c) => inBounds(cardBox(p, c))) ?? { side: preferred, row: 0 };
 
-    let row = 0;
-    let box: Box = { left: rawBbox.x, right: rawBbox.x + rawBbox.width, top: naturalY, bottom: naturalY + rawBbox.height };
-    while (row < MAX_ROW) {
-      const delta = above ? -row * ROW_HEIGHT : row * ROW_HEIGHT;
-      box = {
-        left: rawBbox.x,
-        right: rawBbox.x + rawBbox.width,
-        top: naturalY + delta,
-        bottom: naturalY + rawBbox.height + delta,
-      };
-      if (!placed.some((pb) => boxesOverlap(box, pb, LABEL_GAP))) break;
-      row++;
-    }
-    placed.push(box);
-    result.set(p.index, row);
+    placed.push(cardBox(p, chosen));
+    result.set(p.index, chosen);
   }
   return result;
 }
@@ -128,7 +155,8 @@ function assignRows(
 /**
  * ライフラインチャート（年齢 × 点数の折れ線グラフ）。
  * 横軸=年齢 0〜70歳・縦軸=点数 -10〜+10 で固定表示する。
- * トピックはプロット上に常時表示（上象限=点の上／下象限=点の下）。
+ * トピックは2行組みのカードで常時表示（上象限=点の上／下象限=点の下。範囲からはみ出す・重なるときは段をずらし、
+ * それでも置けなければ逆側へ）。描く順は 折れ線 → カード → 点。
  * プロットをクリックすると onPointClick(index) が呼ばれる（編集モードへの入口）。
  */
 export function LifeLineChart({
@@ -138,19 +166,7 @@ export function LifeLineChart({
   points: PlottedPoint[];
   onPointClick?: (index: number) => void;
 }) {
-  const textRefs = useRef(new Map<number, SVGTextElement>());
-  const prevRowsRef = useRef<Map<number, number>>(new Map());
-  const [rows, setRows] = useState<Map<number, number>>(new Map());
-
-  useLayoutEffect(() => {
-    const aboveGroup = points.filter((p) => p.score >= 0);
-    const belowGroup = points.filter((p) => p.score < 0);
-    const merged = new Map<number, number>();
-    assignRows(aboveGroup, textRefs.current, true, prevRowsRef.current).forEach((v, k) => merged.set(k, v));
-    assignRows(belowGroup, textRefs.current, false, prevRowsRef.current).forEach((v, k) => merged.set(k, v));
-    prevRowsRef.current = merged;
-    setRows(merged);
-  }, [points]);
+  const placements = useMemo(() => assignPlacements(points), [points]);
 
   const zeroY = y(0);
   const path = points.map((p, i) => `${i === 0 ? "M" : "L"} ${x(p.age).toFixed(1)} ${y(p.score).toFixed(1)}`).join(" ");
@@ -197,53 +213,57 @@ export function LifeLineChart({
         <path d={path} fill="none" stroke="#129B86" strokeWidth={3} strokeLinejoin="round" strokeLinecap="round" />
       )}
 
+      {/* トピックのカード（折れ線の上・点の下に描く） */}
       {points.map((p) => {
-        const above = p.score >= 0;
-        const row = rows.get(p.index) ?? 0;
-        const gap = TITLE_GAP + row * ROW_HEIGHT;
-        const titleY = y(p.score) + (above ? -gap : gap + 12);
+        if (!p.title.trim()) return null;
+        const placement = placements.get(p.index) ?? { side: p.score >= 0 ? "above" : "below", row: 0 };
+        const box = cardBox(p, placement);
         const [line1, line2] = splitTitle(p.title);
-        const labelX = x(p.age);
-
+        const cx = (box.left + box.right) / 2;
+        // 1行なら上下中央、2行なら2行で上下中央（ベースラインは文字高の約0.8）
+        const lines = line2 ? 2 : 1;
+        const firstBaseline =
+          box.top + (CARD_H - lines * LINE_HEIGHT) / 2 + LINE_HEIGHT * 0.5 + FONT_SIZE * 0.35;
         return (
-          <g key={p.index}>
-            {p.title.trim() && (
-              <text
-                ref={(el) => {
-                  if (el) textRefs.current.set(p.index, el);
-                  else textRefs.current.delete(p.index);
-                }}
-                x={labelX}
-                y={titleY}
-                textAnchor="middle"
-                fontSize={13}
-                fontWeight={700}
-                fill="#1F2937"
-              >
-                <tspan x={labelX} dy={0}>
-                  {line1}
-                </tspan>
-                {line2 && (
-                  <tspan x={labelX} dy={LINE_HEIGHT}>
-                    {line2}
-                  </tspan>
-                )}
-              </text>
-            )}
-
-            <circle
-              cx={x(p.age)}
-              cy={y(p.score)}
-              r={6}
-              fill="#129B86"
-              stroke="#FFFFFF"
-              strokeWidth={2}
-              className={onPointClick ? "cursor-pointer" : undefined}
-              onClick={() => onPointClick?.(p.index)}
+          <g key={`card-${p.index}`}>
+            <rect
+              x={box.left}
+              y={box.top}
+              width={CARD_W}
+              height={CARD_H}
+              rx={6}
+              fill="#FFFFFF"
+              stroke="#CBD5E1"
+              strokeWidth={1}
             />
+            <text textAnchor="middle" fontSize={FONT_SIZE} fontWeight={700} fill="#1F2937">
+              <tspan x={cx} y={firstBaseline}>
+                {line1}
+              </tspan>
+              {line2 && (
+                <tspan x={cx} y={firstBaseline + LINE_HEIGHT}>
+                  {line2}
+                </tspan>
+              )}
+            </text>
           </g>
         );
       })}
+
+      {/* 点（いちばん上） */}
+      {points.map((p) => (
+        <circle
+          key={`dot-${p.index}`}
+          cx={x(p.age)}
+          cy={y(p.score)}
+          r={6}
+          fill="#129B86"
+          stroke="#FFFFFF"
+          strokeWidth={2}
+          className={onPointClick ? "cursor-pointer" : undefined}
+          onClick={() => onPointClick?.(p.index)}
+        />
+      ))}
 
       <line x1={PAD_L} y1={zeroY} x2={W - PAD_R} y2={zeroY} stroke="transparent" />
     </svg>

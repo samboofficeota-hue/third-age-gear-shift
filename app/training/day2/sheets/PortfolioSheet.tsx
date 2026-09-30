@@ -252,7 +252,7 @@ export function PortfolioSheet({
         right={nameTag}
       />
       <p className="mt-3 text-sm text-ws-muted">
-        どんなポートフォリオにしていきたい。そのために、どう時間を使いたい。今日時点のアイディアでOKです。
+        どんなポートフォリオにしていきたい？ そのために、どう時間を使いたい？ 今日時点のアイディアでOKです。
       </p>
 
       {step === "single" ? (

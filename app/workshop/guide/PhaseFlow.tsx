@@ -31,9 +31,9 @@ export function PhaseFlow({ steps }: { steps: FlowStepData[] }) {
 
   return (
     <div>
-      <div className="flex items-center justify-center gap-1.5 sm:gap-2">
+      <div className="flex items-center justify-center gap-1.5 sm:gap-2.5">
         {steps.map((s, i) => (
-          <div key={s.id} className="flex items-center gap-1.5 sm:gap-2">
+          <div key={s.id} className="flex items-center gap-1.5 sm:gap-2.5">
             {s.accessible ? (
               <Link
                 href={s.href}
@@ -52,7 +52,10 @@ export function PhaseFlow({ steps }: { steps: FlowStepData[] }) {
               </button>
             )}
             {i < steps.length - 1 && (
-              <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <ArrowRight
+                strokeWidth={3}
+                className="h-4 w-4 shrink-0 text-secondary-foreground sm:h-6 sm:w-6"
+              />
             )}
           </div>
         ))}
@@ -75,7 +78,7 @@ function FlowStep({ step }: { step: FlowStepData }) {
   return (
     <div
       className={cn(
-        "relative flex h-16 w-16 shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl border text-center transition sm:h-20 sm:w-20",
+        "relative flex h-16 w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 text-center transition sm:h-24 sm:w-[6.5rem]",
         state === "current"
           ? "border-primary bg-primary/10 shadow-neon-glow"
           : state === "done"
@@ -86,15 +89,19 @@ function FlowStep({ step }: { step: FlowStepData }) {
           : "cursor-not-allowed opacity-70"
       )}
     >
-      {state === "current" && (
-        <span className="text-[10px] font-bold uppercase tracking-wide text-primary">
-          今ここ
-        </span>
-      )}
-      {state === "done" && <Check className="h-3.5 w-3.5 text-primary/70" />}
+      {/* 上段・ラベル・下段の3段を常に同じ高さで確保し、箱ごとにラベルの高さがずれないようにする */}
+      <span className="flex h-3.5 items-center justify-center sm:h-4">
+        {state === "current" ? (
+          <span className="text-[10px] font-bold uppercase leading-none tracking-wide text-primary sm:text-xs">
+            今ここ
+          </span>
+        ) : state === "done" ? (
+          <Check className="h-3.5 w-3.5 text-primary/70" />
+        ) : null}
+      </span>
       <span
         className={cn(
-          "text-xs font-bold sm:text-sm",
+          "text-xs font-bold leading-tight sm:text-base",
           state === "current"
             ? "text-primary"
             : state === "done"
@@ -104,18 +111,16 @@ function FlowStep({ step }: { step: FlowStepData }) {
       >
         {label}
       </span>
-      {sub && (
-        <span
-          className={cn(
-            "text-[9px] font-semibold leading-none sm:text-[10px]",
-            state === "upcoming" ? "text-muted-foreground" : "text-primary/80"
-          )}
-        >
-          {sub}
-        </span>
-      )}
+      <span
+        className={cn(
+          "flex h-3 items-center text-[9px] font-semibold leading-none sm:h-4 sm:text-xs",
+          state === "upcoming" ? "text-muted-foreground" : "text-primary/80"
+        )}
+      >
+        {sub}
+      </span>
       {!accessible && (
-        <Lock className="absolute right-1 top-1 h-3 w-3 text-muted-foreground" />
+        <Lock className="absolute right-1.5 top-1.5 h-3 w-3 text-muted-foreground sm:h-3.5 sm:w-3.5" />
       )}
     </div>
   );

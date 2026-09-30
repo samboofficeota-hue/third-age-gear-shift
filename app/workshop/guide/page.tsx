@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, Lock } from "lucide-react";
+import { ArrowRight, CheckCircle2, Lock } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import {
   type BlockStatusValue,
 } from "@/lib/phases";
 import { getDashboardState } from "@/lib/workshopAccess";
+import { preTaskStatus } from "@/lib/preTasks";
 import { BRAND } from "@/lib/brand";
 import { PhaseFlow, type FlowStepData } from "./PhaseFlow";
 
@@ -58,7 +59,16 @@ export default async function WorkshopGuidePage() {
 
   const state = await getDashboardState();
   const statuses = state?.statuses;
-  const completedPhases = state?.completedPhases ?? [];
+  // 事前課題は「3つとも記入済み」になって初めて完了扱いにする。
+  // completedPhases の "pre" は1か所でも保存すると立つので、そのままでは「今ここ」が早く Day1 に進んでしまう。
+  const wdPre = await prisma.workshopData.findUnique({
+    where: { userId: session.sub },
+    select: { pre: true },
+  });
+  const preSubmitted = preTaskStatus(wdPre?.pre).allDone;
+  const completedPhases = (state?.completedPhases ?? []).filter(
+    (id) => id !== "pre" || preSubmitted
+  );
 
   // 研修セットで有効なフェーズだけをフロー・進捗表示の対象にする。
   const enabledPhases = state?.enabledPhases ?? FORWARD_ORDER;
@@ -80,6 +90,9 @@ export default async function WorkshopGuidePage() {
       })
     : null;
   const day1Date = wsSession?.day1Date ?? null;
+
+  // 事前課題が3つとも記入済みで、まだ Day1 前なら「提出済み・前日まで修正可」を案内する
+  const showPreSubmittedNote = preSubmitted && (!day1Date || Date.now() < day1Date.getTime());
   const day2Date = wsSession?.day2Date ?? null;
   const canJoinDay1 = !!day1Date && Date.now() >= day1Date.getTime();
   const canJoinDay2 = !!day2Date && Date.now() >= day2Date.getTime();
@@ -186,9 +199,13 @@ const introNote = !currentPhaseId ? (
       <div className="mt-8">
         <PhaseFlow steps={steps} />
       </div>
-      <p className="mt-3 text-center text-xs text-muted-foreground">
-        Day 1〜Day 2 は、約3週間の期間をかけて進みます
-      </p>
+
+      {showPreSubmittedNote && (
+        <p className="mt-6 flex items-center justify-center gap-2 text-sm text-secondary-foreground">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
+          事前課題は提出済みです。Day 1 の前日まで修正可能です。
+        </p>
+      )}
 
       <div className="mx-auto mt-8 flex justify-center">
         {primaryAction ? (

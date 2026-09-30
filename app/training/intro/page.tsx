@@ -46,7 +46,7 @@ export default async function TrainingIntroPage() {
       {hasData ? (
         <ProfileSlideReadOnly data={slide as Slide} />
       ) : (
-        <div className="mt-10 w-full max-w-[1123px] rounded-2xl border border-ws-line bg-white p-10 text-center">
+        <div className="mt-10 w-full max-w-[1100px] rounded-2xl border border-ws-line bg-white p-10 text-center">
           <p className="text-lg font-bold text-ws-ink">
             じぶん紹介がまだ作成されていません
           </p>
@@ -75,7 +75,7 @@ export default async function TrainingIntroPage() {
           </div>
         </PrintSheet>
       ) : (
-        <div className="w-full max-w-[1123px] rounded-2xl border border-ws-line bg-white p-10 text-center">
+        <div className="w-full max-w-[1100px] rounded-2xl border border-ws-line bg-white p-10 text-center">
           <p className="text-lg font-bold text-ws-ink">
             ライフラインチャートがまだ作成されていません
           </p>

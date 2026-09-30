@@ -304,7 +304,7 @@ export function Day1Client({
                   <input
                     value={r.share}
                     onChange={(e) => setCell(i, "share", e.target.value)}
-                    placeholder="何%ぐらい？ 頻度は？"
+                    placeholder="何%？ 頻度は？"
                     className="w-[166px] shrink-0 rounded-md border border-ws-line px-2.5 py-1 text-sm text-ws-ink outline-none placeholder:text-ws-muted/60 focus:border-ws-teal"
                   />
                   <input

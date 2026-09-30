@@ -74,6 +74,7 @@ export async function GET(request: Request) {
           lastUpdated: true,
           profile: true,
           pre: true,
+          homework: true,
           sessionId: true,
           attendanceDay1: true,
           attendanceDay2: true,
@@ -115,6 +116,9 @@ export async function GET(request: Request) {
         attendanceDay1: wd?.attendanceDay1 ?? null,
         attendanceDay2: wd?.attendanceDay2 ?? null,
         completedAt: wd?.completedAt ?? null,
+        homeworkSubmittedAt:
+          ((wd?.homework as { submittedAt?: string } | null)?.submittedAt as string | undefined) ??
+          null,
       };
     }),
   });

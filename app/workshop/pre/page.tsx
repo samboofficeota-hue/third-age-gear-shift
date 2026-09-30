@@ -8,13 +8,14 @@ import {
 } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { preTaskStatus } from "@/lib/preTasks";
 import { cn } from "@/lib/utils";
 import { BRAND } from "@/lib/brand";
 import { Button } from "@/components/ui/button";
 
 /**
  * 事前課題の「扉（ウェルカム）／ハブ」シート。
- * 参加お礼 → 3課題（事前アンケート・自己紹介シート・ライフラインチャート）の状況 → 揃えば提出。
+ * 参加お礼 → 3課題（事前アンケート・じぶん紹介シート・ライフラインチャート）の状況 → 揃えば提出。
  */
 export default async function PrePage() {
   const session = await getSession();
@@ -29,16 +30,7 @@ export default async function PrePage() {
       select: { name: true, workshopData: { select: { pre: true } } },
     });
     name = (user?.name ?? "").trim();
-    const pre = user?.workshopData?.pre as
-      | {
-          survey?: Record<string, unknown>;
-          profileSlide?: Record<string, unknown>;
-          lifeCurve?: { points?: unknown[] };
-        }
-      | null;
-    surveyDone = !!pre?.survey && Object.keys(pre.survey).length > 0;
-    slideDone = !!pre?.profileSlide && Object.keys(pre.profileSlide).length > 0;
-    lifeCurveDone = !!pre?.lifeCurve?.points && pre.lifeCurve.points.length > 0;
+    ({ surveyDone, slideDone, lifeCurveDone } = preTaskStatus(user?.workshopData?.pre));
   }
 
   const tasks = [
@@ -52,7 +44,7 @@ export default async function PrePage() {
     {
       href: "/workshop/pre/profile-slide",
       icon: UserCircle,
-      label: "自己紹介シート",
+      label: "じぶん紹介シート",
       note: "Day1で使用",
       done: slideDone,
     },
@@ -76,13 +68,11 @@ export default async function PrePage() {
           {name ? `${name}さん、こんにちは。` : "こんにちは。"}
         </p>
         <div className="mt-3 space-y-3 text-sm leading-relaxed text-secondary-foreground">
-          <p>
-            この度は「{BRAND.name}」にご参加をいただき、ありがとうございます。
-          </p>
+          <p>「{BRAND.name}」へ、ようこそ。</p>
           <p>
             研修当日に先立って、事前課題の記入およびご提出をお願いしています。
             <br />
-            必ず、前日までにお済ませください。
+            必ず、前日までにご記入のほど、よろしくお願いいたします。
           </p>
         </div>
 
@@ -93,19 +83,22 @@ export default async function PrePage() {
         </p>
 
         <ol className="mt-5 space-y-2">
+          {/* ハイライトは「次にやる課題」に置く。記入済みは控えめに（宿題トップと同じ見せ方） */}
           {tasks.map((t) => (
             <li key={t.href}>
               <Link
                 href={t.href}
                 className={cn(
                   "flex items-center gap-3 rounded-lg border px-4 py-3 transition-colors",
-                  t.done
-                    ? "border-primary/40 bg-primary/10 hover:border-primary"
-                    : "border-border bg-bg-panel hover:border-primary/50"
+                  t.href === nextTask?.href
+                    ? "border-primary bg-primary/10 shadow-neon-glow"
+                    : t.done
+                      ? "border-border bg-bg-panel/40 opacity-70 hover:border-primary/50 hover:opacity-100"
+                      : "border-border bg-bg-panel hover:border-primary/50"
                 )}
               >
                 {t.done ? (
-                  <CheckCircle2 className="h-5 w-5 shrink-0 text-primary" />
+                  <CheckCircle2 className="h-5 w-5 shrink-0 text-muted-foreground" />
                 ) : (
                   <t.icon className="h-5 w-5 shrink-0 text-primary" />
                 )}
@@ -114,7 +107,7 @@ export default async function PrePage() {
                 </span>
                 <span className="ml-auto flex items-center gap-2">
                   {t.done && (
-                    <span className="text-caption font-semibold text-primary">
+                    <span className="text-caption font-semibold text-muted-foreground">
                       記入済み
                     </span>
                   )}
@@ -144,7 +137,7 @@ export default async function PrePage() {
         ) : (
           <>
             <p className="mt-5 text-sm text-secondary-foreground">
-              まずは、
+              {tasks.some((t) => t.done) ? "次は、" : "まずは、"}
               <span className="font-bold text-primary">{nextTask?.label}</span>
               からお願いします。
             </p>

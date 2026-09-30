@@ -65,7 +65,7 @@ const BACKCAST_QUESTIONS: {
   {
     key: "issue",
     num: "#1",
-    label: "未来と今を比べて課題は何だろう",
+    label: "未来と今を比べて課題は何だろう？",
     ph: "2045年の未来と現在のギャップから見えてくる課題は？",
   },
   {
@@ -77,7 +77,7 @@ const BACKCAST_QUESTIONS: {
   {
     key: "firstStep",
     num: "#3",
-    label: "そのために何からやってみる",
+    label: "そのために何からやってみる？",
     ph: "まず自分ができる一歩目は？",
   },
 ];
