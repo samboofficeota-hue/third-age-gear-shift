@@ -10,6 +10,7 @@
 // そのあとフルリロードで遷移すれば、サーバー側（middleware/getSession）も同じ Cookie を読める。
 
 import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browserClient";
 import { safeRedirectPath } from "@/lib/safeRedirect";
 
@@ -60,6 +61,8 @@ export default function AuthCallbackPage() {
         }
 
         // フルリロードでサーバー側（middleware/getSession）にも反映させる。
+        // 次の画面が届くまで数秒かかることがあるので、止まって見えないよう文言を切り替える。
+        setMessage("画面を準備しています。そのままお待ちください。");
         window.location.replace(next ?? roleDefaultPath(data.user?.role ?? "participant"));
       } catch (e) {
         if (cancelled) return;
@@ -77,11 +80,11 @@ export default function AuthCallbackPage() {
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-8 text-center">
-        <div className="text-4xl" aria-hidden>
-          🔑
-        </div>
+        <Loader2 className="mx-auto h-10 w-10 animate-spin text-primary" aria-hidden />
         <h1 className="mt-4 text-xl font-bold text-foreground">ログインしています…</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{message}</p>
+        <p className="mt-2 text-sm text-muted-foreground" role="status" aria-live="polite">
+          {message}
+        </p>
       </div>
     </div>
   );
