@@ -23,6 +23,9 @@ type Values = {
   day2Date: string;
   location: string;
   isOnline: boolean;
+  startTime: string;
+  endTime: string;
+  venueAddress: string;
   contentSetId: string;
 };
 
@@ -33,6 +36,9 @@ const EMPTY: Values = {
   day2Date: "",
   location: "",
   isOnline: false,
+  startTime: "",
+  endTime: "",
+  venueAddress: "",
   contentSetId: DEFAULT_CONTENT_SET_ID,
 };
 
@@ -44,6 +50,9 @@ function toValues(s: SessionInfo): Values {
     day2Date: toDateInputValue(s.day2Date),
     location: s.location ?? "",
     isOnline: s.isOnline,
+    startTime: s.startTime ?? "",
+    endTime: s.endTime ?? "",
+    venueAddress: s.venueAddress ?? "",
     contentSetId: s.contentSetId ?? DEFAULT_CONTENT_SET_ID,
   };
 }
@@ -82,6 +91,9 @@ export function SessionForm({
             day2Date: values.day2Date || null,
             location: values.location,
             isOnline: values.isOnline,
+            startTime: values.startTime || null,
+            endTime: values.endTime || null,
+            venueAddress: values.venueAddress,
             contentSetId: values.contentSetId,
           }
         : {
@@ -91,6 +103,9 @@ export function SessionForm({
             day2Date: values.day2Date || null,
             location: values.location,
             isOnline: values.isOnline,
+            startTime: values.startTime || null,
+            endTime: values.endTime || null,
+            venueAddress: values.venueAddress,
             contentSetId: values.contentSetId,
           };
 
@@ -174,6 +189,25 @@ export function SessionForm({
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>開始時刻（Day1・Day2 共通）</Label>
+              <Input
+                type="time"
+                value={values.startTime}
+                onChange={(e) => patch({ startTime: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>終了時刻</Label>
+              <Input
+                type="time"
+                value={values.endTime}
+                onChange={(e) => patch({ endTime: e.target.value })}
+              />
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label>開催形式・会場</Label>
             <div className="flex gap-2">
@@ -197,8 +231,15 @@ export function SessionForm({
             <Input
               value={values.location}
               onChange={(e) => patch({ location: e.target.value })}
-              placeholder={values.isOnline ? "Meet / Zoom のURL" : "会場名・住所"}
+              placeholder={values.isOnline ? "Meet / Zoom のURL" : "会場名（例：田町（COMMUNITYオフィス））"}
             />
+            {!values.isOnline && (
+              <Input
+                value={values.venueAddress}
+                onChange={(e) => patch({ venueAddress: e.target.value })}
+                placeholder="住所（案内メールに載せ、Google マップのリンクも付けます）"
+              />
+            )}
           </div>
 
           <div className="space-y-2">

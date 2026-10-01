@@ -36,7 +36,7 @@ type TemplateDef = {
 const TEMPLATES: TemplateDef[] = [
   {
     key: "invite",
-    note: "アカウント登録用の招待URLを送ります。招待タブで登録済みの方が対象です。",
+    note: "受講ページ（コホート専用URL）の案内を送ります。招待タブで登録済みで、まだログインしていない方が対象です。",
     match: (p) => p.inviteStatus !== "activated",
     matchLabel: "まだ有効化していない人",
   },

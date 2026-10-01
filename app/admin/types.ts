@@ -39,6 +39,11 @@ export type SessionInfo = {
   day1Date: string | null;
   day2Date: string | null;
   location: string | null;
+  /** 開催時刻（"13:30" 形式・Day1/Day2 共通） */
+  startTime: string | null;
+  endTime: string | null;
+  /** 会場住所（案内メールに載せ、Google マップのリンクも作る） */
+  venueAddress: string | null;
   isOnline: boolean;
   /** 研修セット（コンテンツ設定）id。lib/content/sets と対応。 */
   contentSetId: string;

@@ -131,6 +131,10 @@ model WorkshopSession {
   // 開催情報（S-4）
   location  String? // 会場名 or オンラインURL
   isOnline  Boolean   @default(false) @map("is_online")
+  // 開催時刻（"13:30" 形式・Day1/Day2 共通）と会場住所。案内メールに載せる（住所から Google マップのリンクを作る）
+  startTime    String? @map("start_time")
+  endTime      String? @map("end_time")
+  venueAddress String? @map("venue_address")
   createdAt DateTime  @default(now()) @map("created_at")
 
   blockStatuses BlockStatus[]
