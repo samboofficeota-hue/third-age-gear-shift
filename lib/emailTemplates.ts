@@ -39,6 +39,11 @@ export type TemplateContext = {
   /** 会場住所（対面のみ）と、その Google マップのリンク */
   venueAddress: string | null;
   mapUrl: string | null;
+  /**
+   * 再送のときだけ指定する（招待メール）。件名に【再送】を付け、宛名の下に再送の旨と締切を添える。
+   * 例: { originalDate: "10月1日", deadline: "10月16日(金)" }
+   */
+  resend?: { originalDate: string; deadline: string };
   /** 招待リンクの有効日数 */
   expiresInDays: number;
 };
@@ -247,7 +252,10 @@ function preTasksBlock(): string {
 }
 
 function invite(ctx: TemplateContext): RenderedEmail {
-  const subject = `【${BRAND.name}】受講のご案内と事前課題のお願い`;
+  const resendLine = ctx.resend
+    ? `${ctx.resend.originalDate}にお送りしたご案内を再送いたします。事前課題は${ctx.resend.deadline}までにご記入をお願いいたします。`
+    : null;
+  const subject = `${ctx.resend ? "【再送】" : ""}【${BRAND.name}】受講のご案内と事前課題のお願い`;
   // ボタン・末尾のURLとも、コホート専用の受講ページ（/c/<研修コード>）へ。
   // そこからログイン画面でメールアドレスを入れると、ログイン用のリンクが届く（パスワード不要）。
   const loginNote =
@@ -262,6 +270,7 @@ function invite(ctx: TemplateContext): RenderedEmail {
     note: loginNote,
     bodyHtml:
       greeting(ctx.name) +
+      (resendLine ? callout(`<strong style="color:${INK};">${escapeHtml(resendLine)}</strong>`) : "") +
       p(
         `このたびは「${escapeHtml(BRAND.name)}」にご参加いただきありがとうございます。<br>${escapeHtml(BRAND.tagline)}——そのための2日間です。`
       ) +
@@ -272,7 +281,7 @@ function invite(ctx: TemplateContext): RenderedEmail {
       ),
   });
   const text = `${ctx.name} 様
-
+${resendLine ? `\n${resendLine}\n` : ""}
 このたびは「${BRAND.name}」にご参加いただきありがとうございます。
 ${BRAND.tagline}——そのための2日間です。
 
