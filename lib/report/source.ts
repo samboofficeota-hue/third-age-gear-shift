@@ -12,6 +12,7 @@
 import type { AssetKey, AssetsData } from "@/lib/homework/assets/meta";
 import { ASSET_META, ASSET_KEYS } from "@/lib/homework/assets/meta";
 import type { ExcursionData } from "@/lib/homework/excursion/types";
+import { socialContactText, type SocialContactData } from "@/lib/socialContact";
 
 type Json = Record<string, unknown>;
 
@@ -168,7 +169,7 @@ function societySource(input: ReportInput): string {
   const day2 = obj(input.day2);
   const backcast = obj(day2.backcast);
   const portfolio2 = obj(day2.portfolio);
-  const socialContact = obj(bunseki.socialContact);
+  const socialContact = socialContactText(obj(bunseki.socialContact) as SocialContactData);
   const actionPlan = obj(day2.actionPlan);
   const pre = obj(obj(input.pre).survey);
   const post = obj(obj(input.post).surveyImmediate);
@@ -180,8 +181,8 @@ function societySource(input: ReportInput): string {
   const blocks = [
     // ① 出発点：研修前の社会との関わり方
     block("研修前：社会との接点（Day1）", [
-      line("すでに持っている接点", arr(socialContact.have).map(text).filter(Boolean).join("、")),
-      line("持てていない接点", arr(socialContact.missing).map(text).filter(Boolean).join("、")),
+      line("いまよりも関わりを増やしたい接点", socialContact.more.split("\n").map(text).filter(Boolean).join("、")),
+      line("あたらしく関わってみたい接点", socialContact.fresh.split("\n").map(text).filter(Boolean).join("、")),
     ]),
     block(
       "研修前：いまのポートフォリオ（Day1）",

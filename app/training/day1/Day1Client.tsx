@@ -27,6 +27,7 @@ import {
   SocialContact,
   type SocialContactData,
 } from "@/components/worksheet/SocialContact";
+import { socialContactText } from "@/lib/socialContact";
 import { Button } from "@/components/ui/button";
 import { workshopDataEndpoint } from "@/lib/workshopSource";
 
@@ -40,7 +41,7 @@ type Bunseki = {
 };
 
 const EMPTY_ALIGNMENT: AlignmentData = { vision: "", whyWork: "", achieve: "" };
-const EMPTY_SOCIAL: SocialContactData = { have: [], missing: [] };
+const EMPTY_SOCIAL: SocialContactData = {};
 
 const MAX_ROWS = 10;
 const DEFAULT_ROWS = 5;
@@ -168,9 +169,12 @@ export function Day1Client({
       const workOriginClean = workOrigin
         .map((e) => ({ reason: e.reason.trim(), experience: e.experience.trim() }))
         .filter((e) => e.reason || e.experience);
+      // 旧版の have/missing は残したまま、新しい2項目（more/fresh）を保存する
+      const { more, fresh } = socialContactText(socialContact);
       const socialContactClean: SocialContactData = {
-        have: socialContact.have.map((s) => s.trim()).filter(Boolean),
-        missing: socialContact.missing.map((s) => s.trim()).filter(Boolean),
+        ...socialContact,
+        more: more.trim(),
+        fresh: fresh.trim(),
       };
       const res = await fetch("/api/workshop/me/day1", {
         method: "PATCH",
@@ -412,17 +416,17 @@ export function Day1Client({
         />
       </PrintSheet>
 
-      {/* ── 社会とじぶんの接点（じぶん分析） ── */}
+      {/* ── じぶんと社会の接点（じぶん分析） ── */}
       <PrintSheet>
         <SheetHeader
           no={6}
           accent="じぶん"
           title="分析"
-          sub="〜 社会とじぶんの接点"
+          sub="〜 じぶんと社会の接点"
           right={nameTag}
         />
         <p className="mt-3 text-sm text-ws-muted">
-          じぶんと社会の「接点」について、見えているもの、見えていないものを書き出してみよう。
+          じぶんと社会の「接点」について、増やしてみたい接点はどこだろう？
         </p>
         <SocialContact
           value={socialContact}
