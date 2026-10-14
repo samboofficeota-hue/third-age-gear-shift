@@ -35,6 +35,7 @@ enum ParticipantOverrideStatus {
 // 送信したメールの種類（テンプレートキー）。lib/emailTemplates.ts と1:1で対応させる。
 enum EmailTemplateKey {
   invite // 招待・アクティベーション（P-1）
+  day1_info // Day1 当日のご案内
   reminder_pre // 事前課題の催促（P-6）
   completion // 修了の激励（A-2）
   followup_3m // 3ヶ月後リマインド＋§F（F-1）

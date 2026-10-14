@@ -12,6 +12,7 @@ import type { TemplateContext, TemplateKey } from "@/lib/emailTemplates";
  */
 const ACTION_PATH: Record<TemplateKey, string | null> = {
   invite: null, // appUrl(`/c/${code}`)
+  day1_info: null, // appUrl(`/c/${code}`)（当日案内も受講ページへ）
   reminder_pre: "/login",
   completion: "/workshop",
   followup_3m: "/workshop/followup",
@@ -73,6 +74,12 @@ export function buildContext(
       return { ok: false, reason: "研修が見つかりません" };
     }
     actionUrl = cohortUrl(session.code);
+  } else if (template === "day1_info") {
+    // 当日案内は、まだログインしていない人にも届ける（受講ページから入れる）
+    if (!session) {
+      return { ok: false, reason: "研修が見つかりません" };
+    }
+    actionUrl = cohortUrl(session.code);
   } else {
     // 招待以外は本人がログインして開く画面。未有効化の人には届いても入れない
     if (!user.activatedAt) {
@@ -98,6 +105,26 @@ function formatTimeRange(start: string | null, end: string | null): string | nul
   return `${start ?? ""}〜${end ?? ""}`;
 }
 
+/** 受付開始（開始の15分前。例: "13:30" → "13:15"）。開始時刻が無ければ null */
+function receptionTime(start: string | null): string | null {
+  const m = start?.match(/^(\d{1,2}):(\d{2})$/);
+  if (!m) return null;
+  const t = Number(m[1]) * 60 + Number(m[2]) - 15;
+  return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;
+}
+
+/** 事前課題の締切＝Day1 の前日（例: "10月16日(金)"）。Day1 未定なら null */
+function preDeadline(day1: Date | null | undefined): string | null {
+  if (!day1) return null;
+  const d = new Date(new Date(day1).getTime() - 24 * 60 * 60 * 1000);
+  return d.toLocaleDateString("ja-JP", {
+    timeZone: "Asia/Tokyo",
+    month: "long",
+    day: "numeric",
+    weekday: "short",
+  });
+}
+
 /** 研修（開催回）から、メールの日程・会場の表示に使う値を作る */
 function sessionContext(session: ContextSession | null) {
   const address = !session?.isOnline ? session?.venueAddress?.trim() || null : null;
@@ -106,6 +133,8 @@ function sessionContext(session: ContextSession | null) {
     day1Date: formatJpDate(session?.day1Date),
     day2Date: formatJpDate(session?.day2Date),
     timeRange: formatTimeRange(session?.startTime ?? null, session?.endTime ?? null),
+    receptionTime: receptionTime(session?.startTime ?? null),
+    preDeadline: preDeadline(session?.day1Date),
     location: session?.location ?? null,
     isOnline: session?.isOnline ?? false,
     venueAddress: address,
@@ -125,7 +154,7 @@ export function sampleContext(
   return {
     name: "山田 太郎",
     actionUrl:
-      template === "invite"
+      template === "invite" || template === "day1_info"
         ? cohortUrl(session?.code ?? "SAMPLE")
         : appUrl(ACTION_PATH[template]!),
     ...sessionContext(session),

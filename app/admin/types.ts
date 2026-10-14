@@ -119,7 +119,7 @@ export function toDateInputValue(iso: string | null): string {
 
 /* ── メール（P-1 / M-1） ───────────────────────────── */
 
-export type EmailTemplateKey = "invite" | "reminder_pre" | "completion" | "followup_3m";
+export type EmailTemplateKey = "invite" | "day1_info" | "reminder_pre" | "completion" | "followup_3m";
 
 export type MailConfig = {
   /** RESEND_API_KEY が設定されているか */
@@ -164,6 +164,7 @@ export type MailSendSummary = {
 
 export const TEMPLATE_LABEL: Record<EmailTemplateKey, string> = {
   invite: "招待メール",
+  day1_info: "Day1 当日のご案内",
   reminder_pre: "事前課題リマインド",
   completion: "修了の激励",
   followup_3m: "3ヶ月後リマインド",
