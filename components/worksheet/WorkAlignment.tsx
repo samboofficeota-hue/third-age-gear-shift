@@ -2,8 +2,8 @@
 
 /**
  * 会社とじぶんの一致点（じぶん分析）。
- * じぶん∩会社のVenn図（黄色の重なり＝一致点）＋会社のビジョン・ミッション＋
- * 「なぜ今の会社で働こうと思ったか」「今の会社で何を成し遂げたいか」の2つの問い。
+ * じぶん∩会社のVenn図（黄色の重なり＝一致点）の上に、図と同じ並びで3つの問いを置く。
+ * 左＝じぶん（なぜ今の会社で働こうと思ったか）／中央＝一致点（やりたいことと一致した点）／右＝会社（理念・ビジョン）。
  */
 
 export type AlignmentData = {
@@ -115,12 +115,9 @@ export function WorkAlignment({
 
   return (
     <div className="mt-5">
-      {/* 上段：3コラムのタイトル＋入力（左右は同サイズ・中央小さめ） */}
-      <div
-        className="grid items-start gap-12"
-        style={{ gridTemplateColumns: "1fr 0.7fr 1fr" }}
-      >
-        {/* 左：原点（なぜ今の会社で働こうと思ったか） */}
+      {/* 上段：3コラムのタイトル＋入力。下のベン図（じぶん → 一致点 → 会社）と同じ並びにする */}
+      <div className="grid grid-cols-3 items-start gap-8">
+        {/* 左：じぶん（なぜ今の会社で働こうと思ったか） */}
         <Field
           label="なぜ今の会社で働こうと思った？"
           value={value.whyWork}
@@ -133,18 +130,7 @@ export function WorkAlignment({
           headline
         />
 
-        {/* 中央：会社のビジョン・ミッション */}
-        <Field
-          label="会社の理念・ビジョン"
-          value={value.vision}
-          placeholder={"経営ビジョンとは？\n会社のミッションとは？"}
-          rows={5}
-          readOnly={readOnly}
-          onChange={(v) => set({ vision: v })}
-          headline
-        />
-
-        {/* 右：実現したいこと */}
+        {/* 中央：一致点（やりたいことと一致した点） */}
         <Field
           label="やりたいことと一致した点は？"
           value={value.achieve}
@@ -154,6 +140,17 @@ export function WorkAlignment({
           rows={8}
           readOnly={readOnly}
           onChange={(v) => set({ achieve: v })}
+          headline
+        />
+
+        {/* 右：会社（会社の理念・ビジョン） */}
+        <Field
+          label="会社の理念・ビジョン"
+          value={value.vision}
+          placeholder={"経営ビジョンとは？\n会社のミッションとは？"}
+          rows={8}
+          readOnly={readOnly}
+          onChange={(v) => set({ vision: v })}
           headline
         />
       </div>

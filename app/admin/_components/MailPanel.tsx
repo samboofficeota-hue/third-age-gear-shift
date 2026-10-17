@@ -41,6 +41,12 @@ const TEMPLATES: TemplateDef[] = [
     matchLabel: "まだ有効化していない人",
   },
   {
+    key: "day1_info",
+    note: "Day1 の日時・会場・持ち物・事前課題の締切・連絡先をお知らせします。まだログインしていない方にも届きます。",
+    match: () => true,
+    matchLabel: "受講者全員",
+  },
+  {
     key: "reminder_pre",
     note: "事前アンケート・じぶん紹介が未提出の方に、提出をお願いします。",
     match: (p) => p.inviteStatus === "activated" && !(p.preSurveyDone && p.profileSlideDone),

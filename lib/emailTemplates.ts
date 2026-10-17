@@ -16,6 +16,7 @@ import { BRAND } from "@/lib/brand";
 
 export const EMAIL_TEMPLATE_KEYS = [
   "invite",
+  "day1_info",
   "reminder_pre",
   "completion",
   "followup_3m",
@@ -34,11 +35,20 @@ export type TemplateContext = {
   day2Date: string | null;
   /** 開催時刻（例: "13:30〜17:00"）。未設定は null */
   timeRange: string | null;
+  /** 受付開始（例: "13:15"）。開始時刻の15分前。未設定は null */
+  receptionTime?: string | null;
+  /** 事前課題の締切＝Day1 の前日（例: "10月16日(金)"）。未定は null */
+  preDeadline?: string | null;
   location: string | null;
   isOnline: boolean;
   /** 会場住所（対面のみ）と、その Google マップのリンク */
   venueAddress: string | null;
   mapUrl: string | null;
+  /**
+   * 再送のときだけ指定する（招待メール）。件名に【再送】を付け、宛名の下に再送の旨と締切を添える。
+   * 例: { originalDate: "10月1日", deadline: "10月16日(金)" }
+   */
+  resend?: { originalDate: string; deadline: string };
   /** 招待リンクの有効日数 */
   expiresInDays: number;
 };
@@ -68,6 +78,13 @@ export const TEMPLATE_META: Record<TemplateKey, TemplateMeta> = {
     purpose: "受講ページ（コホート専用URL）を案内し、ログインして事前課題に入ってもらう",
     linkLabel: "受講ページ（/c/<研修コード>）",
     timing: "P-1 / Day1の2週間前",
+  },
+  day1_info: {
+    key: "day1_info",
+    label: "Day1 当日のご案内",
+    purpose: "Day1 の日時・会場・持ち物・事前課題の締切・連絡先を伝える",
+    linkLabel: "受講ページ（/c/<研修コード>）",
+    timing: "Day1の数日前",
   },
   reminder_pre: {
     key: "reminder_pre",
@@ -247,7 +264,10 @@ function preTasksBlock(): string {
 }
 
 function invite(ctx: TemplateContext): RenderedEmail {
-  const subject = `【${BRAND.name}】受講のご案内と事前課題のお願い`;
+  const resendLine = ctx.resend
+    ? `${ctx.resend.originalDate}にお送りしたご案内を再送いたします。事前課題は${ctx.resend.deadline}までにご記入をお願いいたします。`
+    : null;
+  const subject = `${ctx.resend ? "【再送】" : ""}【${BRAND.name}】受講のご案内と事前課題のお願い`;
   // ボタン・末尾のURLとも、コホート専用の受講ページ（/c/<研修コード>）へ。
   // そこからログイン画面でメールアドレスを入れると、ログイン用のリンクが届く（パスワード不要）。
   const loginNote =
@@ -262,6 +282,7 @@ function invite(ctx: TemplateContext): RenderedEmail {
     note: loginNote,
     bodyHtml:
       greeting(ctx.name) +
+      (resendLine ? callout(`<strong style="color:${INK};">${escapeHtml(resendLine)}</strong>`) : "") +
       p(
         `このたびは「${escapeHtml(BRAND.name)}」にご参加いただきありがとうございます。<br>${escapeHtml(BRAND.tagline)}——そのための2日間です。`
       ) +
@@ -272,7 +293,7 @@ function invite(ctx: TemplateContext): RenderedEmail {
       ),
   });
   const text = `${ctx.name} 様
-
+${resendLine ? `\n${resendLine}\n` : ""}
 このたびは「${BRAND.name}」にご参加いただきありがとうございます。
 ${BRAND.tagline}——そのための2日間です。
 
@@ -282,6 +303,94 @@ ${scheduleText(ctx)}${PRE_TASKS_TEXT}
 ${loginNote}
 
 ご入力にはPC（またはタブレット）をおすすめします。
+${textFooter(ctx.actionUrl)}`;
+  return { subject, html, text };
+}
+
+/** 見出し（⭐︎〜⭐︎）＋本文の段落。事前課題のお願いと同じ見せ方。linesHtml は呼び出し側でエスケープ済みの HTML */
+function starSection(title: string, linesHtml: string[]): string {
+  return `<div style="margin:0 0 16px;">
+        <p style="margin:0 0 6px;font-size:16px;font-weight:bold;color:${ACCENT};">⭐︎${escapeHtml(title)}⭐︎</p>
+        <p style="margin:0;font-size:15px;">${linesHtml.join("<br>")}</p>
+      </div>`;
+}
+
+/** 当日の連絡先（電話）。今は事務局の太田さん固定 */
+const DAY1_CONTACT_PHONE = "070-8468-0990（太田）";
+/** 強調（赤・太字） */
+const ALERT = "#d32f2f";
+
+/** Day1 の日時・会場だけの表（受付時刻つき） */
+function day1Table(ctx: TemplateContext): string {
+  const day1Only: TemplateContext = { ...ctx, sessionName: null, day2Date: null };
+  const html = scheduleTable(day1Only);
+  return ctx.receptionTime
+    ? html.replace(
+        escapeHtml(withTime(ctx.day1Date ?? "", ctx)),
+        `${escapeHtml(withTime(ctx.day1Date ?? "", ctx))}（受付 ${escapeHtml(ctx.receptionTime)}〜）`
+      )
+    : html;
+}
+
+function day1Info(ctx: TemplateContext): RenderedEmail {
+  const subject = `【${BRAND.name}】Day1 当日のご案内${ctx.day1Date ? `（${ctx.day1Date}）` : ""}`;
+  const belongings = [
+    "ノートPC（タブレットでも可）",
+    "受講サイトでワークシートに記入します。会場には Wi-Fi があります。",
+    "PC をお持ち込みいただけない場合は、代わりの手段をご用意しますので、事前にご連絡ください。",
+  ];
+  // 1行目の「ノートPC」だけ赤・太字にする
+  const belongingsHtml = [
+    `<strong style="color:${ALERT};">ノートPC</strong>（タブレットでも可）`,
+    ...belongings.slice(1).map(escapeHtml),
+  ];
+  const prework = [
+    `事前アンケート・じぶん紹介シート・ライフラインチャートは、${ctx.preDeadline ?? "Day1 の前日"}まで記入・修正できます。`,
+    "まだの方は、それまでにご記入をお願いいたします。じぶん紹介シートは、Day1 の冒頭で発表していただきます。",
+  ];
+  const contact = [
+    "遅れる場合などは、下記までご連絡ください。",
+    `当日連絡先：${DAY1_CONTACT_PHONE}`,
+    `メール：${BRAND.contactEmail}`,
+  ];
+  const loginNote =
+    "受講ページでログインを押し、お申込みのメールアドレスを入力すると、ログイン用のリンクがメールで届きます（パスワードは不要です）。";
+
+  const html = layout({
+    eyebrow: "DAY 1",
+    title: `${ctx.sessionName ?? BRAND.name} Day1 当日のご案内`,
+    showBrandLine: false,
+    buttonLabel: "受講ページへ",
+    buttonUrl: ctx.actionUrl,
+    note: loginNote,
+    bodyHtml:
+      greeting(ctx.name) +
+      p(`いよいよ「${escapeHtml(BRAND.name)}」Day1 が近づいてまいりました。当日のご案内をお送りします。`) +
+      day1Table(ctx) +
+      starSection("持ち物", belongingsHtml) +
+      starSection("事前課題について", prework.map(escapeHtml)) +
+      starSection("当日のご連絡先", contact.map(escapeHtml)),
+  });
+
+  const when = ctx.day1Date
+    ? `日時：${withTime(ctx.day1Date, ctx)}${ctx.receptionTime ? `（受付 ${ctx.receptionTime}〜）` : ""}\n`
+    : "";
+  const venue = scheduleText({ ...ctx, sessionName: null, day1Date: null, day2Date: null });
+  const text = `${ctx.name} 様
+
+いよいよ「${BRAND.name}」Day1 が近づいてまいりました。当日のご案内をお送りします。
+
+${when}${venue}⭐︎持ち物⭐︎
+${belongings.join("\n")}
+
+⭐︎事前課題について⭐︎
+${prework.join("\n")}
+
+⭐︎当日のご連絡先⭐︎
+${contact.join("\n")}
+
+次のURLから受講ページへお進みください。
+${loginNote}
 ${textFooter(ctx.actionUrl)}`;
   return { subject, html, text };
 }
@@ -383,6 +492,7 @@ ${textFooter(ctx.actionUrl)}`;
 
 const RENDERERS: Record<TemplateKey, (ctx: TemplateContext) => RenderedEmail> = {
   invite,
+  day1_info: day1Info,
   reminder_pre: reminderPre,
   completion,
   followup_3m: followup3m,
