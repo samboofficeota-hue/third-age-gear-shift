@@ -180,7 +180,7 @@ export function InterviewChat({ initialMessages, onProgress, onFinish }: Props) 
       </div>
 
       {/* 履歴：ここだけスクロールする */}
-      <div className="min-h-0 flex-1 overflow-y-auto bg-bg-panel/60 p-4 md:p-5">
+      <div className="min-h-0 flex-1 overflow-y-auto bg-white/[0.07] p-4 md:p-5">
         <div className="space-y-4">
           {messages.map((m, i) => (
             <div

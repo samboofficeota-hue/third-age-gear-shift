@@ -61,7 +61,8 @@ export function SheetHeader({
         )}
         <h1 className="text-3xl font-bold text-ws-ink">
           <span className="text-ws-accent">{accent}</span> {title}
-          {sub && <span className="text-ws-muted"> {sub}</span>}
+          {/* 補足は見出しより一段小さく。氏名が長いと見出しが2行に折り返されるため。 */}
+          {sub && <span className="text-2xl text-ws-muted"> {sub}</span>}
         </h1>
       </div>
       {right && <div className="shrink-0">{right}</div>}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CheckCircle2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canAccessPhase } from "@/lib/workshopAccess";
@@ -27,6 +28,7 @@ export default async function HomeworkAssetsPage() {
   const assets = (wd?.homework as { assets?: AssetsData } | null)?.assets;
   const lifeCurvePoints =
     (wd?.pre as { lifeCurve?: { points?: LifeCurvePoint[] } } | null)?.lifeCurve?.points ?? [];
+  const allDone = ASSET_KEYS.every((k) => hasText(assets?.[k]));
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10 md:px-6">
@@ -55,11 +57,13 @@ export default async function HomeworkAssetsPage() {
               <Link
                 key={key}
                 href={`/workshop/homework/assets/${key}`}
+                // 入力済みは薄くせず、緑の枠＋「入力済み」で示す（みらいシナリオの扉と同じ見せ方）。
+                // 薄くすると「押せない」ように見え、未入力との違いも分かりにくかったため。
                 className={cn(
                   "flex flex-col items-center gap-2 rounded-xl border-2 p-4 text-center transition-colors",
                   done
-                    ? "border-border bg-bg-panel/40 opacity-70"
-                    : "border-border bg-bg-panel hover:border-primary/50"
+                    ? "border-primary/60 bg-primary/10 hover:border-primary"
+                    : "border-dashed border-border bg-bg-panel hover:border-primary/50"
                 )}
               >
                 <span
@@ -68,14 +72,35 @@ export default async function HomeworkAssetsPage() {
                 >
                   {meta.label.slice(0, 2)}
                 </span>
-                <span className="flex items-center gap-1 text-sm font-bold text-foreground">
-                  {meta.label}
-                  {done && <CheckCircle2 className="h-4 w-4 shrink-0 text-muted-foreground" />}
-                </span>
+                <span className="text-sm font-bold text-foreground">{meta.label}</span>
+                {done ? (
+                  <span className="flex items-center gap-1 text-xs font-semibold text-primary">
+                    <CheckCircle2 className="h-4 w-4 shrink-0" />
+                    入力済み
+                  </span>
+                ) : (
+                  <span className="text-xs text-muted-foreground">未入力</span>
+                )}
               </Link>
             );
           })}
         </div>
+
+        {/* 3つとも書き終えたら、区切りとして宿題一覧への戻り導線を出す（みらいシナリオの扉と同じ）。 */}
+        {allDone && (
+          <div className="mt-6 flex flex-col items-center gap-3 border-t border-border pt-6">
+            <p className="flex items-center gap-1.5 text-sm text-secondary-foreground">
+              <CheckCircle2 className="h-4 w-4 text-primary" />
+              3つの資産、すべて書き終えました
+            </p>
+            <Button asChild>
+              <Link href="/workshop/homework">
+                <ArrowLeft className="h-4 w-4" />
+                宿題の一覧へ戻る
+              </Link>
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
