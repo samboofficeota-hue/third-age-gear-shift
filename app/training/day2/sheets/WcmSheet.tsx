@@ -64,33 +64,25 @@ const COMPANY_TEMPLATE: FillTemplate = [
 
 /**
  * #11 会社での Will/Can/Must 2.0 → 3.0
- * current ステップ: 左（いま）だけ表示
- * both ステップ: 左が「宿題：会社編のマイシナリオ」カードに入れ替わり、右（将来）に集中する
+ * 左に「宿題：会社編のマイシナリオ」、右に将来（3.0）を並べる。
+ * いま（2.0）の欄は出さない（シナリオを見ながら 3.0 に集中するため）。
  */
 export function WcmSheet({
   nameTag,
-  wcmStep,
-  wcmCurrent,
   wcmFuture,
   wcmMeta,
   viewOnly,
   companyScenario,
   onCompanyScenarioChange,
-  onWcmStepChange,
-  onWcmCurrentChange,
   onWcmFutureChange,
   onWcmMetaChange,
 }: {
   nameTag: ReactNode;
-  wcmStep: "current" | "both";
-  wcmCurrent: WCM;
   wcmFuture: WCM;
   wcmMeta: WcmMeta;
   viewOnly: boolean;
   companyScenario: Record<string, string>;
   onCompanyScenarioChange: (next: Record<string, string>) => void;
-  onWcmStepChange: (next: "current" | "both") => void;
-  onWcmCurrentChange: (next: WCM) => void;
   onWcmFutureChange: (next: WCM) => void;
   onWcmMetaChange: (next: WcmMeta) => void;
 }) {
@@ -148,44 +140,19 @@ export function WcmSheet({
         right={nameTag}
       />
       <p className="mt-3 text-sm text-ws-muted">
-        WCMフレームを使って、じぶん戦略を組み立てていきます。WCM
-        2.0そしてWCM 3.0の順で進めていきましょう
+        宿題で書いた会社編のマイシナリオを見ながら、WCM 3.0 を組み立てていきましょう
       </p>
 
       <div
         className="mt-4 grid items-start gap-x-4 gap-y-3"
         style={{ gridTemplateColumns: "minmax(0,1fr) 88px minmax(0,1fr)" }}
       >
-        {/* ヘッダー行（左：いま の年齢バッジ、または会社編カード） */}
-        {wcmStep === "current" ? (
-          <div className="text-center">
-            <span className="inline-flex items-center gap-1 rounded bg-[#FCEFA6] px-3 py-1.5 text-sm font-bold text-ws-ink">
-              <input
-                readOnly={viewOnly}
-                value={wcmMeta.curYear}
-                onChange={(e) =>
-                  onWcmMetaChange({ ...wcmMeta, curYear: e.target.value })
-                }
-                className="w-14 rounded border border-ws-ink/20 bg-white px-1 text-center outline-none focus:border-ws-teal"
-              />
-              年・
-              <input
-                readOnly={viewOnly}
-                value={wcmMeta.curAge}
-                onChange={(e) =>
-                  onWcmMetaChange({ ...wcmMeta, curAge: e.target.value })
-                }
-                className="w-10 rounded border border-ws-ink/20 bg-white px-1 text-center outline-none focus:border-ws-teal"
-              />
-              歳（いま）
-            </span>
-          </div>
-        ) : (
+        {/* 左：会社編のマイシナリオ（Will〜Must の行までまたぐ） */}
           <div className="row-span-4 rounded-xl border border-ws-line bg-white p-4">
             <p className="mb-1 inline-block rounded-full bg-ws-mint px-3 py-1 text-xs font-bold tracking-wide text-ws-teal">
               宿題：会社編のマイシナリオ
             </p>
-            <div className="[&>div]:!mt-2 [&>div]:!space-y-1 [&>div]:!pl-3 [&>div]:!text-[13px] [&>div]:!leading-snug">
+            <div className="[&>div]:!mt-2 [&>div]:!space-y-1 [&>div]:!pl-3 [&>div]:!text-[16px] [&>div]:!leading-relaxed">
               <FillBlankScenario
                 template={COMPANY_TEMPLATE}
                 values={companyScenario}
@@ -193,7 +160,6 @@ export function WcmSheet({
               />
             </div>
           </div>
-        )}
         <div />
         {/* 将来（3.0）バッジ：左が「今のWCM」でも「会社編シナリオ」でも常時表示 */}
         <div className="text-center">
@@ -227,25 +193,6 @@ export function WcmSheet({
           const showUp = row.key !== "will";
           return (
             <Fragment key={row.key}>
-              {/* 左（いま）: both ステップでは会社編カードに置き換わるため非表示 */}
-              {wcmStep === "current" && (
-                <div>
-                  <div className="mb-1.5">
-                    <span className="text-base font-bold text-ws-teal">
-                      {row.label}
-                    </span>{" "}
-                    <span className="text-xs text-ws-muted">{row.curSub}</span>
-                  </div>
-                  <WcmBox
-                    readOnly={viewOnly}
-                    value={wcmCurrent[row.key]}
-                    onChange={(v) =>
-                      onWcmCurrentChange({ ...wcmCurrent, [row.key]: v })
-                    }
-                  />
-                </div>
-              )}
-
               {/* 中央（Must 行にだけ、現在→将来の向きを示す矢印） */}
               <div className="pt-6">
                 {row.key === "must" && (
@@ -287,16 +234,9 @@ export function WcmSheet({
         })}
       </div>
 
-      {/* ── 左側の表示切り替え（今のWCM ⇄ 会社編シナリオ）・シナリオ修正
-             （3.0は左の表示に関係なく常時表示。#13と同じく左下に並べる） ── */}
+      {/* ── シナリオ修正（#13と同じく左下に置く） ── */}
       <div className="no-print mt-4 flex justify-start gap-3">
-        <Button
-          onClick={() => onWcmStepChange(wcmStep === "current" ? "both" : "current")}
-          className="h-9 rounded-full px-5 text-sm"
-        >
-          {wcmStep === "current" ? "会社編シナリオを見る →" : "← 2.0にもどる"}
-        </Button>
-        {wcmStep === "both" && !viewOnly && (
+        {!viewOnly && (
           <button
             type="button"
             onClick={openEdit}

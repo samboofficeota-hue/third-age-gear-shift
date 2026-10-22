@@ -81,7 +81,6 @@ export function Day2Client({
   // 「現在」ボックスの読み込み表示フラグ。compare ⇄ single の行き来で
   // PortfolioSheet 内部が再マウントされてもリセットされないよう、ここで保持する
   const [currentLoaded, setCurrentLoaded] = useState(false);
-  const [wcmStep, setWcmStep] = useState<"current" | "both">("current");
 
   // 任意の onChange に「保存マークを倒す」処理を挟むラッパ群
   const dirty = <T,>(setter: (v: T) => void) => (v: T) => {
@@ -198,7 +197,9 @@ export function Day2Client({
           actionPlan,
           backcast,
           wcm: { current: wcmCurrent, future: wcmFuture, meta: wcmMeta },
-          summary,
+          // #15 の Must/Will は #14 の 3.0 をそのまま表示するので、保存値もそろえる
+          // （受講者レポートは summary.must / summary.will を読むため）。
+          summary: { ...summary, must: wcmFuture.must, will: wcmFuture.will },
         }),
       });
       if (day1Res.ok && day2Res.ok) setSaved(true);
@@ -297,15 +298,11 @@ export function Day2Client({
       {/* #11 会社での Will/Can/Must 2.0 → 3.0 */}
       <WcmSheet
         nameTag={nameTag}
-        wcmStep={wcmStep}
-        wcmCurrent={wcmCurrent}
         wcmFuture={wcmFuture}
         wcmMeta={wcmMeta}
         viewOnly={viewOnly}
         companyScenario={companyScenario}
         onCompanyScenarioChange={setCompanyScenario}
-        onWcmStepChange={setWcmStep}
-        onWcmCurrentChange={dirty(setWcmCurrent)}
         onWcmFutureChange={dirty(setWcmFuture)}
         onWcmMetaChange={dirty(setWcmMeta)}
       />
@@ -314,6 +311,7 @@ export function Day2Client({
       <SummarySheet
         nameTag={nameTag}
         summary={summary}
+        wcmFuture={wcmFuture}
         viewOnly={viewOnly}
         onSummaryChange={dirty(setSummary)}
       />
