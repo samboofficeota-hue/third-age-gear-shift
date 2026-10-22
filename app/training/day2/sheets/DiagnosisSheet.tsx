@@ -45,7 +45,7 @@ function toFivePoint(v: number): number {
 /**
  * #8 コミュニティ活動力 自己診断
  * 初期: 表のみ（評価列なし）＋「入力する」ボタン
- * 入力後: レーダーチャート＋スコア表 ＋「修正する」ボタン
+ * 入力後: レーダーチャート＋スコア表 ＋「もう一度」ボタン
  */
 export function DiagnosisSheet({
   nameTag,
@@ -128,7 +128,7 @@ export function DiagnosisSheet({
       </div>
 
       {hasScores ? (
-        /* ── 入力済み: レーダーチャート（＋修正ボタン） + スコア表 ── */
+        /* ── 入力済み: レーダーチャート（＋もう一度ボタン） + スコア表 ── */
         <div className="mt-2 flex items-start justify-center gap-12">
           <div className="w-[470px] max-w-full shrink-0">
             <RadarChart
@@ -150,7 +150,7 @@ export function DiagnosisSheet({
                   variant="outline"
                   className="rounded-full border-ws-line px-5 py-1.5 text-sm font-semibold text-ws-teal hover:border-ws-teal hover:bg-ws-mint/40"
                 >
-                  修正する
+                  もう一度
                 </Button>
               </div>
             )}
@@ -197,8 +197,10 @@ export function DiagnosisSheet({
           </table>
         </div>
       ) : (
-        /* ── 未入力: 表のみ（評価列なし） ── */
-        <table className="mt-3 w-full border-collapse text-sm">
+        /* ── 未入力: 表のみ（評価列なし）。カテゴリー・活動力・解説を1行に収める。
+           シート幅は固定（1100px）なのに文字は画面幅で大きくなる（ルート17〜20px）ため、
+           文字サイズを px で固定し、カテゴリー・活動力は折り返し禁止にする ── */
+        <table className="mt-3 w-full border-collapse text-[15px]">
           <thead>
             <tr className="bg-ws-teal text-white">
               <th className="border border-ws-teal px-2 py-2 font-semibold">
@@ -218,18 +220,18 @@ export function DiagnosisSheet({
           <tbody>
             {DIAGNOSIS_ITEMS.map((it) => (
               <tr key={it.no}>
-                <td className="border border-ws-line px-2 py-1.5 text-center text-ws-muted">
+                <td className="whitespace-nowrap border border-ws-line px-2 py-1.5 text-center text-ws-muted">
                   {it.no}
                 </td>
                 {it.span > 0 && (
                   <td
                     rowSpan={it.span}
-                    className="border border-ws-line px-2 py-1.5 text-center align-middle font-bold text-ws-ink"
+                    className="whitespace-nowrap border border-ws-line px-3 py-1.5 text-center align-middle font-bold text-ws-ink"
                   >
                     {it.cat}
                   </td>
                 )}
-                <td className="border border-ws-line px-2 py-1.5 text-center font-bold text-ws-teal">
+                <td className="whitespace-nowrap border border-ws-line px-3 py-1.5 text-center font-bold text-ws-teal">
                   {it.name}
                 </td>
                 <td className="border border-ws-line px-3 py-1.5 leading-snug text-ws-ink">
@@ -243,36 +245,37 @@ export function DiagnosisSheet({
 
       {/* ── 30問モーダル ── */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="ws-light-modal max-h-[90vh] overflow-y-auto bg-ws-teal p-0 [&>button]:text-white [&>button]:hover:text-white/80 sm:max-w-3xl">
-          <DialogHeader className="rounded-t-lg bg-ws-teal px-6 py-5 text-center">
+        {/* 背景は濃いティールだと重いので、薄いミントにして設問カード（白）を浮かせる */}
+        <DialogContent className="ws-light-modal max-h-[90vh] overflow-y-auto bg-ws-mint p-0 [&>button]:text-ws-muted [&>button]:hover:text-ws-ink sm:max-w-3xl">
+          <DialogHeader className="rounded-t-lg bg-ws-mint px-6 pb-4 pt-6 text-center">
             <div className="flex flex-wrap items-baseline justify-center gap-x-3">
-              <DialogTitle className="text-xl font-bold text-white">
+              <DialogTitle className="text-xl font-bold text-ws-teal">
                 コミュニティ活動力診断
               </DialogTitle>
-              <DialogDescription className="whitespace-nowrap text-sm text-white/90">
+              <DialogDescription className="whitespace-nowrap text-sm text-ws-muted">
                 直感で、4段階からあてはまるものを選んでください。
               </DialogDescription>
             </div>
           </DialogHeader>
 
-          <div className="flex flex-col gap-5 px-5 pb-8 pt-3 sm:px-8">
+          <div className="flex flex-col gap-6 px-5 pb-10 pt-2 sm:px-8">
             {DIAGNOSIS_SECTIONS.map((section) => (
               <section
                 key={section.label}
-                className="rounded-xl border border-ws-line bg-white p-5"
+                className="rounded-xl border border-ws-line bg-white p-6 sm:p-8"
               >
                 <span className="inline-block rounded-full bg-ws-mint px-3 py-1 text-xs font-bold tracking-wide text-ws-teal">
                   {section.label}
                 </span>
                 {section.title && (
-                  <h3 className="mt-2 text-base font-bold text-ws-ink">
+                  <h3 className="mt-3 text-base font-bold text-ws-ink">
                     {section.title}
                   </h3>
                 )}
                 {section.legend && (
-                  <p className="mt-1 text-xs text-ws-muted">{section.legend}</p>
+                  <p className="mt-2 text-xs leading-relaxed text-ws-muted">{section.legend}</p>
                 )}
-                <div className="mt-1">
+                <div className="mt-4">
                   {section.questions.map((q, qi) => {
                     const missing = attempted && !answers[q.id];
                     return (
@@ -280,23 +283,27 @@ export function DiagnosisSheet({
                       key={q.id}
                       id={q.id}
                       className={cn(
-                        "border-t border-dashed border-ws-line py-4 first:border-t-0",
+                        "border-t border-dashed border-ws-line py-6 first:border-t-0",
                         missing && "rounded-lg border-2 border-dashed border-ws-accent bg-ws-accent/5 px-3 -mx-3"
                       )}
                     >
                       <legend className="sr-only">{q.text}</legend>
-                      <p className="mb-3 text-sm font-semibold leading-relaxed text-ws-ink">
-                        <span className="mr-1.5 font-bold text-ws-teal">
+                      {/* 設問番号は左に固定し、2行目以降も本文の頭にそろえる（ぶら下げ）。
+                          行間を広めにとり、選択肢との間も空けて読みやすくする。 */}
+                      <p className="mb-5 flex gap-2 text-sm font-semibold leading-loose text-ws-ink">
+                        <span className="shrink-0 font-bold text-ws-teal">
                           Q{section.startQ + qi}.
                         </span>
-                        {q.text}
-                        {missing && (
-                          <span className="ml-2 text-xs font-bold text-ws-accent">
-                            回答してください
-                          </span>
-                        )}
+                        <span>
+                          {q.text}
+                          {missing && (
+                            <span className="ml-2 text-xs font-bold text-ws-accent">
+                              回答してください
+                            </span>
+                          )}
+                        </span>
                       </p>
-                      <div className="grid grid-cols-4 gap-2">
+                      <div className="grid grid-cols-4 gap-3">
                         {SCALE_LABELS.map((slabel, i) => {
                           const v = String(i + 1);
                           const selected = answers[q.id] === v;
