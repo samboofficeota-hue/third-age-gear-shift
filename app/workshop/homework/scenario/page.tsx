@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canAccessPhase } from "@/lib/workshopAccess";
@@ -110,6 +111,23 @@ export default async function HomeworkScenarioPage({
             ))}
           </div>
         </div>
+
+        {/* 両編とも書き終えたら、区切りとして宿題一覧への戻り導線を出す。
+            ヘッダーの「宿題トップへ戻る」だけでは、書き終えた後どうすればいいか不安になるため。 */}
+        {societyDone && companyDone && (
+          <div className="mt-6 flex flex-col items-center gap-3 border-t border-border pt-6">
+            <p className="flex items-center gap-1.5 text-sm text-secondary-foreground">
+              <CheckCircle2 className="h-4 w-4 text-primary" />
+              社会編・会社編、どちらも書き終えました
+            </p>
+            <Button asChild>
+              <Link href="/workshop/homework">
+                <ArrowLeft className="h-4 w-4" />
+                宿題の一覧へ戻る
+              </Link>
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

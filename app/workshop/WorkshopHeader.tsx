@@ -1,13 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { BRAND } from "@/lib/brand";
 
 export function WorkshopHeader() {
   const [loggingOut, setLoggingOut] = useState(false);
   const pathname = usePathname() ?? "";
+  const router = useRouter();
+
+  // ブラウザの「戻る／進む」は staleTimes に関係なく前回の表示を使い回すため、
+  // 記入して戻った宿題一覧に「記入済み」が付かない。履歴移動で来たときだけ取り直す。
+  const cameFromHistory = useRef(false);
+  useEffect(() => {
+    const onPop = () => {
+      cameFromHistory.current = true;
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+  useEffect(() => {
+    if (!cameFromHistory.current) return;
+    cameFromHistory.current = false;
+    router.refresh();
+  }, [pathname, router]);
 
   // 宿題の入力パート（扉のサブページ）は「宿題トップへ戻る」に統一。
   // 事前課題のサブページと宿題の扉は「ガイドに戻る」（扉に戻り道が無かったため）。
