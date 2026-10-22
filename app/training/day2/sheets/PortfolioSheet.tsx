@@ -233,7 +233,7 @@ export function PortfolioSheet({
         onClick={() => onStepChange("compare")}
         className="rounded-full px-4"
       >
-        ← 前に戻る
+        ← 一覧に戻る
       </Button>
     </div>
   );
